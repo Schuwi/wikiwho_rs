@@ -1,6 +1,5 @@
 use chrono::prelude::*;
 use compact_str::CompactString;
-use core::alloc;
 use rustc_hash::{FxHashMap, FxHashSet};
 use std::{
     collections::HashMap,
@@ -9,7 +8,7 @@ use std::{
 };
 
 use crate::{
-    dump_parser::{Contributor, Page, Revision, Text},
+    dump_parser::{Contributor, Revision, Text},
     utils::{
         compute_avg_word_freq, split_into_paragraphs, split_into_sentences, split_into_tokens,
         trim_in_place, RevisionHash,
@@ -69,22 +68,6 @@ impl<T> MaybeVec<T> {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub enum Editor {
-    Id(i32),
-    Name(CompactString),
-}
-
-impl Editor {
-    pub fn from_contributor(contributor: &Contributor) -> Self {
-        if let Some(id) = contributor.id {
-            Self::Id(id)
-        } else {
-            Self::Name(contributor.username.clone())
-        }
-    }
-}
-
 // index is unique within a page
 #[derive(Clone)]
 pub struct RevisionPointer(usize, Arc<RevisionData>);
@@ -115,9 +98,8 @@ impl Deref for RevisionPointer {
 pub struct RevisionData {
     pub id: i32,
     pub length: usize,
-    pub timestamp: DateTime<Utc>,
-    pub editor: Editor,
     pub text: String,
+    pub xml_revision: Revision,
 }
 
 impl RevisionData {
@@ -125,9 +107,19 @@ impl RevisionData {
         Self {
             id: 0,
             length: 0,
-            timestamp: Utc::now(),
-            editor: Editor::Id(0),
             text: String::new(),
+            xml_revision: Revision {
+                id: 0,
+                timestamp: Utc::now(),
+                contributor: Contributor {
+                    id: None,
+                    username: CompactString::new(""),
+                },
+                comment: None,
+                minor: false,
+                text: Text::Normal(String::new()),
+                sha1: None,
+            },
         }
     }
 }
@@ -142,16 +134,14 @@ pub struct RevisionAnalysis {
 
 impl RevisionData {
     pub fn from_revision(revision: &Revision) -> Self {
-        let editor = Editor::from_contributor(&revision.contributor);
         Self {
             id: revision.id,
             length: revision.text.len(),
-            timestamp: revision.timestamp,
-            editor,
             text: match revision.text {
                 Text::Normal(ref t) => t.to_lowercase(),
                 Text::Deleted => String::new(),
             },
+            xml_revision: revision.clone(),
         }
     }
 }
@@ -282,7 +272,7 @@ pub struct WordAnalysis {
     pub matched_in_current: bool,
 
     // words may be re-added after being removed
-    pub inbound: Vec<i32>, // revision ids where this word exists, except for the revision it was (re)introduced
+    pub inbound: Vec<i32>,
     pub outbound: Vec<i32>, // the revision ids where this word was removed (i.e. not present in the revision but present in the previous revision)
 }
 
@@ -303,9 +293,18 @@ impl WordAnalysis {
         }
     }
 
-    fn maybe_push_inbound(&mut self, vandalism: bool, revision_id_curr: i32) {
+    fn maybe_push_inbound(
+        &mut self,
+        vandalism: bool,
+        revision_id_curr: i32,
+        revision_id_prev: Option<i32>,
+        push: bool,
+    ) {
         if !vandalism && self.matched_in_current && self.inbound.last() != Some(&revision_id_curr) {
-            self.inbound.push(revision_id_curr);
+            if Some(self.last_rev_id) != revision_id_prev && push {
+                self.inbound.push(revision_id_curr);
+            }
+            self.last_rev_id = revision_id_curr;
         }
     }
 
@@ -340,7 +339,6 @@ pub struct Analysis {
     paragraphs_ht: FxHashMap<blake3::Hash, Vec<ParagraphPointer>>, // Hash table of paragraphs of all revisions
     sentences_ht: FxHashMap<blake3::Hash, Vec<SentencePointer>>, // Hash table of sentences of all revisions
     spam_hashes: FxHashSet<RevisionHash>, // Hashes of spam revisions; RevisionHash can be a SHA1 hash or a BLAKE3 hash but we expect all hashes in this revision to be of the same type
-    title: CompactString,
 
     revision_curr: RevisionPointer,
     revision_prev: Option<RevisionPointer>,
@@ -530,7 +528,7 @@ impl ParasentPointer for ParagraphPointer {
 
     fn all_parasents_in_parents(
         analysis: &mut Analysis,
-        prevs: &[Self::ParentPointer],
+        prevs: &[RevisionPointer],
     ) -> Vec<Self> {
         let mut result = Vec::new();
         for revision_prev in prevs {
@@ -573,6 +571,7 @@ impl ParasentPointer for ParagraphPointer {
             .entry(self.data().hash_value)
             .and_modify(|v| v.push(self.clone()))
             .or_insert_with(|| MaybeVec::new_single(self.clone()));
+        revision_curr.paragraphs_ordered.push(self.clone());
     }
 
     fn find_in_any_previous_revision(analysis: &mut Analysis, hash: &blake3::Hash) -> Vec<Self> {
@@ -636,7 +635,7 @@ impl ParasentPointer for SentencePointer {
 
     fn all_parasents_in_parents(
         analysis: &mut Analysis,
-        prevs: &[Self::ParentPointer],
+        prevs: &[ParagraphPointer],
     ) -> Vec<Self> {
         let mut result = Vec::new();
         for paragraph_prev in prevs {
@@ -680,6 +679,7 @@ impl ParasentPointer for SentencePointer {
             .entry(self.data().hash_value)
             .and_modify(|v| v.push(self.clone()))
             .or_insert_with(|| MaybeVec::new_single(self.clone()));
+        paragraph_curr.sentences_ordered.push(self.clone());
     }
 
     fn find_in_any_previous_revision(analysis: &mut Analysis, hash: &blake3::Hash) -> Vec<Self> {
@@ -706,7 +706,9 @@ impl ParasentPointer for SentencePointer {
 }
 
 impl Analysis {
-    pub fn analyse_page(title: &str, xml_revisions: &[Revision]) -> Result<(Self, AnalysisResult), AnalysisError> {
+    pub fn analyse_page(
+        xml_revisions: &[Revision],
+    ) -> Result<(Self, AnalysisResult), AnalysisError> {
         let mut analysis_result = AnalysisResult {
             spam_ids: Vec::new(),
             revisions: HashMap::new(),
@@ -722,7 +724,6 @@ impl Analysis {
             paragraphs_ht: FxHashMap::default(),
             sentences_ht: FxHashMap::default(),
             spam_hashes: FxHashSet::default(),
-            title: title.into(),
             revision_curr: RevisionPointer::new(0, RevisionData::dummy()), /* will be overwritten before being read */
             revision_prev: None,
         };
@@ -883,6 +884,7 @@ impl Analysis {
         matched_{paragraphs, words, sentences}_prev
          */
         let revision_id_curr = self.revision_curr.id; /* short-hand */
+        let revision_id_prev = self.revision_prev.as_ref().map(|r| r.id); /* short-hand */
 
         let mut unmatched_sentences_curr = Vec::new();
         let mut unmatched_sentences_prev = Vec::new();
@@ -965,17 +967,32 @@ impl Analysis {
             }
         }
 
-        // Reset the matches that have been modified (only concerns the previous revision)
-        let closure = |word: &mut WordAnalysis| {
-            // first update last used info (i.e. inbound) of matched words
-            word.maybe_push_inbound(vandalism, revision_id_curr);
-            // then reset
+        // Reset the matches that we modified in old revisions
+        let handle_word = |word: &mut WordAnalysis, push_inbound: bool| {
+            word.maybe_push_inbound(vandalism, revision_id_curr, revision_id_prev, push_inbound);
             word.matched_in_current = false;
         };
 
-        self.iterate_words_in_paragraphs(&matched_paragraphs_prev, closure);
-        self.iterate_words_in_sentences(&matched_sentences_prev, closure);
-        self.iterate_words(&matched_words_prev, closure);
+        for matched_paragraph in &matched_paragraphs_prev {
+            matched_paragraph.set_matched_in_current(self, false);
+            for matched_sentence in &self.paragraphs[matched_paragraph.0].sentences_ordered {
+                self.sentences[matched_sentence.0].matched_in_current = false;
+
+                for matched_word in &self.sentences[matched_sentence.0].words_unordered {
+                    handle_word(&mut self.words[matched_word.0], true);
+                }
+            }
+        }
+        for matched_sentence in &matched_sentences_prev {
+            matched_sentence.set_matched_in_current(self, false);
+
+            for matched_word in &self.sentences[matched_sentence.0].words_unordered {
+                handle_word(&mut self.words[matched_word.0], true);
+            }
+        }
+        for matched_word in &matched_words_prev {
+            handle_word(&mut self.words[matched_word.0], false);
+        }
 
         vandalism
     }
@@ -995,7 +1012,7 @@ impl Analysis {
             let mut matched_one = false;
             let mut matched_all = true;
 
-            P::iterate_words(self, prev_parasents, |word| {
+            P::iterate_words(self, &[paragraph_prev_pointer.clone()], |word| {
                 if word.matched_in_current {
                     matched_one = true;
                 } else {
@@ -1060,16 +1077,16 @@ impl Analysis {
                 if let Some(parasent_prev_pointer) = matched_curr {
                     // this parasent was found in a previous revision
 
-                    // Mark all sentences and words in this paragraph as matched
+                    // Mark all sentences and words in this paragraph/sentence as matched
                     parasent_prev_pointer.mark_all_children_matched(self);
 
                     // Add paragraph/sentence to the current revision/paragraph
                     parasent_prev_pointer.store_in_parent(self, parasent_curr_pointer);
                 } else {
-                    // this paragraph was not found in any previous revision, so it is new
-                    // add to the list of unmatched paragraphs for future matching
+                    // this paragraph/sentence was not found in any previous revision, so it is new
+                    // add to the list of unmatched paragraphs/sentences for future matching
 
-                    // Allocate a new paragraph and create a pointer to it.
+                    // Allocate a new paragraph/sentence and create a pointer to it.
                     let paragraph_pointer =
                         P::allocate_new_in_parent(self, parasent_curr_pointer, parasent_text);
                     unmatched_parasents_curr.push(paragraph_pointer);
@@ -1179,6 +1196,8 @@ impl Analysis {
         // do the diffing!
         let mut diff: Vec<_> = similar::capture_diff_slices_deadline(
             similar::Algorithm::Myers,
+            // similar::Algorithm::Lcs,
+            // similar::Algorithm::Patience, /* seems to be waaaay faster than the other o.o */
             &text_prev,
             &text_curr,
             None,

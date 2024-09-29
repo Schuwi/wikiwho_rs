@@ -205,6 +205,7 @@ pub struct Contributor {
     pub id: Option<i32>,
 }
 
+#[derive(Clone, PartialEq, Eq)]
 pub enum Text {
     Normal(String),
     Deleted,
@@ -242,7 +243,7 @@ impl Debug for Sha1Hash {
 }
 
 // apparently `restricted` is never set in mwxml (https://github.com/mediawiki-utilities/python-mwxml/blob/2b477be6aa9794064d03b5be38c7759d1570488b/mwxml/iteration/revision.py#L80)
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Revision {
     pub id: i32,
     pub timestamp: chrono::DateTime<chrono::Utc>,
@@ -768,7 +769,20 @@ impl<R: BufRead> DumpParser<R> {
                     match self.current_path.as_slice() {
                         // Page tags
                         [MediaWiki, Page, Title] => {
-                            page.title = CompactString::from(text.as_ref());
+                            fn normalize_title(title: &str) -> Cow<'_, str> {
+                                if title.contains("_") {
+                                    title.replace("_", " ").into()
+                                } else {
+                                    title.into()
+                                }
+                            }
+
+                            if let Some(title) = text.split_once(":") {
+                                // split off the namespace
+                                page.title = CompactString::from(normalize_title(title.1));
+                            } else {
+                                page.title = CompactString::from(normalize_title(&text));
+                            }
                             span.record("title", &page.title.as_str());
                         }
                         [MediaWiki, Page, Ns] => {

@@ -485,6 +485,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "json-writer"
+version = "0.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "279046e6427c19c86f93df06fe9dc90c32b43f4a2a85bb3083d579e4a1e7ef03"
+dependencies = [
+ "itoa",
+ "ryu",
+]
+
+[[package]]
 name = "libc"
 version = "0.2.158"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -969,6 +979,7 @@ dependencies = [
  "compact_str",
  "criterion",
  "itertools 0.13.0",
+ "json-writer",
  "md5",
  "quick-xml",
  "rand",

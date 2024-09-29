@@ -1,6 +1,7 @@
 use algorithm::Analysis;
 use clap::Parser;
-use dump_parser::DumpParser;
+use dump_parser::{Contributor, DumpParser};
+use json_writer::JSONObjectWriter;
 use std::collections::HashMap;
 use std::fs::File;
 use std::io::BufReader;
@@ -18,57 +19,86 @@ struct CommandLine {
 fn main() {
     let args: CommandLine = CommandLine::parse();
 
-    let file = File::open(args.input_file).expect("file not found");
+    let file = File::open(&args.input_file)
+        .expect(format!("file not found: {}", args.input_file.display()).as_str());
     let reader = BufReader::new(file);
     let reader = zstd::stream::Decoder::with_buffer(reader).unwrap();
     let reader = BufReader::new(reader);
 
     let mut parser = DumpParser::new(reader).expect("Failed to create parser");
-    println!("Site info: {:?}", parser.site_info());
+    eprintln!("Site info: {:?}", parser.site_info());
 
+    let mut output = String::new();
     while let Some(page) = parser.parse_page().expect("Failed to parse page") {
-        if page.namespace != 0 {
-            continue;
-        }
+        // if page.namespace != 0 {
+        //     continue;
+        // }
 
-        let (mut analysis, analysis_result) = Analysis::analyse_page(&page.title, &page.revisions).expect("Failed to analyse page");
+        let (mut analysis, analysis_result) =
+            Analysis::analyse_page(&page.revisions).expect("Failed to analyse page");
         let latest_rev_id = analysis_result.ordered_revisions.last().unwrap();
         let latest_rev_pointer = analysis_result.revisions[latest_rev_id].clone();
-
-        println!("Page: {}", page.title);
-        println!("Latest revision: {}", latest_rev_id);
 
         let mut author_contributions = HashMap::new();
         analysis.iterate_words_in_revisions(&[latest_rev_pointer], |word| {
             let origin_rev_id = word.origin_rev_id;
-            let origin_rev = page.revisions.iter().find(|rev| rev.id == origin_rev_id).unwrap();
-            // let origin_rev = &analysis_result.revisions[&origin_rev_id];
+            let origin_rev = &analysis_result.revisions[&origin_rev_id];
 
-            let author = origin_rev.contributor.clone();
-            // let author = origin_rev.editor.clone();
+            let author = origin_rev.xml_revision.contributor.clone();
             let author_contribution = author_contributions.entry(author).or_insert(0);
             *author_contribution += 1;
         });
 
         // Find top 5 authors and everyone with at least 5% of the total contributions or at least 25 tokens
-        let total_tokens = author_contributions.values().sum::<usize>();
-        let mut author_contributions: Vec<_> = author_contributions.into_iter().collect();
-        author_contributions.sort_by_key(|(_, count)| *count);
-        author_contributions.reverse();
+        /*
+        total_contributions = sum(author_contributions.values())
+        top_authors = sorted(author_contributions.items(), key=lambda x: x[1], reverse=True)[:5]
+        top_authors += filter(lambda x: (x[1] / total_contributions >= 0.05 or x[1] >= 25) and not (x in top_authors), author_contributions.items())
+         */
+        let total_contributions: usize = author_contributions.values().sum();
+        let mut top_authors: Vec<(&Contributor, &usize)> = author_contributions.iter().collect();
+        top_authors.sort_by(|a, b| b.1.cmp(a.1));
+        top_authors.truncate(5);
+        top_authors.extend(author_contributions.iter().filter(|(_, count)| {
+            **count as f64 / total_contributions as f64 >= 0.05 || **count >= 25
+        }));
+        top_authors.sort_by(|a, b| {
+            a.0.id
+                .cmp(&b.0.id)
+                .then_with(|| a.0.username.cmp(&b.0.username))
+        });
+        top_authors.dedup();
+        top_authors.sort_by(|a, b| b.1.cmp(a.1));
 
-        let mut top_authors = Vec::new();
-        let mut other_authors = Vec::new();
-        for (author, count) in author_contributions {
-            if count >= 25 || count as f64 / total_tokens as f64 >= 0.05 {
-                top_authors.push((author, count));
-            } else {
-                other_authors.push((author, count));
-            }
-        }
+        let mut object_writer = JSONObjectWriter::new(&mut output);
 
-        println!("Top authors:");
+        object_writer.value("page", page.title.as_str());
+        let mut array_writer = object_writer.array("top_authors");
         for (author, count) in top_authors {
-            println!("{:?}: {}", author, count);
+            let mut author_writer = array_writer.object();
+            author_writer.value("id", author.id);
+            author_writer.value("text", author.username.as_str());
+            author_writer.value("contributions", *count as u64);
         }
+        array_writer.end();
+        object_writer.value("total_tokens", total_contributions as u64);
+
+        object_writer.end();
+
+        println!("{output}");
+        output.clear();
     }
 }
+
+/*
+DEBUGGING TODO:
+## "Nodb" page [x]
+expected: {"page":"Nodb","top_authors":[{"id":128144,"text":"Nerd","contributions":24},{"id":1390,"text":"Pajz","contributions":22},{"id":306,"text":"Melancholie","contributions":2}],"total_tokens":48}
+got: {"page":"Nodb","top_authors":[{"id":128144,"text":"Nerd","contributions":31},{"id":1390,"text":"Pajz","contributions":17}],"total_tokens":48}
+-> manual revision of input file: Melancholie has 2 contributions to the page,
+                                  contributions of Nerd are closer to 24 than 31,
+                                  contributions of Pajz are closer to 22 than 17
+=> highly depends on the diff algorithm - using LCS insted of Myers gets a closer result to the original implementation
+
+## Approximate comparison of results with the original implementation [ ]
+ */
