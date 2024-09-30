@@ -430,6 +430,59 @@ pub fn trim_in_place(mut input: String) -> String {
     input
 }
 
+#[cfg(feature = "python-diff")]
+use similar::ChangeTag;
+
+#[cfg(feature = "python-diff")]
+pub fn python_diff<S: AsRef<str> + pyo3::ToPyObject>(
+    old: &[S],
+    new: &[S],
+) -> Vec<Option<(ChangeTag, String)>> {
+    use pyo3::{
+        prelude::*,
+        types::{PyList, PyString},
+    };
+
+    Python::with_gil(|py| {
+        let builtins = py.import_bound("builtins").unwrap();
+        let difflib = py.import_bound("difflib").unwrap();
+        let differ = difflib.getattr("Differ").unwrap().call0().unwrap();
+
+        let old = PyList::new_bound(py, old);
+        let new = PyList::new_bound(py, new);
+
+        let diff = differ.call_method1("compare", (old, new)).unwrap();
+        let diff = builtins
+            .call_method1("list", (diff,))
+            .unwrap()
+            .downcast_into::<PyList>()
+            .unwrap();
+
+        let mut result = Vec::new();
+        for item in diff.iter() {
+            let diff_item = item.downcast::<PyString>().unwrap();
+            let diff_item = diff_item.to_str().unwrap();
+
+            let tag = match diff_item.chars().next().unwrap() {
+                ' ' => Some(ChangeTag::Equal),
+                '+' => Some(ChangeTag::Insert),
+                '-' => Some(ChangeTag::Delete),
+                _ => None, /* apparently it can be '?' for example; I have no idea how diff algorithms work */
+            };
+            let value = diff_item[2..].to_string();
+
+            result.push(tag.map(|tag| (tag, value)));
+        }
+
+        result
+    })
+}
+
+#[cfg(not(feature = "python-diff"))]
+pub fn python_diff(old: &[&str], new: &[&str]) -> Vec<(DiffTag, String)> {
+    panic!("python-diff feature is not enabled");
+}
+
 #[cfg(test)]
 mod tests {
     use rand::{Rng, SeedableRng};

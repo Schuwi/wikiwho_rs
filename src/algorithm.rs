@@ -10,8 +10,8 @@ use std::{
 use crate::{
     dump_parser::{Contributor, Revision, Text},
     utils::{
-        compute_avg_word_freq, split_into_paragraphs, split_into_sentences, split_into_tokens,
-        trim_in_place, RevisionHash,
+        self, compute_avg_word_freq, split_into_paragraphs, split_into_sentences,
+        split_into_tokens, trim_in_place, RevisionHash,
     },
 };
 
@@ -526,10 +526,7 @@ impl ParasentPointer for ParagraphPointer {
         analysis.iterate_words_in_paragraphs(paragraphs, f);
     }
 
-    fn all_parasents_in_parents(
-        analysis: &mut Analysis,
-        prevs: &[RevisionPointer],
-    ) -> Vec<Self> {
+    fn all_parasents_in_parents(analysis: &mut Analysis, prevs: &[RevisionPointer]) -> Vec<Self> {
         let mut result = Vec::new();
         for revision_prev in prevs {
             result.extend_from_slice(&analysis.revisions[revision_prev.0].paragraphs_ordered);
@@ -633,10 +630,7 @@ impl ParasentPointer for SentencePointer {
         analysis.iterate_words_in_sentences(sentences, f);
     }
 
-    fn all_parasents_in_parents(
-        analysis: &mut Analysis,
-        prevs: &[ParagraphPointer],
-    ) -> Vec<Self> {
+    fn all_parasents_in_parents(analysis: &mut Analysis, prevs: &[ParagraphPointer]) -> Vec<Self> {
         let mut result = Vec::new();
         for paragraph_prev in prevs {
             result.extend_from_slice(&analysis.paragraphs[paragraph_prev.0].sentences_ordered);
@@ -1194,18 +1188,23 @@ impl Analysis {
         }
 
         // do the diffing!
-        let mut diff: Vec<_> = similar::capture_diff_slices_deadline(
-            similar::Algorithm::Myers,
-            // similar::Algorithm::Lcs,
-            // similar::Algorithm::Patience, /* seems to be waaaay faster than the other o.o */
-            &text_prev,
-            &text_curr,
-            None,
-        )
-        .iter()
-        .flat_map(|op| op.iter_changes(&text_prev, &text_curr))
-        .map(|c| Some((c.tag(), c.value())))
-        .collect();
+        let mut diff: Vec<_>;
+        if cfg!(feature = "python-diff") {
+            diff = utils::python_diff(&text_prev, &text_curr);
+        } else {
+            diff = similar::capture_diff_slices_deadline(
+                similar::Algorithm::Myers,
+                // similar::Algorithm::Lcs,
+                // similar::Algorithm::Patience, /* seems to be waaaay faster than the other o.o */
+                &text_prev,
+                &text_curr,
+                None,
+            )
+            .iter()
+            .flat_map(|op| op.iter_changes(&text_prev, &text_curr))
+            .map(|c| Some((c.tag(), c.value())))
+            .collect();
+        }
 
         for (i, sentence_curr) in unmatched_sentences_curr.iter().enumerate() {
             for word_text in unmatched_words_prev_splitted[i].iter() {
