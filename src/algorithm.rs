@@ -765,18 +765,16 @@ impl Analysis {
 
             // Spam detection: Deletion
             if !vandalism && !(xml_revision.comment.is_some() && xml_revision.minor) {
-                if let Some(ref revision_prev) = analysis.revision_prev {
-                    let change_percentage = (revision_data.length as f32
-                        - revision_prev.length as f32)
-                        / revision_prev.length as f32;
+                let revision_prev = &analysis.revision_curr; /* !! since we have not yet updated revision_curr, this is the previous revision */
+                let change_percentage = (revision_data.length as f32 - revision_prev.length as f32)
+                    / revision_prev.length as f32;
 
-                    if revision_prev.length > PREVIOUS_LENGTH
-                        && revision_data.length < CURR_LENGTH
-                        && change_percentage <= CHANGE_PERCENTAGE
-                    {
-                        // Vandalism detected due to significant deletion
-                        vandalism = true;
-                    }
+                if revision_prev.length > PREVIOUS_LENGTH
+                    && revision_data.length < CURR_LENGTH
+                    && change_percentage <= CHANGE_PERCENTAGE
+                {
+                    // Vandalism detected due to significant deletion
+                    vandalism = true;
                 }
             }
 
@@ -796,7 +794,7 @@ impl Analysis {
             std::mem::swap(&mut analysis.revision_curr, &mut revision_pointer);
             if at_least_one {
                 analysis.revision_prev = Some(revision_pointer);
-            } /* if !at_least_one we do not yet have a valid revision to refer to as previous */
+            } /* if !at_least_one we do not yet have a valid revision (revision_pointer contains a dummy value) to refer to as previous */
 
             // Perform the actual word (aka. token) matching
             vandalism = analysis.determine_authorship();
