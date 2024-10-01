@@ -382,7 +382,10 @@ use std::{
     iter::{Fuse, FusedIterator},
 };
 
-use crate::dump_parser::Sha1Hash;
+use crate::{
+    algorithm::{Analysis, RevisionPointer, WordPointer},
+    dump_parser::Sha1Hash,
+};
 
 pub fn compute_avg_word_freq<S: AsRef<str>>(token_list: &[S]) -> f32 {
     let mut counter: HashMap<String, u64> = HashMap::new();
@@ -430,7 +433,23 @@ pub fn trim_in_place(mut input: String) -> String {
     input
 }
 
-#[cfg(feature = "python-diff")]
+pub fn iterate_revision_tokens<'a>(
+    analysis: &'a Analysis,
+    revision: &RevisionPointer,
+) -> impl Iterator<Item = &'a WordPointer> + 'a {
+    let revision = &analysis[revision];
+
+    revision
+        .paragraphs_ordered
+        .iter()
+        .flat_map(move |paragraph| {
+            analysis[paragraph]
+                .sentences_ordered
+                .iter()
+                .flat_map(move |sentence| analysis[sentence].words_ordered.iter())
+        })
+}
+
 use similar::ChangeTag;
 
 #[cfg(feature = "python-diff")]
@@ -479,7 +498,7 @@ pub fn python_diff<S: AsRef<str> + pyo3::ToPyObject>(
 }
 
 #[cfg(not(feature = "python-diff"))]
-pub fn python_diff(old: &[&str], new: &[&str]) -> Vec<(DiffTag, String)> {
+pub fn python_diff<S: AsRef<str>>(_old: &[S], _new: &[S]) -> Vec<Option<(ChangeTag, String)>> {
     panic!("python-diff feature is not enabled");
 }
 

@@ -228,7 +228,7 @@ pub struct SentenceData {
 
 #[derive(Clone, Default)]
 pub struct SentenceAnalysis {
-    pub words_unordered: Vec<WordPointer>,
+    pub words_ordered: Vec<WordPointer>,
 
     /// whether this sentence was found in the current revision
     pub matched_in_current: bool,
@@ -259,6 +259,14 @@ impl WordPointer {
     }
 }
 
+impl Deref for WordPointer {
+    type Target = WordData;
+
+    fn deref(&self) -> &Self::Target {
+        &self.1
+    }
+}
+
 #[derive(Clone)]
 pub struct WordData {
     pub value: CompactString,
@@ -266,8 +274,9 @@ pub struct WordData {
 
 #[derive(Clone)]
 pub struct WordAnalysis {
+    pub unique_id: WordPointer,
     pub origin_rev_id: i32,
-    pub last_rev_id: i32,
+    pub latest_rev_id: i32,
     /// whether this word was found in the current revision
     pub matched_in_current: bool,
 
@@ -283,10 +292,11 @@ impl WordData {
 }
 
 impl WordAnalysis {
-    pub fn new(origin_rev_id: i32) -> Self {
+    pub fn new(pointer: WordPointer, origin_rev_id: i32) -> Self {
         Self {
+            unique_id: pointer,
             origin_rev_id,
-            last_rev_id: origin_rev_id,
+            latest_rev_id: origin_rev_id,
             matched_in_current: false,
             inbound: Vec::new(),
             outbound: Vec::new(),
@@ -301,10 +311,10 @@ impl WordAnalysis {
         push: bool,
     ) {
         if !vandalism && self.matched_in_current && self.inbound.last() != Some(&revision_id_curr) {
-            if Some(self.last_rev_id) != revision_id_prev && push {
+            if push && Some(self.latest_rev_id) != revision_id_prev {
                 self.inbound.push(revision_id_curr);
             }
-            self.last_rev_id = revision_id_curr;
+            self.latest_rev_id = revision_id_curr;
         }
     }
 
@@ -334,13 +344,16 @@ pub struct Analysis {
     revisions: Vec<RevisionAnalysis>,
     paragraphs: Vec<ParagraphAnalysis>,
     sentences: Vec<SentenceAnalysis>,
-    words: Vec<WordAnalysis>, // Ordered, unique list of tokens in the page
+    pub words: Vec<WordAnalysis>, // Ordered, unique list of tokens in the page
 
     paragraphs_ht: FxHashMap<blake3::Hash, Vec<ParagraphPointer>>, // Hash table of paragraphs of all revisions
     sentences_ht: FxHashMap<blake3::Hash, Vec<SentencePointer>>, // Hash table of sentences of all revisions
     spam_hashes: FxHashSet<RevisionHash>, // Hashes of spam revisions; RevisionHash can be a SHA1 hash or a BLAKE3 hash but we expect all hashes in this revision to be of the same type
 
-    revision_curr: RevisionPointer,
+    /// The current revision being analysed.
+    ///
+    /// After analysis finished this will be the latest revision that was not marked as spam.
+    pub revision_curr: RevisionPointer,
     revision_prev: Option<RevisionPointer>,
     // text_curr: String, /* pass text_curr as parameter instead */
     // temp: Vec<String>, /* replaced by disambiguate_* in analyse_page */
@@ -582,7 +595,7 @@ impl ParasentPointer for ParagraphPointer {
     fn mark_all_children_matched(&self, analysis: &mut Analysis) {
         for sentence in &analysis.paragraphs[self.0].sentences_ordered {
             analysis.sentences[sentence.0].matched_in_current = true;
-            for word in &analysis.sentences[sentence.0].words_unordered {
+            for word in &analysis.sentences[sentence.0].words_ordered {
                 analysis.words[word.0].matched_in_current = true;
             }
         }
@@ -685,7 +698,7 @@ impl ParasentPointer for SentencePointer {
     }
 
     fn mark_all_children_matched(&self, analysis: &mut Analysis) {
-        for word in &analysis.sentences[self.0].words_unordered {
+        for word in &analysis.sentences[self.0].words_ordered {
             analysis.words[word.0].matched_in_current = true;
         }
     }
@@ -834,7 +847,7 @@ impl Analysis {
         mut f: impl FnMut(&mut WordAnalysis),
     ) {
         for sentence in sentences {
-            for word in &self.sentences[sentence.0].words_unordered {
+            for word in &self.sentences[sentence.0].words_ordered {
                 f(&mut self.words[word.0]);
             }
         }
@@ -847,7 +860,7 @@ impl Analysis {
     ) {
         for paragraph in paragraphs {
             for sentence in &self.paragraphs[paragraph.0].sentences_ordered {
-                for word in &self.sentences[sentence.0].words_unordered {
+                for word in &self.sentences[sentence.0].words_ordered {
                     f(&mut self.words[word.0]);
                 }
             }
@@ -862,7 +875,7 @@ impl Analysis {
         for revision in revisions {
             for paragraph in &self.revisions[revision.0].paragraphs_ordered {
                 for sentence in &self.paragraphs[paragraph.0].sentences_ordered {
-                    for word in &self.sentences[sentence.0].words_unordered {
+                    for word in &self.sentences[sentence.0].words_ordered {
                         f(&mut self.words[word.0]);
                     }
                 }
@@ -963,7 +976,9 @@ impl Analysis {
 
         // Reset the matches that we modified in old revisions
         let handle_word = |word: &mut WordAnalysis, push_inbound: bool| {
+            // first update inbound and last used info of matched words of all previous revisions
             word.maybe_push_inbound(vandalism, revision_id_curr, revision_id_prev, push_inbound);
+            // then reset the matched status
             word.matched_in_current = false;
         };
 
@@ -972,7 +987,7 @@ impl Analysis {
             for matched_sentence in &self.paragraphs[matched_paragraph.0].sentences_ordered {
                 self.sentences[matched_sentence.0].matched_in_current = false;
 
-                for matched_word in &self.sentences[matched_sentence.0].words_unordered {
+                for matched_word in &self.sentences[matched_sentence.0].words_ordered {
                     handle_word(&mut self.words[matched_word.0], true);
                 }
             }
@@ -980,11 +995,12 @@ impl Analysis {
         for matched_sentence in &matched_sentences_prev {
             matched_sentence.set_matched_in_current(self, false);
 
-            for matched_word in &self.sentences[matched_sentence.0].words_unordered {
+            for matched_word in &self.sentences[matched_sentence.0].words_ordered {
                 handle_word(&mut self.words[matched_word.0], true);
             }
         }
         for matched_word in &matched_words_prev {
+            // there is no inbound chance because we only diff with words of previous revision -> push_inbound = false
             handle_word(&mut self.words[matched_word.0], false);
         }
 
@@ -1126,7 +1142,7 @@ impl Analysis {
         let mut text_prev = Vec::new();
         for sentence_prev_pointer in unmatched_sentences_prev {
             let sentence_prev = &self.sentences[sentence_prev_pointer.0];
-            for word_prev_pointer in &sentence_prev.words_unordered {
+            for word_prev_pointer in &sentence_prev.words_ordered {
                 if !self.words[word_prev_pointer.0].matched_in_current {
                     text_prev.push(word_prev_pointer.value().to_string());
                     unmatched_words_prev.push(word_prev_pointer.clone());
@@ -1164,17 +1180,17 @@ impl Analysis {
             analysis: &mut Analysis,
             word: &str,
             sentence_pointer: &SentencePointer,
-        ) -> WordPointer {
+        ) {
             let word_data = WordData::new(word.into());
             let word_pointer = WordPointer::new(analysis.words.len(), word_data);
-            analysis
-                .words
-                .push(WordAnalysis::new(analysis.revision_curr.id));
+            analysis.words.push(WordAnalysis::new(
+                word_pointer.clone(),
+                analysis.revision_curr.id,
+            ));
             analysis.sentences[sentence_pointer.0]
-                .words_unordered
-                .push(word_pointer.clone());
+                .words_ordered
+                .push(word_pointer);
             analysis.revisions[analysis.revision_curr.0].original_adds += 1;
-            word_pointer
         }
 
         // Edit consists of adding new content, not changing/removing content
@@ -1227,7 +1243,7 @@ impl Analysis {
                                     curr_matched = true;
 
                                     self[word_prev].matched_in_current = true;
-                                    self[sentence_curr].words_unordered.push(word_prev.clone());
+                                    self[sentence_curr].words_ordered.push(word_prev.clone());
 
                                     matched_words_prev.push(word_prev.clone());
                                     *change = None;

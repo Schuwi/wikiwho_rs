@@ -34,20 +34,20 @@ fn main() {
         //     continue;
         // }
 
-        let (mut analysis, analysis_result) =
+        let (analysis, analysis_result) =
             Analysis::analyse_page(&page.revisions).expect("Failed to analyse page");
-        let latest_rev_id = analysis_result.ordered_revisions.last().unwrap();
-        let latest_rev_pointer = analysis_result.revisions[latest_rev_id].clone();
+        let latest_rev_id = *analysis_result.ordered_revisions.last().unwrap();
+        let latest_rev_pointer = analysis_result.revisions[&latest_rev_id].clone();
 
         let mut author_contributions = HashMap::new();
-        analysis.iterate_words_in_revisions(&[latest_rev_pointer], |word| {
-            let origin_rev_id = word.origin_rev_id;
+        for word_pointer in utils::iterate_revision_tokens(&analysis, &latest_rev_pointer) {
+            let origin_rev_id = analysis[word_pointer].origin_rev_id;
             let origin_rev = &analysis_result.revisions[&origin_rev_id];
 
             let author = origin_rev.xml_revision.contributor.clone();
             let author_contribution = author_contributions.entry(author).or_insert(0);
             *author_contribution += 1;
-        });
+        }
 
         // Find top 5 authors and everyone with at least 5% of the total contributions or at least 25 tokens
         /*
@@ -73,6 +73,7 @@ fn main() {
         let mut object_writer = JSONObjectWriter::new(&mut output);
 
         object_writer.value("page", page.title.as_str());
+        object_writer.value("ns", page.namespace);
         let mut array_writer = object_writer.array("top_authors");
         for (author, count) in top_authors {
             let mut author_writer = array_writer.object();
@@ -82,6 +83,12 @@ fn main() {
         }
         array_writer.end();
         object_writer.value("total_tokens", total_contributions as u64);
+
+        // let mut array_writer = object_writer.array("current_tokens");
+        // for word in utils::iterate_revision_tokens(&analysis, &latest_rev_pointer) {
+        //     array_writer.value(word.value.as_str());
+        // }
+        // array_writer.end();
 
         object_writer.end();
 
