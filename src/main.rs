@@ -57,7 +57,7 @@ fn main() {
          */
         let total_contributions: usize = author_contributions.values().sum();
         let mut top_authors: Vec<(&Contributor, &usize)> = author_contributions.iter().collect();
-        top_authors.sort_by(|a, b| b.1.cmp(a.1));
+        top_authors.sort_by(|a, b| b.1.cmp(a.1).then_with(|| b.0.username.cmp(&a.0.username))); /* note reversed order on name comparison to match python script */
         top_authors.truncate(5);
         top_authors.extend(author_contributions.iter().filter(|(_, count)| {
             **count as f64 / total_contributions as f64 >= 0.05 || **count >= 25
@@ -68,7 +68,7 @@ fn main() {
                 .then_with(|| a.0.username.cmp(&b.0.username))
         });
         top_authors.dedup();
-        top_authors.sort_by(|a, b| b.1.cmp(a.1));
+        top_authors.sort_by(|a, b| b.1.cmp(a.1).then_with(|| b.0.username.cmp(&a.0.username)));
 
         let mut object_writer = JSONObjectWriter::new(&mut output);
 
