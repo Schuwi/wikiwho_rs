@@ -19,7 +19,7 @@
                     "kind": "bin"
                 }
             },
-            "args": [],
+            "args": ["dewiktionary-20240901-pages-meta-history.xml.zst"],
             "cwd": "${workspaceFolder}"
         },
         {
