@@ -101,7 +101,7 @@ where
 impl<T: 'static + Default + Clone, I: Iterator<Item = T>, const N: usize> ReplaceIterator<T, I, N> {
     fn new(inner: I, needle: &'static [T], replacement: &'static [T]) -> Self {
         assert!(needle.len() == N);
-        assert!(needle.len() > 0);
+        assert!(N > 0);
         Self {
             inner: inner.fuse(),
             buffer: ArrayDeque::new(),
@@ -151,7 +151,7 @@ impl<
         } else {
             let mut yield_item = None;
 
-            while let Some(next_item) = self.inner.next() {
+            for next_item in self.inner.by_ref() {
                 if next_item == self.needle[self.matched_items] {
                     self.matched_items += 1;
                 } else if next_item == self.needle[0] {
@@ -268,7 +268,7 @@ pub fn split_into_paragraphs_naive(text: &str) -> Vec<String> {
 // almost 5 times worse performance than the naive implementation, whoops
 #[doc(hidden)] /* only public for benchmarking */
 pub fn split_into_paragraphs_iterator(text: &str) -> Vec<String> {
-    let mut iterator = text
+    let iterator = text
         .chars()
         .replace_all(&['\r', '\n'], &['\n'])
         .replace_all(&['\r'], &['\n'])
@@ -293,7 +293,7 @@ pub fn split_into_paragraphs_iterator(text: &str) -> Vec<String> {
     let mut result = Vec::new();
     let mut paragraph = String::new();
 
-    while let Some(c) = iterator.next() {
+    for c in iterator {
         if c == '\u{0091}' {
             result.push(paragraph.clone());
             paragraph.clear();

@@ -25,7 +25,7 @@ fn main() {
     let args: CommandLine = CommandLine::parse();
 
     let file = File::open(&args.input_file)
-        .expect(format!("file not found: {}", args.input_file.display()).as_str());
+        .unwrap_or_else(|_| panic!("file not found: {}", args.input_file.display()));
     let reader = BufReader::new(file);
     let reader = zstd::stream::Decoder::with_buffer(reader).unwrap();
     let reader = BufReader::new(reader);

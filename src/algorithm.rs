@@ -66,6 +66,13 @@ impl<T> MaybeVec<T> {
             MaybeVec::Vec(v) => v.len(),
         }
     }
+
+    pub fn is_empty(&self) -> bool {
+        match self {
+            MaybeVec::Single(_) => false,
+            MaybeVec::Vec(v) => v.is_empty(),
+        }
+    }
 }
 
 // index is unique within a page
@@ -552,7 +559,7 @@ impl ParasentPointer for ParagraphPointer {
         let paragraphs = split_into_paragraphs(revision_text);
         paragraphs
             .into_iter()
-            .map(|s| trim_in_place(s))
+            .map(trim_in_place)
             .filter(|s| !s.is_empty()) /* don't track empty paragraphs */
             .collect()
     }
@@ -588,7 +595,7 @@ impl ParasentPointer for ParagraphPointer {
         analysis
             .paragraphs_ht
             .get(hash)
-            .map(|v| v.clone())
+            .cloned()
             .unwrap_or_default()
     }
 
@@ -656,7 +663,7 @@ impl ParasentPointer for SentencePointer {
         let sentences = split_into_sentences(paragraph_text);
         sentences
             .into_iter()
-            .map(|s| trim_in_place(s))
+            .map(trim_in_place)
             .filter(|s| !s.is_empty()) /* don't track empty sentences */
             .map(|s| split_into_tokens(&s).join(" ")) /* here whitespaces in the sentence are cleaned */
             .collect()
@@ -690,11 +697,7 @@ impl ParasentPointer for SentencePointer {
     }
 
     fn find_in_any_previous_revision(analysis: &mut Analysis, hash: &blake3::Hash) -> Vec<Self> {
-        analysis
-            .sentences_ht
-            .get(hash)
-            .map(|v| v.clone())
-            .unwrap_or_default()
+        analysis.sentences_ht.get(hash).cloned().unwrap_or_default()
     }
 
     fn mark_all_children_matched(&self, analysis: &mut Analysis) {
@@ -755,7 +758,7 @@ impl Analysis {
                 None => RevisionHash::Blake3(blake3::hash(text.as_bytes())),
             };
 
-            let revision_data = RevisionData::from_revision(&xml_revision);
+            let revision_data = RevisionData::from_revision(xml_revision);
             let mut vandalism = false;
 
             if analysis.spam_hashes.contains(&rev_hash) {
@@ -764,7 +767,7 @@ impl Analysis {
             }
 
             // Spam detection: Deletion
-            if !vandalism && !(xml_revision.comment.is_some() && xml_revision.minor) {
+            if !(vandalism || xml_revision.comment.is_some() && xml_revision.minor) {
                 let revision_prev = &analysis.revision_curr; /* !! since we have not yet updated revision_curr, this is the previous revision */
                 let change_percentage = (revision_data.length as f32 - revision_prev.length as f32)
                     / revision_prev.length as f32;
@@ -833,11 +836,11 @@ impl Analysis {
         }
     }
 
-    fn iterate_words(&mut self, words: &[WordPointer], mut f: impl FnMut(&mut WordAnalysis)) {
-        for word in words {
-            f(&mut self.words[word.0]);
-        }
-    }
+    // fn iterate_words(&mut self, words: &[WordPointer], mut f: impl FnMut(&mut WordAnalysis)) {
+    //     for word in words {
+    //         f(&mut self.words[word.0]);
+    //     }
+    // }
 
     fn iterate_words_in_sentences(
         &mut self,
@@ -865,21 +868,21 @@ impl Analysis {
         }
     }
 
-    pub fn iterate_words_in_revisions(
-        &mut self,
-        revisions: &[RevisionPointer],
-        mut f: impl FnMut(&mut WordAnalysis),
-    ) {
-        for revision in revisions {
-            for paragraph in &self.revisions[revision.0].paragraphs_ordered {
-                for sentence in &self.paragraphs[paragraph.0].sentences_ordered {
-                    for word in &self.sentences[sentence.0].words_ordered {
-                        f(&mut self.words[word.0]);
-                    }
-                }
-            }
-        }
-    }
+    // fn iterate_words_in_revisions(
+    //     &mut self,
+    //     revisions: &[RevisionPointer],
+    //     mut f: impl FnMut(&mut WordAnalysis),
+    // ) {
+    //     for revision in revisions {
+    //         for paragraph in &self.revisions[revision.0].paragraphs_ordered {
+    //             for sentence in &self.paragraphs[paragraph.0].sentences_ordered {
+    //                 for word in &self.sentences[sentence.0].words_ordered {
+    //                     f(&mut self.words[word.0]);
+    //                 }
+    //             }
+    //         }
+    //     }
+    // }
 
     fn determine_authorship(&mut self) -> bool {
         /*
@@ -958,7 +961,7 @@ impl Analysis {
                 let hash = paragraph.data().hash_value;
                 self.paragraphs_ht
                     .entry(hash)
-                    .or_insert_with(Vec::new)
+                    .or_default()
                     .push(paragraph.clone());
             }
 
@@ -967,7 +970,7 @@ impl Analysis {
                 let hash = sentence.data().hash_value;
                 self.sentences_ht
                     .entry(hash)
-                    .or_insert_with(Vec::new)
+                    .or_default()
                     .push(sentence.clone());
             }
         }
@@ -1231,14 +1234,10 @@ impl Analysis {
                         match change_tag {
                             similar::ChangeTag::Equal => {
                                 // match
-                                if let Some(word_prev) = unmatched_words_prev
-                                    .iter()
-                                    .filter(|w| {
-                                        w.value() == word_text
-                                            && !self.words[w.index()].matched_in_current
-                                    })
-                                    .next()
-                                {
+                                if let Some(word_prev) = unmatched_words_prev.iter().find(|w| {
+                                    w.value() == word_text
+                                        && !self.words[w.index()].matched_in_current
+                                }) {
                                     curr_matched = true;
 
                                     self[word_prev].matched_in_current = true;
@@ -1250,14 +1249,10 @@ impl Analysis {
                             }
                             similar::ChangeTag::Delete => {
                                 // word was deleted
-                                if let Some(word_prev) = unmatched_words_prev
-                                    .iter()
-                                    .filter(|w| {
-                                        w.value() == word_text
-                                            && !self.words[w.index()].matched_in_current
-                                    })
-                                    .next()
-                                {
+                                if let Some(word_prev) = unmatched_words_prev.iter().find(|w| {
+                                    w.value() == word_text
+                                        && !self.words[w.index()].matched_in_current
+                                }) {
                                     let revision_curr_id = self.revision_curr.id;
                                     self[word_prev].matched_in_current = true;
                                     self[word_prev].outbound.push(revision_curr_id);

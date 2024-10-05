@@ -218,6 +218,13 @@ impl Text {
             Text::Deleted => 0,
         }
     }
+
+    pub fn is_empty(&self) -> bool {
+        match self {
+            Text::Normal(text) => text.is_empty(),
+            Text::Deleted => true,
+        }
+    }
 }
 
 impl Debug for Text {
@@ -269,7 +276,7 @@ struct RevisionBuilder {
 
 #[derive(Debug, thiserror::Error)]
 #[error("missing mandatory field: {0}")]
-struct BuildRevisionError(&'static str, RevisionBuilder);
+struct BuildRevisionError(&'static str, Box<RevisionBuilder>);
 
 impl RevisionBuilder {
     fn new() -> Self {
@@ -287,16 +294,16 @@ impl RevisionBuilder {
 
     fn try_build(self) -> Result<Revision, BuildRevisionError> {
         if self.id.is_none() {
-            return Err(BuildRevisionError("id", self));
+            return Err(BuildRevisionError("id", self.into()));
         }
         if self.timestamp.is_none() {
-            return Err(BuildRevisionError("timestamp", self));
+            return Err(BuildRevisionError("timestamp", self.into()));
         }
         if self.contributor_name.is_none() {
-            return Err(BuildRevisionError("contributor_name", self));
+            return Err(BuildRevisionError("contributor_name", self.into()));
         }
         if self.text.is_none() {
-            return Err(BuildRevisionError("text", self));
+            return Err(BuildRevisionError("text", self.into()));
         }
 
         Ok(Revision {
@@ -417,14 +424,14 @@ pub enum ParsingError {
     Eof,
 }
 
-impl ParsingError {
-    fn is_recoverable(&self) -> bool {
-        match self {
-            ParsingError::XmlError(_) => todo!("decide if error is recoverable"),
-            ParsingError::Eof => false,
-        }
-    }
-}
+// impl ParsingError {
+//     fn is_recoverable(&self) -> bool {
+//         match self {
+//             ParsingError::XmlError(_) => todo!("decide if error is recoverable"),
+//             ParsingError::Eof => false,
+//         }
+//     }
+// }
 
 impl<R: BufRead> DumpParser<R> {
     pub fn new(reader: R) -> Result<Self, ParsingError> {
@@ -783,7 +790,7 @@ impl<R: BufRead> DumpParser<R> {
                             } else {
                                 page.title = CompactString::from(normalize_title(&text));
                             }
-                            span.record("title", &page.title.as_str());
+                            span.record("title", page.title.as_str());
                         }
                         [MediaWiki, Page, Ns] => {
                             let ns = if let Ok(id) = text.parse() {
