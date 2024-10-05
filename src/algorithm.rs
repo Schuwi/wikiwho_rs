@@ -1154,7 +1154,8 @@ impl Analysis {
             // split_into_tokens is already done in analyse_sentences_in_paragraphs
             let words: Vec<_> = sentence_curr_pointer
                 .value()
-                .split_whitespace()
+                //.split_whitespace() // DU SCHLINGEL!!! :D
+                .split(' ')
                 .map(|s| s.to_string())
                 .collect();
             text_curr.extend_from_slice(words.as_slice());
