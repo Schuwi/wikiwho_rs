@@ -380,7 +380,7 @@ const CURR_LENGTH: usize = 1000;
 const UNMATCHED_PARAGRAPH: f32 = 0.0;
 const TOKEN_DENSITY_LIMIT: f32 = 20.0;
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Eq)]
 pub enum AnalysisError {
     NoValidRevisions,
 }

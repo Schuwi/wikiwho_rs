@@ -1,0 +1,1 @@
+-e git+https://github.com/Schuwi/WikiWho.git@f53a61aee392e420a9ee6d514dea17645df5b5d4#egg=WikiWho

@@ -230,7 +230,7 @@ impl Debug for Text {
 }
 
 #[derive(Clone, Copy, PartialEq, Eq, Hash)]
-pub struct Sha1Hash([u8; 31]);
+pub struct Sha1Hash(pub(crate) [u8; 31]);
 
 impl Debug for Sha1Hash {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {

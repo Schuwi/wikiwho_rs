@@ -39,4 +39,7 @@ zstd = "0.13.2"
 
 [dev-dependencies]
 criterion = "0.5.1"
+hex = "0.4.3"
+proptest = "1.5.0"
+pyo3 = { version = "0.22.3", features = ["auto-initialize"] }
 rand_xoshiro = "0.6.0"
