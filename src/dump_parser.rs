@@ -33,6 +33,7 @@ enum Tag {
     Timestamp, // <timestamp>2003-12-05T06:41:50Z</timestamp>
     Contributor, // <contributor><username>blah</username><id>500</id></contributor>
     Username, // <username>blah</username>
+    Ip,       // sometimes: <contributor><ip>123.456.789.122</ip></contributor>
     // Text's sha1 attribute seems to be preferred over the sha1 tag (https://github.com/mediawiki-utilities/python-mwxml/blob/2b477be6aa9794064d03b5be38c7759d1570488b/mwxml/iteration/revision.py#L83-L96)
     Text(bool, Option<String>), // <text bytes="20" sha1="3h3w...">blah</text> or <text bytes="20" sha1="3h3w..." deleted="deleted" />
     // Sha1 hash is base36 encoded (0-padded to 31 characters)
@@ -58,6 +59,7 @@ impl Debug for Tag {
             Tag::Timestamp => write!(f, "<timestamp>"),
             Tag::Contributor => write!(f, "<contributor>"),
             Tag::Username => write!(f, "<username>"),
+            Tag::Ip => write!(f, "<ip>"),
             Tag::Text(deleted, sha1) => {
                 write!(f, "<text")?;
                 if let Some(sha1) = sha1 {
@@ -123,6 +125,7 @@ impl Tag {
             b"timestamp" => Ok(Tag::Timestamp),
             b"contributor" => Ok(Tag::Contributor),
             b"username" => Ok(Tag::Username),
+            b"ip" => Ok(Tag::Ip),
             b"text" => {
                 let mut sha1 = None;
                 let mut deleted = false;
@@ -181,6 +184,7 @@ impl Tag {
             (Tag::Timestamp, b"timestamp") => Ok(true),
             (Tag::Contributor, b"contributor") => Ok(true),
             (Tag::Username, b"username") => Ok(true),
+            (Tag::Ip, b"ip") => Ok(true),
             (Tag::Text(_, _), b"text") => Ok(true),
             (Tag::Sha1, b"sha1") => Ok(true),
             (Tag::Comment, b"comment") => Ok(true),
@@ -227,7 +231,7 @@ impl Text {
     }
 
     /// Returns the text as a string slice.
-    /// 
+    ///
     /// If the text is [`Text::Deleted`], an empty string is returned.
     pub fn as_str(&self) -> &str {
         match self {
@@ -866,6 +870,13 @@ impl<R: BufRead> DumpParser<R> {
                             }
                         }
                         [MediaWiki, Page, Revision, Contributor, Username] => {
+                            if let Some(revision_builder) = &mut revision_builder {
+                                revision_builder.contributor_name =
+                                    Some(CompactString::from(text.as_ref()));
+                            }
+                        }
+                        // alternative to Username tag - can happen sometimes
+                        [MediaWiki, Page, Revision, Contributor, Ip] => {
                             if let Some(revision_builder) = &mut revision_builder {
                                 revision_builder.contributor_name =
                                     Some(CompactString::from(text.as_ref()));
