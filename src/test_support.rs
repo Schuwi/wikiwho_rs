@@ -49,6 +49,8 @@ pub fn dummy_revision() -> Revision {
 pub struct PyWikiwho {
     pub spam_ids: Vec<i32>,
     pub revisions: HashMap<i32, PyRevision>,
+    pub ordered_revisions: Vec<i32>,
+    pub revision_curr: PyRevision,
 }
 
 #[derive(FromPyObject)]
@@ -474,7 +476,10 @@ pub mod proptest {
 pub mod delta_debugging {
     use std::collections::HashSet;
 
-    use crate::{dump_parser::{Page, Text}, test_support::page_to_xml};
+    use crate::{
+        dump_parser::{Page, Text},
+        test_support::page_to_xml,
+    };
 
     fn simplify_text(text: &str) -> Vec<String> {
         let mut candidates = Vec::new();
@@ -633,7 +638,11 @@ pub mod delta_debugging {
     ///
     /// # Returns
     /// The simplified page if a simplification was successful, otherwise the original page
-    pub fn delta_debug_texts(mut current_page: Page, test_page: impl Fn(&Page) -> bool, max_iterations: usize) -> Page {
+    pub fn delta_debug_texts(
+        mut current_page: Page,
+        test_page: impl Fn(&Page) -> bool,
+        max_iterations: usize,
+    ) -> Page {
         let mut changed = true;
         let mut visited = HashSet::new();
         let mut iterations = 0;
@@ -655,14 +664,18 @@ pub mod delta_debugging {
             visited.insert(current_page.clone());
 
             // Phase 2: Simplify Individually
-            if let Some(new_page) = apply_individual_simplifications(&current_page, &test_page, &mut iterations) {
+            if let Some(new_page) =
+                apply_individual_simplifications(&current_page, &test_page, &mut iterations)
+            {
                 current_page = new_page;
                 changed = true;
                 continue;
             }
 
             // Phase 3: Simplify Jointly
-            if let Some(new_page) = apply_joint_simplifications(&current_page, &test_page, &mut iterations) {
+            if let Some(new_page) =
+                apply_joint_simplifications(&current_page, &test_page, &mut iterations)
+            {
                 current_page = new_page;
                 changed = true;
                 continue;

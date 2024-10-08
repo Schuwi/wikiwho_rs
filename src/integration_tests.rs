@@ -1,4 +1,8 @@
-use std::{collections::HashMap, fs::File, io::BufReader};
+use std::{
+    collections::HashMap,
+    fs::File,
+    io::{BufReader, Cursor},
+};
 
 use pyo3::types::PyDict;
 
@@ -116,9 +120,7 @@ fn test_case_2() {
     compare_algorithm_python(&page).unwrap();
 }
 
-fn compare_algorithm_python(
-    page: &Page,
-) -> Result<(), TestCaseError> {
+fn compare_algorithm_python(page: &Page) -> Result<(), TestCaseError> {
     with_gil!(py, {
         // run Rust implementation
         let result = Analysis::analyse_page(&page.revisions);
@@ -128,6 +130,15 @@ fn compare_algorithm_python(
 
         // run Python implementation
         let wikiwho_py = run_analysis_python(py, &page);
+        prop_assert_eq!(
+            wikiwho_py.ordered_revisions.last(),
+            Some(&wikiwho_py.revision_curr.id)
+        );
+
+        prop_assert_eq!(
+            analysis_result.ordered_revisions,
+            wikiwho_py.ordered_revisions
+        );
 
         // iterate and compare result graph
         for revision_id in page.revisions.iter().map(|r| r.id) {
@@ -213,7 +224,13 @@ fn compare_algorithm_python(
                         prop_assert_eq!(word_pointer_rust.unique_id(), word_py.token_id as usize);
                         prop_assert_eq!(&word_rust.inbound, &word_py.inbound);
                         prop_assert_eq!(&word_rust.outbound, &word_py.outbound);
-                        prop_assert_eq!(word_rust.latest_rev_id, word_py.last_rev_id, "inconsistency at word: {:?}, revision: {}", &word_pointer_rust.value, revision_id);
+                        prop_assert_eq!(
+                            word_rust.latest_rev_id,
+                            word_py.last_rev_id,
+                            "inconsistency at word: {:?}, revision: {}",
+                            &word_pointer_rust.value,
+                            revision_id
+                        );
                         prop_assert_eq!(word_rust.origin_rev_id, word_py.origin_rev_id);
                     }
                 }
@@ -356,12 +373,14 @@ use crate::test_support::delta_debug_texts;
 #[test]
 #[ignore] // this test takes very long and is only useful for focus debugging
 fn simplify_bad_example_anontalkpagetext() {
-    let reader =
-        BufReader::new(File::open("failing-inputs/Anontalkpagetext_shortened-manually.xml").unwrap());
+    let reader = BufReader::new(
+        File::open("failing-inputs/Anontalkpagetext_shortened-manually.xml").unwrap(),
+    );
     let mut parser = DumpParser::new(reader).unwrap();
     let bad_page = parser.parse_page().unwrap().unwrap();
 
-    let test_page = |page: &Page| matches!(compare_algorithm_python(page), Err(TestCaseError::Fail(_)));
+    let test_page =
+        |page: &Page| matches!(compare_algorithm_python(page), Err(TestCaseError::Fail(_)));
 
     // Ensure the bad_page indeed causes a failure
     assert!(
@@ -370,7 +389,9 @@ fn simplify_bad_example_anontalkpagetext() {
     );
 
     // Perform delta debugging on texts
-    let minimized_page = delta_debug_texts(bad_page, test_page, 300000 /* runs for about an hour or so */);
+    let minimized_page = delta_debug_texts(
+        bad_page, test_page, 300000, /* runs for about an hour or so */
+    );
 
     // Assert that the minimized_page still causes the failure
     assert!(
@@ -391,4 +412,15 @@ fn simplify_bad_example_anontalkpagetext() {
 
     // Output the minimized Page for inspection
     println!("\n\n\n\nMinimized Page: {}", page_to_xml(&minimized_page));
+}
+
+#[test]
+fn known_bad_example_hallo() {
+    let reader = BufReader::new(File::open("failing-inputs/Hallo.xml").unwrap());
+    let mut parser = DumpParser::new(reader).unwrap();
+    let page = parser.parse_page().unwrap().unwrap();
+
+    compare_algorithm_python(&page).unwrap();
+
+    println!("Page: {}", page_to_xml(&page));
 }
