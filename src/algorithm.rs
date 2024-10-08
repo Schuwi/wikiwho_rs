@@ -321,7 +321,7 @@ impl WordAnalysis {
         revision_id_prev: Option<i32>,
         push: bool,
     ) {
-        if !vandalism && self.matched_in_current && self.inbound.last() != Some(&revision_id_curr) {
+        if !vandalism && self.matched_in_current && self.outbound.last() != Some(&revision_id_curr) {
             if push && Some(self.latest_rev_id) != revision_id_prev {
                 self.inbound.push(revision_id_curr);
             }
