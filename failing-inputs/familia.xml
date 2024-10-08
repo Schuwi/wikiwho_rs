@@ -1,0 +1,7001 @@
+<mediawiki xmlns="http://www.mediawiki.org/xml/export-0.11/"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.mediawiki.org/xml/export-0.11/ http://www.mediawiki.org/xml/export-0.11.xsd"
+  version="0.11" xml:lang="de">
+  <siteinfo>
+    <sitename>Wiktionary</sitename>
+    <dbname>dewiktionary</dbname>
+    <base>https://de.wiktionary.org/wiki/Wiktionary:Hauptseite</base>
+    <generator>MediaWiki 1.43.0-wmf.20</generator>
+    <case>case-sensitive</case>
+    <namespaces>
+      <namespace key="-2" case="case-sensitive">Medium</namespace>
+      <namespace key="-1" case="first-letter">Spezial</namespace>
+      <namespace key="0" case="case-sensitive" />
+      <namespace key="1" case="case-sensitive">Diskussion</namespace>
+      <namespace key="2" case="first-letter">Benutzer</namespace>
+      <namespace key="3" case="first-letter">Benutzer Diskussion</namespace>
+      <namespace key="4" case="case-sensitive">Wiktionary</namespace>
+      <namespace key="5" case="case-sensitive">Wiktionary Diskussion</namespace>
+      <namespace key="6" case="case-sensitive">Datei</namespace>
+      <namespace key="7" case="case-sensitive">Datei Diskussion</namespace>
+      <namespace key="8" case="first-letter">MediaWiki</namespace>
+      <namespace key="9" case="first-letter">MediaWiki Diskussion</namespace>
+      <namespace key="10" case="case-sensitive">Vorlage</namespace>
+      <namespace key="11" case="case-sensitive">Vorlage Diskussion</namespace>
+      <namespace key="12" case="case-sensitive">Hilfe</namespace>
+      <namespace key="13" case="case-sensitive">Hilfe Diskussion</namespace>
+      <namespace key="14" case="case-sensitive">Kategorie</namespace>
+      <namespace key="15" case="case-sensitive">Kategorie Diskussion</namespace>
+      <namespace key="102" case="case-sensitive">Verzeichnis</namespace>
+      <namespace key="103" case="case-sensitive">Verzeichnis Diskussion</namespace>
+      <namespace key="104" case="case-sensitive">Thesaurus</namespace>
+      <namespace key="105" case="case-sensitive">Thesaurus Diskussion</namespace>
+      <namespace key="106" case="case-sensitive">Reim</namespace>
+      <namespace key="107" case="case-sensitive">Reim Diskussion</namespace>
+      <namespace key="108" case="case-sensitive">Flexion</namespace>
+      <namespace key="109" case="case-sensitive">Flexion Diskussion</namespace>
+      <namespace key="110" case="case-sensitive">Rekonstruktion</namespace>
+      <namespace key="111" case="case-sensitive">Rekonstruktion Diskussion</namespace>
+      <namespace key="710" case="case-sensitive">TimedText</namespace>
+      <namespace key="711" case="case-sensitive">TimedText talk</namespace>
+      <namespace key="828" case="case-sensitive">Modul</namespace>
+      <namespace key="829" case="case-sensitive">Modul Diskussion</namespace>
+    </namespaces>
+  </siteinfo>
+  <page>
+    <title>familia</title>
+    <ns>0</ns>
+    <id>669</id>
+    <revision>
+      <id>6679</id>
+      <timestamp>2004-03-22T22:45:28Z</timestamp>
+      <contributor>
+        <username>GerardM</username>
+        <id>137</id>
+      </contributor>
+      <origin>6679</origin>
+      <model>wikitext</model>
+      <format>text/x-wiki</format>
+      <text bytes="30" sha1="p1eqg4adf19blx1o9pr7wuhslyprfuw" xml:space="preserve">[[Familie (Biologie)|Familie]]</text>
+      <sha1>p1eqg4adf19blx1o9pr7wuhslyprfuw</sha1>
+    </revision>
+    <revision>
+      <id>11967</id>
+      <parentid>6679</parentid>
+      <timestamp>2004-09-05T00:04:39Z</timestamp>
+      <contributor>
+        <username>Melancholie</username>
+        <id>306</id>
+      </contributor>
+      <minor />
+      <comment>ist zu überarbeiten</comment>
+      <origin>11967</origin>
+      <model>wikitext</model>
+      <format>text/x-wiki</format>
+      <text bytes="61" sha1="fobsem4uab8ry7zk73einomtqg1igyb" xml:space="preserve">{{Überarbeiten}}
+
+{{Bedeutung}}
+:[1] Familie in der Biologie</text>
+      <sha1>fobsem4uab8ry7zk73einomtqg1igyb</sha1>
+    </revision>
+    <revision>
+      <id>15009</id>
+      <parentid>11967</parentid>
+      <timestamp>2004-11-12T00:38:20Z</timestamp>
+      <contributor>
+        <username>Melancholie</username>
+        <id>306</id>
+      </contributor>
+      <minor />
+      <origin>15009</origin>
+      <model>wikitext</model>
+      <format>text/x-wiki</format>
+      <text bytes="1655" sha1="78gbd3vcq0cnx7lattjg7icw5mnh5po" xml:space="preserve">== Familia ({{Sprache|Lateinisch}}) ==
+=== {{Wortart|Substantiv}} ===
+{{Substantiv-Tabelle|
+Wer oder was? (Einzahl)=
+|Wer oder was? (Mehrzahl)=
+|Wessen? (Einzahl)=
+|Wessen? (Mehrzahl)=
+|Wem? (Einzahl)=
+|Wem? (Mehrzahl)=
+|Wen? (Einzahl)=
+|Wen? (Mehrzahl)=
+}}
+{{Worttrennung}} Familia,  ''Plural:'' 
+
+{{Aussprache}}
+:[[Wiktionary:Hörbeispiele|Hörbeispiele]]: {{fehlend}},  ''Plural:'' {{fehlend}}
+:[[Glossar:IPA|IPA]]: [ ],  ''Plural:'' [ ]
+
+{{Bedeutung}}
+&lt;!-- Bedeutung [1], andere Bedeutung [2],... angeben - möglichst kurze Erklärung--&gt;
+:[1] Familie in der Biologie
+
+{{Abkürzungen}}
+
+{{Herkunft}}
+:
+        
+{{Synonyme}}
+&lt;!-- hinter jedem oder vor allen Synonymen angegen, auf welche Bedeutung es/sie sich bezieht/en --&gt;
+:
+
+{{Gegenworte}}
+:
+
+{{Oberbegriffe}}
+&lt;!-- Oberbegriffe aufsteigend nach Größe sortiert --&gt;
+:
+
+{{Unterbegriffe}}
+&lt;!-- Unterbegriffe absteigend nach Größe sortiert --&gt;
+:
+
+{{Beispiele}}
+&lt;!-- für Bedeutung [1], andere Bedeutung [2], usw. --&gt;
+:[1] 
+
+{{Redewendungen}}
+:
+
+{{Signifikante Kollokationen}}
+&lt;!-- Einträge üblicher Nachbarworte insbesondere gebräuchlicher Kombinationen (was man sofort damit verbindet)--&gt;
+:
+
+{{Abgeleitete Begriffe}}
+&lt;!-- Abgeleitete Begriffe alphabetisch sortiert (z.B. Wörterbuch, wortgewandt) --&gt;
+:
+
+{{Übersetzungen (Sprachen)|
+&lt;!-- Beispiel: &quot;Englisch: [1] [[word]]&quot;, usw. --&gt;
+*Arabisch: 
+*Chinesisch: 
+*'''Englisch:''' [] [[ ]]
+|
+*Französisch: 
+*Russisch: 
+*Spanisch: 
+}}
+{{Referenzen}}
+:[1] Wikipedia-Artikel [[w:Familia|Familia]]
+
+{{Ähnlichkeiten}}&lt;!-- tot beim Eintrag von Tod, und umgekehrt --&gt;
+
+&lt;!-------------------------------------------------------------&gt;
+&lt;!--
+[[en:Familia]]
+--&gt;</text>
+      <sha1>78gbd3vcq0cnx7lattjg7icw5mnh5po</sha1>
+    </revision>
+    <revision>
+      <id>15578</id>
+      <parentid>15009</parentid>
+      <timestamp>2004-11-27T02:40:03Z</timestamp>
+      <contributor>
+        <username>SteffenB</username>
+        <id>12</id>
+      </contributor>
+      <comment>+Bedeutung (Latein!), +Flexionstabelle;</comment>
+      <origin>15578</origin>
+      <model>wikitext</model>
+      <format>text/x-wiki</format>
+      <text bytes="1590" sha1="rkl8cyb6xny7bdqrn7b5gz4wjdn7ro8" xml:space="preserve">== familia ({{Sprache|Lateinisch}}) ==
+=== {{Wortart|Substantiv}} ''f'' ===
+{{Latein 1. Deklination|famili|famili}}
+
+{{Worttrennung}} familia,  ''Plural:'' familiae
+
+{{Aussprache}}
+:[[Wiktionary:Hörbeispiele|Hörbeispiele]]: {{fehlend}},  ''Plural:'' {{fehlend}}
+:[[Glossar:IPA|IPA]]: [ ],  ''Plural:'' [ ]
+
+{{Bedeutung}}
+&lt;!-- Bedeutung [1], andere Bedeutung [2],... angeben - möglichst kurze Erklärung--&gt;
+:[1] Hausstand (mit Sklaven)
+:[2] Untergruppe eines Geschlechts
+:[3] Bruderschaft, Sekte. Gruppe
+
+{{Abkürzungen}}
+
+{{Herkunft}}
+:
+        
+{{Synonyme}}
+&lt;!-- hinter jedem oder vor allen Synonymen angegen, auf welche Bedeutung es/sie sich bezieht/en --&gt;
+:
+
+{{Gegenworte}}
+:
+
+{{Oberbegriffe}}
+&lt;!-- Oberbegriffe aufsteigend nach Größe sortiert --&gt;
+:
+
+{{Unterbegriffe}}
+&lt;!-- Unterbegriffe absteigend nach Größe sortiert --&gt;
+:
+
+{{Beispiele}}
+&lt;!-- für Bedeutung [1], andere Bedeutung [2], usw. --&gt;
+:[1] 
+
+{{Redewendungen}}
+:
+
+{{Signifikante Kollokationen}}
+&lt;!-- Einträge üblicher Nachbarworte insbesondere gebräuchlicher Kombinationen (was man sofort damit verbindet)--&gt;
+:
+
+{{Abgeleitete Begriffe}}
+&lt;!-- Abgeleitete Begriffe alphabetisch sortiert (z.B. Wörterbuch, wortgewandt) --&gt;
+:
+
+{{Übersetzungen (Sprachen)|
+&lt;!-- Beispiel: &quot;Englisch: [1] [[word]]&quot;, usw. --&gt;
+*Arabisch: 
+*Chinesisch: 
+*'''Englisch:''' [] [[ ]]
+|
+*Französisch: 
+*Russisch: 
+*Spanisch: 
+}}
+{{Referenzen}}
+:[1] Wikipedia-Artikel [[w:Familia|Familia]]
+
+{{Ähnlichkeiten}}&lt;!-- tot beim Eintrag von Tod, und umgekehrt --&gt;
+
+&lt;!-------------------------------------------------------------&gt;
+&lt;!--
+[[en:Familia]]
+--&gt;</text>
+      <sha1>rkl8cyb6xny7bdqrn7b5gz4wjdn7ro8</sha1>
+    </revision>
+    <revision>
+      <id>17129</id>
+      <parentid>15578</parentid>
+      <timestamp>2004-11-30T17:20:57Z</timestamp>
+      <contributor>
+        <username>SteffenB</username>
+        <id>12</id>
+      </contributor>
+      <comment>~Tabelle;</comment>
+      <origin>17129</origin>
+      <model>wikitext</model>
+      <format>text/x-wiki</format>
+      <text bytes="1929" sha1="jt3h8wn7bv4kgp1himm55l3dge11jrh" xml:space="preserve">== familia ({{Sprache|Lateinisch}}) ==
+=== {{Wortart|Substantiv}} ''f'' ===
+{{Substantiv-Tabelle (Latein)| 
+Nominativ Singular=familia
+|Nominativ Plural=familiae
+|Genitiv Singular=familiae
+|Genitiv Plural=familiārum
+|Dativ Singular=familiae
+|Dativ Plural=familiīs
+|Akkusativ Singular=familiam
+|Akkusativ Plural=familiās
+|Ablativ Singular=familiā
+|Ablativ Plural=familiīs
+|Vokativ Singular=familia
+|Vokativ Plural=familiae
+}}&lt;!-- /Flexionstabelle
+/--&gt;
+{{Worttrennung}} familia,  ''Plural:'' familiae
+
+{{Aussprache}}
+:[[Wiktionary:Hörbeispiele|Hörbeispiele]]: {{fehlend}},  ''Plural:'' {{fehlend}}
+:[[Glossar:IPA|IPA]]: [ ],  ''Plural:'' [ ]
+
+{{Bedeutung}}
+&lt;!-- Bedeutung [1], andere Bedeutung [2],... angeben - möglichst kurze Erklärung--&gt;
+:[1] Hausstand (mit Sklaven)
+:[2] Untergruppe eines Geschlechts
+:[3] Bruderschaft, Sekte. Gruppe
+
+{{Abkürzungen}}
+
+{{Herkunft}}
+:
+        
+{{Synonyme}}
+&lt;!-- hinter jedem oder vor allen Synonymen angegen, auf welche Bedeutung es/sie sich bezieht/en --&gt;
+:
+
+{{Gegenworte}}
+:
+
+{{Oberbegriffe}}
+&lt;!-- Oberbegriffe aufsteigend nach Größe sortiert --&gt;
+:
+
+{{Unterbegriffe}}
+&lt;!-- Unterbegriffe absteigend nach Größe sortiert --&gt;
+:
+
+{{Beispiele}}
+&lt;!-- für Bedeutung [1], andere Bedeutung [2], usw. --&gt;
+:[1] 
+
+{{Redewendungen}}
+:
+
+{{Signifikante Kollokationen}}
+&lt;!-- Einträge üblicher Nachbarworte insbesondere gebräuchlicher Kombinationen (was man sofort damit verbindet)--&gt;
+:
+
+{{Abgeleitete Begriffe}}
+&lt;!-- Abgeleitete Begriffe alphabetisch sortiert (z.B. Wörterbuch, wortgewandt) --&gt;
+:
+
+{{Übersetzungen (Sprachen)|
+&lt;!-- Beispiel: &quot;Englisch: [1] [[word]]&quot;, usw. --&gt;
+*Arabisch: 
+*Chinesisch: 
+*'''Englisch:''' [] [[ ]]
+|
+*Französisch: 
+*Russisch: 
+*Spanisch: 
+}}
+{{Referenzen}}
+:[1] Wikipedia-Artikel [[w:Familia|Familia]]
+
+{{Ähnlichkeiten}}&lt;!-- tot beim Eintrag von Tod, und umgekehrt --&gt;
+
+&lt;!-------------------------------------------------------------&gt;
+&lt;!--
+[[en:Familia]]
+--&gt;</text>
+      <sha1>jt3h8wn7bv4kgp1himm55l3dge11jrh</sha1>
+    </revision>
+    <revision>
+      <id>26302</id>
+      <parentid>17129</parentid>
+      <timestamp>2004-12-08T11:53:36Z</timestamp>
+      <contributor>
+        <username>Balû</username>
+        <id>54</id>
+      </contributor>
+      <minor />
+      <comment>+en:</comment>
+      <origin>26302</origin>
+      <model>wikitext</model>
+      <format>text/x-wiki</format>
+      <text bytes="1855" sha1="ecjbbw3hu7adw2ikj5dlxg2cdaun3bt" xml:space="preserve">== familia ({{Sprache|Lateinisch}}) ==
+=== {{Wortart|Substantiv}} ''f'' ===
+{{Substantiv-Tabelle (Latein)| 
+Nominativ Singular=familia
+|Nominativ Plural=familiae
+|Genitiv Singular=familiae
+|Genitiv Plural=familiārum
+|Dativ Singular=familiae
+|Dativ Plural=familiīs
+|Akkusativ Singular=familiam
+|Akkusativ Plural=familiās
+|Ablativ Singular=familiā
+|Ablativ Plural=familiīs
+|Vokativ Singular=familia
+|Vokativ Plural=familiae
+}}&lt;!-- /Flexionstabelle
+/--&gt;
+{{Worttrennung}} familia,  ''Plural:'' familiae
+
+{{Aussprache}}
+:[[Wiktionary:Hörbeispiele|Hörbeispiele]]: {{fehlend}},  ''Plural:'' {{fehlend}}
+:[[Glossar:IPA|IPA]]: [ ],  ''Plural:'' [ ]
+
+{{Bedeutung}}
+&lt;!-- Bedeutung [1], andere Bedeutung [2],... angeben - möglichst kurze Erklärung--&gt;
+:[1] Hausstand (mit Sklaven)
+:[2] Untergruppe eines Geschlechts
+:[3] Bruderschaft, Sekte. Gruppe
+
+{{Abkürzungen}}
+
+{{Herkunft}}
+:
+        
+{{Synonyme}}
+&lt;!-- hinter jedem oder vor allen Synonymen angegen, auf welche Bedeutung es/sie sich bezieht/en --&gt;
+:
+
+{{Gegenworte}}
+:
+
+{{Oberbegriffe}}
+&lt;!-- Oberbegriffe aufsteigend nach Größe sortiert --&gt;
+:
+
+{{Unterbegriffe}}
+&lt;!-- Unterbegriffe absteigend nach Größe sortiert --&gt;
+:
+
+{{Beispiele}}
+&lt;!-- für Bedeutung [1], andere Bedeutung [2], usw. --&gt;
+:[1] 
+
+{{Redewendungen}}
+:
+
+{{Signifikante Kollokationen}}
+&lt;!-- Einträge üblicher Nachbarworte insbesondere gebräuchlicher Kombinationen (was man sofort damit verbindet)--&gt;
+:
+
+{{Abgeleitete Begriffe}}
+&lt;!-- Abgeleitete Begriffe alphabetisch sortiert (z.B. Wörterbuch, wortgewandt) --&gt;
+:
+
+{{Übersetzungen (Sprachen)|
+&lt;!-- Beispiel: &quot;Englisch: [1] [[word]]&quot;, usw. --&gt;
+*Arabisch: 
+*Chinesisch: 
+*'''Englisch:''' [] [[ ]]
+|
+*Französisch: 
+*Russisch: 
+*Spanisch: 
+}}
+{{Referenzen}}
+:[1] Wikipedia-Artikel [[w:Familia|Familia]]
+
+{{Ähnlichkeiten}}&lt;!-- tot beim Eintrag von Tod, und umgekehrt --&gt;
+
+[[en:familia]]</text>
+      <sha1>ecjbbw3hu7adw2ikj5dlxg2cdaun3bt</sha1>
+    </revision>
+    <revision>
+      <id>37523</id>
+      <parentid>26302</parentid>
+      <timestamp>2005-01-11T17:32:24Z</timestamp>
+      <contributor>
+        <username>BaluBot</username>
+        <id>734</id>
+      </contributor>
+      <minor />
+      <comment>BaluBot - Bot: Wiktionary:Hörbeispiele|Hörbeispiele durch Hilfe:Hörbeispiele|Hörbeispiele ersetzt.</comment>
+      <origin>37523</origin>
+      <model>wikitext</model>
+      <format>text/x-wiki</format>
+      <text bytes="1850" sha1="dz8ffjy92ykly6whyxhdxewg5u4nftk" xml:space="preserve">== familia ({{Sprache|Lateinisch}}) ==
+=== {{Wortart|Substantiv}} ''f'' ===
+{{Substantiv-Tabelle (Latein)| 
+Nominativ Singular=familia
+|Nominativ Plural=familiae
+|Genitiv Singular=familiae
+|Genitiv Plural=familiārum
+|Dativ Singular=familiae
+|Dativ Plural=familiīs
+|Akkusativ Singular=familiam
+|Akkusativ Plural=familiās
+|Ablativ Singular=familiā
+|Ablativ Plural=familiīs
+|Vokativ Singular=familia
+|Vokativ Plural=familiae
+}}&lt;!-- /Flexionstabelle
+/--&gt;
+{{Worttrennung}} familia,  ''Plural:'' familiae
+
+{{Aussprache}}
+:[[Hilfe:Hörbeispiele|Hörbeispiele]]: {{fehlend}},  ''Plural:'' {{fehlend}}
+:[[Glossar:IPA|IPA]]: [ ],  ''Plural:'' [ ]
+
+{{Bedeutung}}
+&lt;!-- Bedeutung [1], andere Bedeutung [2],... angeben - möglichst kurze Erklärung--&gt;
+:[1] Hausstand (mit Sklaven)
+:[2] Untergruppe eines Geschlechts
+:[3] Bruderschaft, Sekte. Gruppe
+
+{{Abkürzungen}}
+
+{{Herkunft}}
+:
+        
+{{Synonyme}}
+&lt;!-- hinter jedem oder vor allen Synonymen angegen, auf welche Bedeutung es/sie sich bezieht/en --&gt;
+:
+
+{{Gegenworte}}
+:
+
+{{Oberbegriffe}}
+&lt;!-- Oberbegriffe aufsteigend nach Größe sortiert --&gt;
+:
+
+{{Unterbegriffe}}
+&lt;!-- Unterbegriffe absteigend nach Größe sortiert --&gt;
+:
+
+{{Beispiele}}
+&lt;!-- für Bedeutung [1], andere Bedeutung [2], usw. --&gt;
+:[1] 
+
+{{Redewendungen}}
+:
+
+{{Signifikante Kollokationen}}
+&lt;!-- Einträge üblicher Nachbarworte insbesondere gebräuchlicher Kombinationen (was man sofort damit verbindet)--&gt;
+:
+
+{{Abgeleitete Begriffe}}
+&lt;!-- Abgeleitete Begriffe alphabetisch sortiert (z.B. Wörterbuch, wortgewandt) --&gt;
+:
+
+{{Übersetzungen (Sprachen)|
+&lt;!-- Beispiel: &quot;Englisch: [1] [[word]]&quot;, usw. --&gt;
+*Arabisch: 
+*Chinesisch: 
+*'''Englisch:''' [] [[ ]]
+|
+*Französisch: 
+*Russisch: 
+*Spanisch: 
+}}
+{{Referenzen}}
+:[1] Wikipedia-Artikel [[w:Familia|Familia]]
+
+{{Ähnlichkeiten}}&lt;!-- tot beim Eintrag von Tod, und umgekehrt --&gt;
+
+[[en:familia]]</text>
+      <sha1>dz8ffjy92ykly6whyxhdxewg5u4nftk</sha1>
+    </revision>
+    <revision>
+      <id>42769</id>
+      <parentid>37523</parentid>
+      <timestamp>2005-03-30T00:11:36Z</timestamp>
+      <contributor>
+        <username>MelancholieBot</username>
+        <id>1075</id>
+      </contributor>
+      <minor />
+      <comment>diverse Anpassungen an die aktuelle [[Vorlage:Formatvorlage|Formatvorlage]]</comment>
+      <origin>42769</origin>
+      <model>wikitext</model>
+      <format>text/x-wiki</format>
+      <text bytes="1843" sha1="c73v80y1x0zra9lfucyt21jgb7nb9f1" xml:space="preserve">== familia ({{Sprache|Lateinisch}}) ==
+=== {{Wortart|Substantiv}} ''f'' ===
+{{Substantiv-Tabelle (Latein)| 
+Nominativ Singular=familia
+|Nominativ Plural=familiae
+|Genitiv Singular=familiae
+|Genitiv Plural=familiārum
+|Dativ Singular=familiae
+|Dativ Plural=familiīs
+|Akkusativ Singular=familiam
+|Akkusativ Plural=familiās
+|Ablativ Singular=familiā
+|Ablativ Plural=familiīs
+|Vokativ Singular=familia
+|Vokativ Plural=familiae
+}}&lt;!-- /Flexionstabelle
+/--&gt;
+{{Silbentrennung}} familia,  ''Plural:'' familiae
+
+{{Aussprache}}
+:[[Hilfe:Hörbeispiele|Hörbeispiele]]: {{fehlend}},  ''Plural:'' {{fehlend}}
+:[[Hilfe:IPA|IPA]]: [ ],  ''Plural:'' [ ]
+
+{{Bedeutungen}}
+&lt;!-- Bedeutung [1], andere Bedeutung [2],... angeben - möglichst kurze Erklärung--&gt;
+:[1] Hausstand (mit Sklaven)
+:[2] Untergruppe eines Geschlechts
+:[3] Bruderschaft, Sekte. Gruppe
+
+{{Abkürzungen}}
+
+{{Herkunft}}
+:
+        
+{{Synonyme}}
+&lt;!-- hinter jedem oder vor allen Synonymen angegen, auf welche Bedeutung es/sie sich bezieht/en --&gt;
+:
+
+{{Gegenworte}}
+:
+
+{{Oberbegriffe}}
+&lt;!-- Oberbegriffe aufsteigend nach Größe sortiert --&gt;
+:
+
+{{Unterbegriffe}}
+&lt;!-- Unterbegriffe absteigend nach Größe sortiert --&gt;
+:
+
+{{Beispiele}}
+&lt;!-- für Bedeutung [1], andere Bedeutung [2], usw. --&gt;
+:[1] 
+
+{{Redewendungen}}
+:
+
+{{Charakteristische Wortkombinationen}}
+&lt;!-- Einträge üblicher Nachbarworte insbesondere gebräuchlicher Kombinationen (was man sofort damit verbindet)--&gt;
+:
+
+{{Abgeleitete Begriffe}}
+&lt;!-- Abgeleitete Begriffe alphabetisch sortiert (z.B. Wörterbuch, wortgewandt) --&gt;
+:
+
+{{Übersetzungen (Sprachen)|
+&lt;!-- Beispiel: &quot;Englisch: [1] [[word]]&quot;, usw. --&gt;
+*Arabisch: 
+*Chinesisch: 
+*'''Englisch:''' [] [[ ]]
+|
+*Französisch: 
+*Russisch: 
+*Spanisch: 
+}}
+{{Referenzen}}
+:[1] {{Wikipedia|Familia}}
+
+{{Ähnlichkeiten}}&lt;!-- tot beim Eintrag von Tod, und umgekehrt --&gt;
+
+[[en:familia]]</text>
+      <sha1>c73v80y1x0zra9lfucyt21jgb7nb9f1</sha1>
+    </revision>
+    <revision>
+      <id>47487</id>
+      <parentid>42769</parentid>
+      <timestamp>2005-04-03T15:23:47Z</timestamp>
+      <contributor>
+        <username>MelancholieBot</username>
+        <id>1075</id>
+      </contributor>
+      <minor />
+      <comment>gem. [[Vorlage:Formatvorlage|FV]]</comment>
+      <origin>47487</origin>
+      <model>wikitext</model>
+      <format>text/x-wiki</format>
+      <text bytes="1821" sha1="7ubz01sau6h3swqn17obyg9t5tjp5w1" xml:space="preserve">== familia ({{Sprache|Lateinisch}}) ==
+=== {{Wortart|Substantiv}} ''f'' ===
+{{Substantiv-Tabelle (Latein)| 
+Nominativ Singular=familia
+|Nominativ Plural=familiae
+|Genitiv Singular=familiae
+|Genitiv Plural=familiārum
+|Dativ Singular=familiae
+|Dativ Plural=familiīs
+|Akkusativ Singular=familiam
+|Akkusativ Plural=familiās
+|Ablativ Singular=familiā
+|Ablativ Plural=familiīs
+|Vokativ Singular=familia
+|Vokativ Plural=familiae
+}}&lt;!-- /Flexionstabelle
+/--&gt;
+{{Silbentrennung}} familia, {{Pl.}} familiae
+
+{{Aussprache}}
+:[[Hilfe:Hörbeispiele|Hörbeispiele]]: {{fehlend}}, {{Pl.}} {{fehlend}}
+:[[Hilfe:IPA|IPA]]: [], {{Pl.}} []
+
+{{Bedeutungen}}
+&lt;!-- Bedeutung [1], andere Bedeutung [2],... angeben - möglichst kurze Erklärung--&gt;
+:[1] Hausstand (mit Sklaven)
+:[2] Untergruppe eines Geschlechts
+:[3] Bruderschaft, Sekte. Gruppe
+
+{{Abkürzungen}}
+
+{{Herkunft}}
+:
+    
+{{Synonyme}}
+&lt;!-- hinter jedem oder vor allen Synonymen angegen, auf welche Bedeutung es/sie sich bezieht/en --&gt;
+:
+
+{{Gegenworte}}
+:
+
+{{Oberbegriffe}}
+&lt;!-- Oberbegriffe aufsteigend nach Größe sortiert --&gt;
+:
+
+{{Unterbegriffe}}
+&lt;!-- Unterbegriffe absteigend nach Größe sortiert --&gt;
+:
+
+{{Beispiele}}
+&lt;!-- für Bedeutung [1], andere Bedeutung [2], usw. --&gt;
+:[1] 
+
+{{Redewendungen}}
+:
+
+{{Charakteristische Wortkombinationen}}
+&lt;!-- Einträge üblicher Nachbarworte insbesondere gebräuchlicher Kombinationen (was man sofort damit verbindet)--&gt;
+:
+
+{{Abgeleitete Begriffe}}
+&lt;!-- Abgeleitete Begriffe alphabetisch sortiert (z.B. Wörterbuch, wortgewandt) --&gt;
+:
+
+{{Übersetzungen (Sprachen)|
+&lt;!-- Beispiel: &quot;Englisch: [1] [[word]]&quot;, usw. --&gt;
+*Arabisch: 
+*Chinesisch: 
+*'''Englisch:''' [] [[]]
+|
+*Französisch: 
+*Russisch: 
+*Spanisch: 
+}}
+{{Referenzen}}
+:[1] {{Wikipedia|Familia}}
+
+{{Ähnlichkeiten}}&lt;!-- tot beim Eintrag von Tod, und umgekehrt --&gt;
+
+[[en:familia]]</text>
+      <sha1>7ubz01sau6h3swqn17obyg9t5tjp5w1</sha1>
+    </revision>
+    <revision>
+      <id>52744</id>
+      <parentid>47487</parentid>
+      <timestamp>2005-04-08T13:22:06Z</timestamp>
+      <contributor>
+        <username>MelancholieBot</username>
+        <id>1075</id>
+      </contributor>
+      <minor />
+      <comment>robot  Ergänze:pl,la,es,hu</comment>
+      <origin>52744</origin>
+      <model>wikitext</model>
+      <format>text/x-wiki</format>
+      <text bytes="1881" sha1="n08375vk6a557vw2z1p0hyu1psnct1z" xml:space="preserve">== familia ({{Sprache|Lateinisch}}) ==
+=== {{Wortart|Substantiv}} ''f'' ===
+{{Substantiv-Tabelle (Latein)| 
+Nominativ Singular=familia
+|Nominativ Plural=familiae
+|Genitiv Singular=familiae
+|Genitiv Plural=familiārum
+|Dativ Singular=familiae
+|Dativ Plural=familiīs
+|Akkusativ Singular=familiam
+|Akkusativ Plural=familiās
+|Ablativ Singular=familiā
+|Ablativ Plural=familiīs
+|Vokativ Singular=familia
+|Vokativ Plural=familiae
+}}&lt;!-- /Flexionstabelle
+/--&gt;
+{{Silbentrennung}} familia, {{Pl.}} familiae
+
+{{Aussprache}}
+:[[Hilfe:Hörbeispiele|Hörbeispiele]]: {{fehlend}}, {{Pl.}} {{fehlend}}
+:[[Hilfe:IPA|IPA]]: [], {{Pl.}} []
+
+{{Bedeutungen}}
+&lt;!-- Bedeutung [1], andere Bedeutung [2],... angeben - möglichst kurze Erklärung--&gt;
+:[1] Hausstand (mit Sklaven)
+:[2] Untergruppe eines Geschlechts
+:[3] Bruderschaft, Sekte. Gruppe
+
+{{Abkürzungen}}
+
+{{Herkunft}}
+:
+    
+{{Synonyme}}
+&lt;!-- hinter jedem oder vor allen Synonymen angegen, auf welche Bedeutung es/sie sich bezieht/en --&gt;
+:
+
+{{Gegenworte}}
+:
+
+{{Oberbegriffe}}
+&lt;!-- Oberbegriffe aufsteigend nach Größe sortiert --&gt;
+:
+
+{{Unterbegriffe}}
+&lt;!-- Unterbegriffe absteigend nach Größe sortiert --&gt;
+:
+
+{{Beispiele}}
+&lt;!-- für Bedeutung [1], andere Bedeutung [2], usw. --&gt;
+:[1] 
+
+{{Redewendungen}}
+:
+
+{{Charakteristische Wortkombinationen}}
+&lt;!-- Einträge üblicher Nachbarworte insbesondere gebräuchlicher Kombinationen (was man sofort damit verbindet)--&gt;
+:
+
+{{Abgeleitete Begriffe}}
+&lt;!-- Abgeleitete Begriffe alphabetisch sortiert (z.B. Wörterbuch, wortgewandt) --&gt;
+:
+
+{{Übersetzungen (Sprachen)|
+&lt;!-- Beispiel: &quot;Englisch: [1] [[word]]&quot;, usw. --&gt;
+*Arabisch: 
+*Chinesisch: 
+*'''Englisch:''' [] [[]]
+|
+*Französisch: 
+*Russisch: 
+*Spanisch: 
+}}
+{{Referenzen}}
+:[1] {{Wikipedia|Familia}}
+
+{{Ähnlichkeiten}}&lt;!-- tot beim Eintrag von Tod, und umgekehrt --&gt;
+
+[[en:Familia]]
+[[es:familia]]
+[[hu:Familia]]
+[[la:Familia]]
+[[pl:Familia]]</text>
+      <sha1>n08375vk6a557vw2z1p0hyu1psnct1z</sha1>
+    </revision>
+    <revision>
+      <id>66196</id>
+      <parentid>52744</parentid>
+      <timestamp>2005-04-12T11:59:19Z</timestamp>
+      <contributor>
+        <username>MelancholieBot</username>
+        <id>1075</id>
+      </contributor>
+      <minor />
+      <comment>gem. [[Vorlage:Formatvorlage|Formatvorlage]]</comment>
+      <origin>66196</origin>
+      <model>wikitext</model>
+      <format>text/x-wiki</format>
+      <text bytes="1906" sha1="l2q3oqw86kbu1wsn8a1qmgzj1hln62u" xml:space="preserve">== familia ({{Sprache|Lateinisch}}) ==
+=== {{Wortart|Substantiv}} ''f'' ===
+{{Substantiv-Tabelle (Latein)| 
+Nominativ Singular=familia
+|Nominativ Plural=familiae
+|Genitiv Singular=familiae
+|Genitiv Plural=familiārum
+|Dativ Singular=familiae
+|Dativ Plural=familiīs
+|Akkusativ Singular=familiam
+|Akkusativ Plural=familiās
+|Ablativ Singular=familiā
+|Ablativ Plural=familiīs
+|Vokativ Singular=familia
+|Vokativ Plural=familiae
+}}&lt;!-- /Flexionstabelle
+/--&gt;
+{{Silbentrennung}} familia, {{Pl.}} familiae
+
+{{Aussprache}}
+:[[Hilfe:Hörbeispiele|Hörbeispiele]]: {{fehlend}}, {{Pl.}} {{fehlend}}
+:[[Hilfe:IPA|IPA]]: [], {{Pl.}} []
+
+{{Bedeutungen}}
+&lt;!-- Bedeutung [1], andere Bedeutung [2],... angeben - möglichst kurze Erklärung--&gt;
+:[1] Hausstand (mit Sklaven)
+:[2] Untergruppe eines Geschlechts
+:[3] Bruderschaft, Sekte. Gruppe
+
+{{Abkürzungen}}
+
+{{Herkunft}}
+:
+    
+{{Synonyme}}
+&lt;!-- hinter jedem oder vor allen Synonymen angegen, auf welche Bedeutung es/sie sich bezieht/en --&gt;
+:
+
+{{Gegenworte}}
+:
+
+{{Oberbegriffe}}
+&lt;!-- Oberbegriffe aufsteigend nach Größe sortiert --&gt;
+:
+
+{{Unterbegriffe}}
+&lt;!-- Unterbegriffe absteigend nach Größe sortiert --&gt;
+:
+
+{{Beispiele}}
+&lt;!-- für Bedeutung [1], andere Bedeutung [2], usw. --&gt;
+:[1] 
+
+{{Redewendungen}}
+:
+
+{{Charakteristische Wortkombinationen}}
+&lt;!-- Einträge üblicher Nachbarworte insbesondere gebräuchlicher Kombinationen (was man sofort damit verbindet)--&gt;
+:
+
+{{Abgeleitete Begriffe}}
+&lt;!-- Abgeleitete Begriffe alphabetisch sortiert (z.B. Wörterbuch, wortgewandt) --&gt;
+:
+
+==== Übersetzungen ====
+{{Übersetzungen (Sprachen)|
+&lt;!-- Beispiel: &quot;Englisch: [1] [[word]]&quot;, usw. --&gt;
+*Arabisch: 
+*Chinesisch: 
+*'''Englisch:''' [] [[]]
+|
+*Französisch: 
+*Russisch: 
+*Spanisch: 
+}}
+{{Referenzen}}
+:[1] {{Wikipedia|Familia}}
+
+{{Ähnlichkeiten}}&lt;!-- tot beim Eintrag von Tod, und umgekehrt --&gt;
+
+[[en:Familia]]
+[[es:familia]]
+[[hu:Familia]]
+[[la:Familia]]
+[[pl:Familia]]</text>
+      <sha1>l2q3oqw86kbu1wsn8a1qmgzj1hln62u</sha1>
+    </revision>
+    <revision>
+      <id>83558</id>
+      <parentid>66196</parentid>
+      <timestamp>2005-07-12T15:22:56Z</timestamp>
+      <contributor>
+        <username>MelancholieBot</username>
+        <id>1075</id>
+      </contributor>
+      <minor />
+      <comment>robot  Ergänze: fi, io Ändere: en</comment>
+      <origin>83558</origin>
+      <model>wikitext</model>
+      <format>text/x-wiki</format>
+      <text bytes="1936" sha1="tkfi6x9sbwfhtjqze58x6jq0uqon8g0" xml:space="preserve">== familia ({{Sprache|Lateinisch}}) ==
+=== {{Wortart|Substantiv}} ''f'' ===
+{{Substantiv-Tabelle (Latein)| 
+Nominativ Singular=familia
+|Nominativ Plural=familiae
+|Genitiv Singular=familiae
+|Genitiv Plural=familiārum
+|Dativ Singular=familiae
+|Dativ Plural=familiīs
+|Akkusativ Singular=familiam
+|Akkusativ Plural=familiās
+|Ablativ Singular=familiā
+|Ablativ Plural=familiīs
+|Vokativ Singular=familia
+|Vokativ Plural=familiae
+}}&lt;!-- /Flexionstabelle
+/--&gt;
+{{Silbentrennung}} familia, {{Pl.}} familiae
+
+{{Aussprache}}
+:[[Hilfe:Hörbeispiele|Hörbeispiele]]: {{fehlend}}, {{Pl.}} {{fehlend}}
+:[[Hilfe:IPA|IPA]]: [], {{Pl.}} []
+
+{{Bedeutungen}}
+&lt;!-- Bedeutung [1], andere Bedeutung [2],... angeben - möglichst kurze Erklärung--&gt;
+:[1] Hausstand (mit Sklaven)
+:[2] Untergruppe eines Geschlechts
+:[3] Bruderschaft, Sekte. Gruppe
+
+{{Abkürzungen}}
+
+{{Herkunft}}
+:
+    
+{{Synonyme}}
+&lt;!-- hinter jedem oder vor allen Synonymen angegen, auf welche Bedeutung es/sie sich bezieht/en --&gt;
+:
+
+{{Gegenworte}}
+:
+
+{{Oberbegriffe}}
+&lt;!-- Oberbegriffe aufsteigend nach Größe sortiert --&gt;
+:
+
+{{Unterbegriffe}}
+&lt;!-- Unterbegriffe absteigend nach Größe sortiert --&gt;
+:
+
+{{Beispiele}}
+&lt;!-- für Bedeutung [1], andere Bedeutung [2], usw. --&gt;
+:[1] 
+
+{{Redewendungen}}
+:
+
+{{Charakteristische Wortkombinationen}}
+&lt;!-- Einträge üblicher Nachbarworte insbesondere gebräuchlicher Kombinationen (was man sofort damit verbindet)--&gt;
+:
+
+{{Abgeleitete Begriffe}}
+&lt;!-- Abgeleitete Begriffe alphabetisch sortiert (z.B. Wörterbuch, wortgewandt) --&gt;
+:
+
+==== Übersetzungen ====
+{{Übersetzungen (Sprachen)|
+&lt;!-- Beispiel: &quot;Englisch: [1] [[word]]&quot;, usw. --&gt;
+*Arabisch: 
+*Chinesisch: 
+*'''Englisch:''' [] [[]]
+|
+*Französisch: 
+*Russisch: 
+*Spanisch: 
+}}
+{{Referenzen}}
+:[1] {{Wikipedia|Familia}}
+
+{{Ähnlichkeiten}}&lt;!-- tot beim Eintrag von Tod, und umgekehrt --&gt;
+
+[[en:familia]]
+[[es:familia]]
+[[fi:Familia]]
+[[hu:Familia]]
+[[io:Familia]]
+[[la:Familia]]
+[[pl:Familia]]</text>
+      <sha1>tkfi6x9sbwfhtjqze58x6jq0uqon8g0</sha1>
+    </revision>
+    <revision>
+      <id>96287</id>
+      <parentid>83558</parentid>
+      <timestamp>2005-08-20T12:07:54Z</timestamp>
+      <contributor>
+        <username>RobotGMwikt</username>
+        <id>1508</id>
+      </contributor>
+      <minor />
+      <comment>Bot:  Ändere: hu</comment>
+      <origin>96287</origin>
+      <model>wikitext</model>
+      <format>text/x-wiki</format>
+      <text bytes="1936" sha1="c4jf3cws72ftdz7z64frz4kngjphk4h" xml:space="preserve">== familia ({{Sprache|Lateinisch}}) ==
+=== {{Wortart|Substantiv}} ''f'' ===
+{{Substantiv-Tabelle (Latein)| 
+Nominativ Singular=familia
+|Nominativ Plural=familiae
+|Genitiv Singular=familiae
+|Genitiv Plural=familiārum
+|Dativ Singular=familiae
+|Dativ Plural=familiīs
+|Akkusativ Singular=familiam
+|Akkusativ Plural=familiās
+|Ablativ Singular=familiā
+|Ablativ Plural=familiīs
+|Vokativ Singular=familia
+|Vokativ Plural=familiae
+}}&lt;!-- /Flexionstabelle
+/--&gt;
+{{Silbentrennung}} familia, {{Pl.}} familiae
+
+{{Aussprache}}
+:[[Hilfe:Hörbeispiele|Hörbeispiele]]: {{fehlend}}, {{Pl.}} {{fehlend}}
+:[[Hilfe:IPA|IPA]]: [], {{Pl.}} []
+
+{{Bedeutungen}}
+&lt;!-- Bedeutung [1], andere Bedeutung [2],... angeben - möglichst kurze Erklärung--&gt;
+:[1] Hausstand (mit Sklaven)
+:[2] Untergruppe eines Geschlechts
+:[3] Bruderschaft, Sekte. Gruppe
+
+{{Abkürzungen}}
+
+{{Herkunft}}
+:
+    
+{{Synonyme}}
+&lt;!-- hinter jedem oder vor allen Synonymen angegen, auf welche Bedeutung es/sie sich bezieht/en --&gt;
+:
+
+{{Gegenworte}}
+:
+
+{{Oberbegriffe}}
+&lt;!-- Oberbegriffe aufsteigend nach Größe sortiert --&gt;
+:
+
+{{Unterbegriffe}}
+&lt;!-- Unterbegriffe absteigend nach Größe sortiert --&gt;
+:
+
+{{Beispiele}}
+&lt;!-- für Bedeutung [1], andere Bedeutung [2], usw. --&gt;
+:[1] 
+
+{{Redewendungen}}
+:
+
+{{Charakteristische Wortkombinationen}}
+&lt;!-- Einträge üblicher Nachbarworte insbesondere gebräuchlicher Kombinationen (was man sofort damit verbindet)--&gt;
+:
+
+{{Abgeleitete Begriffe}}
+&lt;!-- Abgeleitete Begriffe alphabetisch sortiert (z.B. Wörterbuch, wortgewandt) --&gt;
+:
+
+==== Übersetzungen ====
+{{Übersetzungen (Sprachen)|
+&lt;!-- Beispiel: &quot;Englisch: [1] [[word]]&quot;, usw. --&gt;
+*Arabisch: 
+*Chinesisch: 
+*'''Englisch:''' [] [[]]
+|
+*Französisch: 
+*Russisch: 
+*Spanisch: 
+}}
+{{Referenzen}}
+:[1] {{Wikipedia|Familia}}
+
+{{Ähnlichkeiten}}&lt;!-- tot beim Eintrag von Tod, und umgekehrt --&gt;
+
+[[en:familia]]
+[[es:familia]]
+[[fi:Familia]]
+[[hu:familia]]
+[[io:Familia]]
+[[la:Familia]]
+[[pl:Familia]]</text>
+      <sha1>c4jf3cws72ftdz7z64frz4kngjphk4h</sha1>
+    </revision>
+    <revision>
+      <id>100133</id>
+      <parentid>96287</parentid>
+      <timestamp>2005-08-31T07:22:02Z</timestamp>
+      <contributor>
+        <username>RobotGMwikt</username>
+        <id>1508</id>
+      </contributor>
+      <minor />
+      <comment>Bot:  Ändere: pl</comment>
+      <origin>100133</origin>
+      <model>wikitext</model>
+      <format>text/x-wiki</format>
+      <text bytes="1936" sha1="45hfbxeknqemhkdz6wl91wersv0bnee" xml:space="preserve">== familia ({{Sprache|Lateinisch}}) ==
+=== {{Wortart|Substantiv}} ''f'' ===
+{{Substantiv-Tabelle (Latein)| 
+Nominativ Singular=familia
+|Nominativ Plural=familiae
+|Genitiv Singular=familiae
+|Genitiv Plural=familiārum
+|Dativ Singular=familiae
+|Dativ Plural=familiīs
+|Akkusativ Singular=familiam
+|Akkusativ Plural=familiās
+|Ablativ Singular=familiā
+|Ablativ Plural=familiīs
+|Vokativ Singular=familia
+|Vokativ Plural=familiae
+}}&lt;!-- /Flexionstabelle
+/--&gt;
+{{Silbentrennung}} familia, {{Pl.}} familiae
+
+{{Aussprache}}
+:[[Hilfe:Hörbeispiele|Hörbeispiele]]: {{fehlend}}, {{Pl.}} {{fehlend}}
+:[[Hilfe:IPA|IPA]]: [], {{Pl.}} []
+
+{{Bedeutungen}}
+&lt;!-- Bedeutung [1], andere Bedeutung [2],... angeben - möglichst kurze Erklärung--&gt;
+:[1] Hausstand (mit Sklaven)
+:[2] Untergruppe eines Geschlechts
+:[3] Bruderschaft, Sekte. Gruppe
+
+{{Abkürzungen}}
+
+{{Herkunft}}
+:
+    
+{{Synonyme}}
+&lt;!-- hinter jedem oder vor allen Synonymen angegen, auf welche Bedeutung es/sie sich bezieht/en --&gt;
+:
+
+{{Gegenworte}}
+:
+
+{{Oberbegriffe}}
+&lt;!-- Oberbegriffe aufsteigend nach Größe sortiert --&gt;
+:
+
+{{Unterbegriffe}}
+&lt;!-- Unterbegriffe absteigend nach Größe sortiert --&gt;
+:
+
+{{Beispiele}}
+&lt;!-- für Bedeutung [1], andere Bedeutung [2], usw. --&gt;
+:[1] 
+
+{{Redewendungen}}
+:
+
+{{Charakteristische Wortkombinationen}}
+&lt;!-- Einträge üblicher Nachbarworte insbesondere gebräuchlicher Kombinationen (was man sofort damit verbindet)--&gt;
+:
+
+{{Abgeleitete Begriffe}}
+&lt;!-- Abgeleitete Begriffe alphabetisch sortiert (z.B. Wörterbuch, wortgewandt) --&gt;
+:
+
+==== Übersetzungen ====
+{{Übersetzungen (Sprachen)|
+&lt;!-- Beispiel: &quot;Englisch: [1] [[word]]&quot;, usw. --&gt;
+*Arabisch: 
+*Chinesisch: 
+*'''Englisch:''' [] [[]]
+|
+*Französisch: 
+*Russisch: 
+*Spanisch: 
+}}
+{{Referenzen}}
+:[1] {{Wikipedia|Familia}}
+
+{{Ähnlichkeiten}}&lt;!-- tot beim Eintrag von Tod, und umgekehrt --&gt;
+
+[[en:familia]]
+[[es:familia]]
+[[fi:Familia]]
+[[hu:familia]]
+[[io:Familia]]
+[[la:Familia]]
+[[pl:familia]]</text>
+      <sha1>45hfbxeknqemhkdz6wl91wersv0bnee</sha1>
+    </revision>
+    <revision>
+      <id>110609</id>
+      <parentid>100133</parentid>
+      <timestamp>2005-09-26T21:32:13Z</timestamp>
+      <contributor>
+        <username>RobotGMwikt</username>
+        <id>1508</id>
+      </contributor>
+      <minor />
+      <comment>Bot:  Ändere: fi</comment>
+      <origin>110609</origin>
+      <model>wikitext</model>
+      <format>text/x-wiki</format>
+      <text bytes="1936" sha1="aaueb517gcvxm3cnhyz16shk16jr5lx" xml:space="preserve">== familia ({{Sprache|Lateinisch}}) ==
+=== {{Wortart|Substantiv}} ''f'' ===
+{{Substantiv-Tabelle (Latein)| 
+Nominativ Singular=familia
+|Nominativ Plural=familiae
+|Genitiv Singular=familiae
+|Genitiv Plural=familiārum
+|Dativ Singular=familiae
+|Dativ Plural=familiīs
+|Akkusativ Singular=familiam
+|Akkusativ Plural=familiās
+|Ablativ Singular=familiā
+|Ablativ Plural=familiīs
+|Vokativ Singular=familia
+|Vokativ Plural=familiae
+}}&lt;!-- /Flexionstabelle
+/--&gt;
+{{Silbentrennung}} familia, {{Pl.}} familiae
+
+{{Aussprache}}
+:[[Hilfe:Hörbeispiele|Hörbeispiele]]: {{fehlend}}, {{Pl.}} {{fehlend}}
+:[[Hilfe:IPA|IPA]]: [], {{Pl.}} []
+
+{{Bedeutungen}}
+&lt;!-- Bedeutung [1], andere Bedeutung [2],... angeben - möglichst kurze Erklärung--&gt;
+:[1] Hausstand (mit Sklaven)
+:[2] Untergruppe eines Geschlechts
+:[3] Bruderschaft, Sekte. Gruppe
+
+{{Abkürzungen}}
+
+{{Herkunft}}
+:
+    
+{{Synonyme}}
+&lt;!-- hinter jedem oder vor allen Synonymen angegen, auf welche Bedeutung es/sie sich bezieht/en --&gt;
+:
+
+{{Gegenworte}}
+:
+
+{{Oberbegriffe}}
+&lt;!-- Oberbegriffe aufsteigend nach Größe sortiert --&gt;
+:
+
+{{Unterbegriffe}}
+&lt;!-- Unterbegriffe absteigend nach Größe sortiert --&gt;
+:
+
+{{Beispiele}}
+&lt;!-- für Bedeutung [1], andere Bedeutung [2], usw. --&gt;
+:[1] 
+
+{{Redewendungen}}
+:
+
+{{Charakteristische Wortkombinationen}}
+&lt;!-- Einträge üblicher Nachbarworte insbesondere gebräuchlicher Kombinationen (was man sofort damit verbindet)--&gt;
+:
+
+{{Abgeleitete Begriffe}}
+&lt;!-- Abgeleitete Begriffe alphabetisch sortiert (z.B. Wörterbuch, wortgewandt) --&gt;
+:
+
+==== Übersetzungen ====
+{{Übersetzungen (Sprachen)|
+&lt;!-- Beispiel: &quot;Englisch: [1] [[word]]&quot;, usw. --&gt;
+*Arabisch: 
+*Chinesisch: 
+*'''Englisch:''' [] [[]]
+|
+*Französisch: 
+*Russisch: 
+*Spanisch: 
+}}
+{{Referenzen}}
+:[1] {{Wikipedia|Familia}}
+
+{{Ähnlichkeiten}}&lt;!-- tot beim Eintrag von Tod, und umgekehrt --&gt;
+
+[[en:familia]]
+[[es:familia]]
+[[fi:familia]]
+[[hu:familia]]
+[[io:Familia]]
+[[la:Familia]]
+[[pl:familia]]</text>
+      <sha1>aaueb517gcvxm3cnhyz16shk16jr5lx</sha1>
+    </revision>
+    <revision>
+      <id>113620</id>
+      <parentid>110609</parentid>
+      <timestamp>2005-10-04T05:44:50Z</timestamp>
+      <contributor>
+        <username>BaluBot</username>
+        <id>734</id>
+      </contributor>
+      <minor />
+      <comment>Bot: Automatisierte Textersetzung  (-{{Substantiv-Tabelle (Latein)| +{{Lateinisch Substantiv Übersicht|)</comment>
+      <origin>113620</origin>
+      <model>wikitext</model>
+      <format>text/x-wiki</format>
+      <text bytes="1941" sha1="7cvx2ari6b0sgowf4c167ksxbzqtnd6" xml:space="preserve">== familia ({{Sprache|Lateinisch}}) ==
+=== {{Wortart|Substantiv}} ''f'' ===
+{{Lateinisch Substantiv Übersicht| 
+Nominativ Singular=familia
+|Nominativ Plural=familiae
+|Genitiv Singular=familiae
+|Genitiv Plural=familiārum
+|Dativ Singular=familiae
+|Dativ Plural=familiīs
+|Akkusativ Singular=familiam
+|Akkusativ Plural=familiās
+|Ablativ Singular=familiā
+|Ablativ Plural=familiīs
+|Vokativ Singular=familia
+|Vokativ Plural=familiae
+}}&lt;!-- /Flexionstabelle
+/--&gt;
+{{Silbentrennung}} familia, {{Pl.}} familiae
+
+{{Aussprache}}
+:[[Hilfe:Hörbeispiele|Hörbeispiele]]: {{fehlend}}, {{Pl.}} {{fehlend}}
+:[[Hilfe:IPA|IPA]]: [], {{Pl.}} []
+
+{{Bedeutungen}}
+&lt;!-- Bedeutung [1], andere Bedeutung [2],... angeben - möglichst kurze Erklärung--&gt;
+:[1] Hausstand (mit Sklaven)
+:[2] Untergruppe eines Geschlechts
+:[3] Bruderschaft, Sekte. Gruppe
+
+{{Abkürzungen}}
+
+{{Herkunft}}
+:
+    
+{{Synonyme}}
+&lt;!-- hinter jedem oder vor allen Synonymen angegen, auf welche Bedeutung es/sie sich bezieht/en --&gt;
+:
+
+{{Gegenworte}}
+:
+
+{{Oberbegriffe}}
+&lt;!-- Oberbegriffe aufsteigend nach Größe sortiert --&gt;
+:
+
+{{Unterbegriffe}}
+&lt;!-- Unterbegriffe absteigend nach Größe sortiert --&gt;
+:
+
+{{Beispiele}}
+&lt;!-- für Bedeutung [1], andere Bedeutung [2], usw. --&gt;
+:[1] 
+
+{{Redewendungen}}
+:
+
+{{Charakteristische Wortkombinationen}}
+&lt;!-- Einträge üblicher Nachbarworte insbesondere gebräuchlicher Kombinationen (was man sofort damit verbindet)--&gt;
+:
+
+{{Abgeleitete Begriffe}}
+&lt;!-- Abgeleitete Begriffe alphabetisch sortiert (z.B. Wörterbuch, wortgewandt) --&gt;
+:
+
+==== Übersetzungen ====
+{{Übersetzungen (Sprachen)|
+&lt;!-- Beispiel: &quot;Englisch: [1] [[word]]&quot;, usw. --&gt;
+*Arabisch: 
+*Chinesisch: 
+*'''Englisch:''' [] [[]]
+|
+*Französisch: 
+*Russisch: 
+*Spanisch: 
+}}
+{{Referenzen}}
+:[1] {{Wikipedia|Familia}}
+
+{{Ähnlichkeiten}}&lt;!-- tot beim Eintrag von Tod, und umgekehrt --&gt;
+
+[[en:familia]]
+[[es:familia]]
+[[fi:familia]]
+[[hu:familia]]
+[[io:Familia]]
+[[la:Familia]]
+[[pl:familia]]</text>
+      <sha1>7cvx2ari6b0sgowf4c167ksxbzqtnd6</sha1>
+    </revision>
+    <revision>
+      <id>114657</id>
+      <parentid>113620</parentid>
+      <timestamp>2005-10-05T15:10:19Z</timestamp>
+      <contributor>
+        <username>BaluBot</username>
+        <id>734</id>
+      </contributor>
+      <minor />
+      <comment>Bot: Verwende bei Übersetzungen neue Ü-Vorlage</comment>
+      <origin>114657</origin>
+      <model>wikitext</model>
+      <format>text/x-wiki</format>
+      <text bytes="1949" sha1="6bxunwatvyvmm90c12yw7nqkfupfvi3" xml:space="preserve">== familia ({{Sprache|Lateinisch}}) ==
+=== {{Wortart|Substantiv}} ''f'' ===
+{{Lateinisch Substantiv Übersicht| 
+Nominativ Singular=familia
+|Nominativ Plural=familiae
+|Genitiv Singular=familiae
+|Genitiv Plural=familiārum
+|Dativ Singular=familiae
+|Dativ Plural=familiīs
+|Akkusativ Singular=familiam
+|Akkusativ Plural=familiās
+|Ablativ Singular=familiā
+|Ablativ Plural=familiīs
+|Vokativ Singular=familia
+|Vokativ Plural=familiae
+}}&lt;!-- /Flexionstabelle
+/--&gt;
+{{Silbentrennung}} familia, {{Pl.}} familiae
+
+{{Aussprache}}
+:[[Hilfe:Hörbeispiele|Hörbeispiele]]: {{fehlend}}, {{Pl.}} {{fehlend}}
+:[[Hilfe:IPA|IPA]]: [], {{Pl.}} []
+
+{{Bedeutungen}}
+&lt;!-- Bedeutung [1], andere Bedeutung [2],... angeben - möglichst kurze Erklärung--&gt;
+:[1] Hausstand (mit Sklaven)
+:[2] Untergruppe eines Geschlechts
+:[3] Bruderschaft, Sekte. Gruppe
+
+{{Abkürzungen}}
+
+{{Herkunft}}
+:
+    
+{{Synonyme}}
+&lt;!-- hinter jedem oder vor allen Synonymen angegen, auf welche Bedeutung es/sie sich bezieht/en --&gt;
+:
+
+{{Gegenworte}}
+:
+
+{{Oberbegriffe}}
+&lt;!-- Oberbegriffe aufsteigend nach Größe sortiert --&gt;
+:
+
+{{Unterbegriffe}}
+&lt;!-- Unterbegriffe absteigend nach Größe sortiert --&gt;
+:
+
+{{Beispiele}}
+&lt;!-- für Bedeutung [1], andere Bedeutung [2], usw. --&gt;
+:[1] 
+
+{{Redewendungen}}
+:
+
+{{Charakteristische Wortkombinationen}}
+&lt;!-- Einträge üblicher Nachbarworte insbesondere gebräuchlicher Kombinationen (was man sofort damit verbindet)--&gt;
+:
+
+{{Abgeleitete Begriffe}}
+&lt;!-- Abgeleitete Begriffe alphabetisch sortiert (z.B. Wörterbuch, wortgewandt) --&gt;
+:
+
+==== Übersetzungen ====
+{{Ü-links}}
+&lt;!-- Beispiel: &quot;Englisch: [1] [[word]]&quot;, usw. --&gt;
+*Arabisch: 
+*Chinesisch: 
+*'''Englisch:''' [] [[]]
+{{Ü-Abstand}}
+*Französisch: 
+*Russisch: 
+*Spanisch: 
+{{Ü-rechts}}
+{{Referenzen}}
+:[1] {{Wikipedia|Familia}}
+
+{{Ähnlichkeiten}}&lt;!-- tot beim Eintrag von Tod, und umgekehrt --&gt;
+
+[[en:familia]]
+[[es:familia]]
+[[fi:familia]]
+[[hu:familia]]
+[[io:Familia]]
+[[la:Familia]]
+[[pl:familia]]</text>
+      <sha1>6bxunwatvyvmm90c12yw7nqkfupfvi3</sha1>
+    </revision>
+    <revision>
+      <id>118779</id>
+      <parentid>114657</parentid>
+      <timestamp>2005-10-08T09:28:02Z</timestamp>
+      <contributor>
+        <username>RobotGMwikt</username>
+        <id>1508</id>
+      </contributor>
+      <minor />
+      <comment>Bot:  Ergänze: no, pt</comment>
+      <origin>118779</origin>
+      <model>wikitext</model>
+      <format>text/x-wiki</format>
+      <text bytes="1979" sha1="1j20d8o9pra6l4o9419czyxjwpfvhwy" xml:space="preserve">== familia ({{Sprache|Lateinisch}}) ==
+=== {{Wortart|Substantiv}} ''f'' ===
+{{Lateinisch Substantiv Übersicht| 
+Nominativ Singular=familia
+|Nominativ Plural=familiae
+|Genitiv Singular=familiae
+|Genitiv Plural=familiārum
+|Dativ Singular=familiae
+|Dativ Plural=familiīs
+|Akkusativ Singular=familiam
+|Akkusativ Plural=familiās
+|Ablativ Singular=familiā
+|Ablativ Plural=familiīs
+|Vokativ Singular=familia
+|Vokativ Plural=familiae
+}}&lt;!-- /Flexionstabelle
+/--&gt;
+{{Silbentrennung}} familia, {{Pl.}} familiae
+
+{{Aussprache}}
+:[[Hilfe:Hörbeispiele|Hörbeispiele]]: {{fehlend}}, {{Pl.}} {{fehlend}}
+:[[Hilfe:IPA|IPA]]: [], {{Pl.}} []
+
+{{Bedeutungen}}
+&lt;!-- Bedeutung [1], andere Bedeutung [2],... angeben - möglichst kurze Erklärung--&gt;
+:[1] Hausstand (mit Sklaven)
+:[2] Untergruppe eines Geschlechts
+:[3] Bruderschaft, Sekte. Gruppe
+
+{{Abkürzungen}}
+
+{{Herkunft}}
+:
+    
+{{Synonyme}}
+&lt;!-- hinter jedem oder vor allen Synonymen angegen, auf welche Bedeutung es/sie sich bezieht/en --&gt;
+:
+
+{{Gegenworte}}
+:
+
+{{Oberbegriffe}}
+&lt;!-- Oberbegriffe aufsteigend nach Größe sortiert --&gt;
+:
+
+{{Unterbegriffe}}
+&lt;!-- Unterbegriffe absteigend nach Größe sortiert --&gt;
+:
+
+{{Beispiele}}
+&lt;!-- für Bedeutung [1], andere Bedeutung [2], usw. --&gt;
+:[1] 
+
+{{Redewendungen}}
+:
+
+{{Charakteristische Wortkombinationen}}
+&lt;!-- Einträge üblicher Nachbarworte insbesondere gebräuchlicher Kombinationen (was man sofort damit verbindet)--&gt;
+:
+
+{{Abgeleitete Begriffe}}
+&lt;!-- Abgeleitete Begriffe alphabetisch sortiert (z.B. Wörterbuch, wortgewandt) --&gt;
+:
+
+==== Übersetzungen ====
+{{Ü-links}}
+&lt;!-- Beispiel: &quot;Englisch: [1] [[word]]&quot;, usw. --&gt;
+*Arabisch: 
+*Chinesisch: 
+*'''Englisch:''' [] [[]]
+{{Ü-Abstand}}
+*Französisch: 
+*Russisch: 
+*Spanisch: 
+{{Ü-rechts}}
+{{Referenzen}}
+:[1] {{Wikipedia|Familia}}
+
+{{Ähnlichkeiten}}&lt;!-- tot beim Eintrag von Tod, und umgekehrt --&gt;
+
+[[en:familia]]
+[[es:familia]]
+[[fi:familia]]
+[[hu:familia]]
+[[io:Familia]]
+[[la:Familia]]
+[[no:Familia]]
+[[pl:familia]]
+[[pt:Familia]]</text>
+      <sha1>1j20d8o9pra6l4o9419czyxjwpfvhwy</sha1>
+    </revision>
+    <revision>
+      <id>176134</id>
+      <parentid>118779</parentid>
+      <timestamp>2006-01-30T09:17:29Z</timestamp>
+      <contributor>
+        <username>RobotGMwikt</username>
+        <id>1508</id>
+      </contributor>
+      <minor />
+      <comment>Bot:  Ergänze: fr</comment>
+      <origin>176134</origin>
+      <model>wikitext</model>
+      <format>text/x-wiki</format>
+      <text bytes="1994" sha1="587k9116lypnkhpws94a94g4ya2r7ys" xml:space="preserve">== familia ({{Sprache|Lateinisch}}) ==
+=== {{Wortart|Substantiv}} ''f'' ===
+{{Lateinisch Substantiv Übersicht| 
+Nominativ Singular=familia
+|Nominativ Plural=familiae
+|Genitiv Singular=familiae
+|Genitiv Plural=familiārum
+|Dativ Singular=familiae
+|Dativ Plural=familiīs
+|Akkusativ Singular=familiam
+|Akkusativ Plural=familiās
+|Ablativ Singular=familiā
+|Ablativ Plural=familiīs
+|Vokativ Singular=familia
+|Vokativ Plural=familiae
+}}&lt;!-- /Flexionstabelle
+/--&gt;
+{{Silbentrennung}} familia, {{Pl.}} familiae
+
+{{Aussprache}}
+:[[Hilfe:Hörbeispiele|Hörbeispiele]]: {{fehlend}}, {{Pl.}} {{fehlend}}
+:[[Hilfe:IPA|IPA]]: [], {{Pl.}} []
+
+{{Bedeutungen}}
+&lt;!-- Bedeutung [1], andere Bedeutung [2],... angeben - möglichst kurze Erklärung--&gt;
+:[1] Hausstand (mit Sklaven)
+:[2] Untergruppe eines Geschlechts
+:[3] Bruderschaft, Sekte. Gruppe
+
+{{Abkürzungen}}
+
+{{Herkunft}}
+:
+    
+{{Synonyme}}
+&lt;!-- hinter jedem oder vor allen Synonymen angegen, auf welche Bedeutung es/sie sich bezieht/en --&gt;
+:
+
+{{Gegenworte}}
+:
+
+{{Oberbegriffe}}
+&lt;!-- Oberbegriffe aufsteigend nach Größe sortiert --&gt;
+:
+
+{{Unterbegriffe}}
+&lt;!-- Unterbegriffe absteigend nach Größe sortiert --&gt;
+:
+
+{{Beispiele}}
+&lt;!-- für Bedeutung [1], andere Bedeutung [2], usw. --&gt;
+:[1] 
+
+{{Redewendungen}}
+:
+
+{{Charakteristische Wortkombinationen}}
+&lt;!-- Einträge üblicher Nachbarworte insbesondere gebräuchlicher Kombinationen (was man sofort damit verbindet)--&gt;
+:
+
+{{Abgeleitete Begriffe}}
+&lt;!-- Abgeleitete Begriffe alphabetisch sortiert (z.B. Wörterbuch, wortgewandt) --&gt;
+:
+
+==== Übersetzungen ====
+{{Ü-links}}
+&lt;!-- Beispiel: &quot;Englisch: [1] [[word]]&quot;, usw. --&gt;
+*Arabisch: 
+*Chinesisch: 
+*'''Englisch:''' [] [[]]
+{{Ü-Abstand}}
+*Französisch: 
+*Russisch: 
+*Spanisch: 
+{{Ü-rechts}}
+{{Referenzen}}
+:[1] {{Wikipedia|Familia}}
+
+{{Ähnlichkeiten}}&lt;!-- tot beim Eintrag von Tod, und umgekehrt --&gt;
+
+[[en:familia]]
+[[es:familia]]
+[[fi:familia]]
+[[fr:familia]]
+[[hu:familia]]
+[[io:Familia]]
+[[la:Familia]]
+[[no:Familia]]
+[[pl:familia]]
+[[pt:Familia]]</text>
+      <sha1>587k9116lypnkhpws94a94g4ya2r7ys</sha1>
+    </revision>
+    <revision>
+      <id>199317</id>
+      <parentid>176134</parentid>
+      <timestamp>2006-03-14T17:34:25Z</timestamp>
+      <contributor>
+        <username>RobotGMwikt</username>
+        <id>1508</id>
+      </contributor>
+      <minor />
+      <comment>Bot:  Ändere: io, la, no, pt</comment>
+      <origin>199317</origin>
+      <model>wikitext</model>
+      <format>text/x-wiki</format>
+      <text bytes="1994" sha1="hy706hsg6c4sxcvlm6869fxhdgpr5gk" xml:space="preserve">== familia ({{Sprache|Lateinisch}}) ==
+=== {{Wortart|Substantiv}} ''f'' ===
+{{Lateinisch Substantiv Übersicht| 
+Nominativ Singular=familia
+|Nominativ Plural=familiae
+|Genitiv Singular=familiae
+|Genitiv Plural=familiārum
+|Dativ Singular=familiae
+|Dativ Plural=familiīs
+|Akkusativ Singular=familiam
+|Akkusativ Plural=familiās
+|Ablativ Singular=familiā
+|Ablativ Plural=familiīs
+|Vokativ Singular=familia
+|Vokativ Plural=familiae
+}}&lt;!-- /Flexionstabelle
+/--&gt;
+{{Silbentrennung}} familia, {{Pl.}} familiae
+
+{{Aussprache}}
+:[[Hilfe:Hörbeispiele|Hörbeispiele]]: {{fehlend}}, {{Pl.}} {{fehlend}}
+:[[Hilfe:IPA|IPA]]: [], {{Pl.}} []
+
+{{Bedeutungen}}
+&lt;!-- Bedeutung [1], andere Bedeutung [2],... angeben - möglichst kurze Erklärung--&gt;
+:[1] Hausstand (mit Sklaven)
+:[2] Untergruppe eines Geschlechts
+:[3] Bruderschaft, Sekte. Gruppe
+
+{{Abkürzungen}}
+
+{{Herkunft}}
+:
+    
+{{Synonyme}}
+&lt;!-- hinter jedem oder vor allen Synonymen angegen, auf welche Bedeutung es/sie sich bezieht/en --&gt;
+:
+
+{{Gegenworte}}
+:
+
+{{Oberbegriffe}}
+&lt;!-- Oberbegriffe aufsteigend nach Größe sortiert --&gt;
+:
+
+{{Unterbegriffe}}
+&lt;!-- Unterbegriffe absteigend nach Größe sortiert --&gt;
+:
+
+{{Beispiele}}
+&lt;!-- für Bedeutung [1], andere Bedeutung [2], usw. --&gt;
+:[1] 
+
+{{Redewendungen}}
+:
+
+{{Charakteristische Wortkombinationen}}
+&lt;!-- Einträge üblicher Nachbarworte insbesondere gebräuchlicher Kombinationen (was man sofort damit verbindet)--&gt;
+:
+
+{{Abgeleitete Begriffe}}
+&lt;!-- Abgeleitete Begriffe alphabetisch sortiert (z.B. Wörterbuch, wortgewandt) --&gt;
+:
+
+==== Übersetzungen ====
+{{Ü-links}}
+&lt;!-- Beispiel: &quot;Englisch: [1] [[word]]&quot;, usw. --&gt;
+*Arabisch: 
+*Chinesisch: 
+*'''Englisch:''' [] [[]]
+{{Ü-Abstand}}
+*Französisch: 
+*Russisch: 
+*Spanisch: 
+{{Ü-rechts}}
+{{Referenzen}}
+:[1] {{Wikipedia|Familia}}
+
+{{Ähnlichkeiten}}&lt;!-- tot beim Eintrag von Tod, und umgekehrt --&gt;
+
+[[en:familia]]
+[[es:familia]]
+[[fi:familia]]
+[[fr:familia]]
+[[hu:familia]]
+[[io:familia]]
+[[la:familia]]
+[[no:familia]]
+[[pl:familia]]
+[[pt:familia]]</text>
+      <sha1>hy706hsg6c4sxcvlm6869fxhdgpr5gk</sha1>
+    </revision>
+    <revision>
+      <id>255979</id>
+      <parentid>199317</parentid>
+      <timestamp>2006-06-02T15:37:21Z</timestamp>
+      <contributor>
+        <username>SpaceBirdyBot</username>
+        <id>2227</id>
+      </contributor>
+      <minor />
+      <comment>Sprachkürzel &amp; pagename</comment>
+      <origin>255979</origin>
+      <model>wikitext</model>
+      <format>text/x-wiki</format>
+      <text bytes="1970" sha1="f8sdssbbo4lwfty10apbk4n339b6gb9" xml:space="preserve">== familia ({{Sprache|Lateinisch}}) ==
+=== {{Wortart|Substantiv}} ''f'' ===
+{{Lateinisch Substantiv Übersicht| 
+Nominativ Singular=familia
+|Nominativ Plural=familiae
+|Genitiv Singular=familiae
+|Genitiv Plural=familiārum
+|Dativ Singular=familiae
+|Dativ Plural=familiīs
+|Akkusativ Singular=familiam
+|Akkusativ Plural=familiās
+|Ablativ Singular=familiā
+|Ablativ Plural=familiīs
+|Vokativ Singular=familia
+|Vokativ Plural=familiae
+}}&lt;!-- /Flexionstabelle
+/--&gt;
+{{Silbentrennung}} familia, {{Pl.}} familiae
+
+{{Aussprache}}
+:[[Hilfe:Hörbeispiele|Hörbeispiele]]: {{fehlend}}, {{Pl.}} {{fehlend}}
+:[[Hilfe:IPA|IPA]]: [], {{Pl.}} []
+
+{{Bedeutungen}}
+&lt;!-- Bedeutung [1], andere Bedeutung [2],... angeben - möglichst kurze Erklärung--&gt;
+:[1] Hausstand (mit Sklaven)
+:[2] Untergruppe eines Geschlechts
+:[3] Bruderschaft, Sekte. Gruppe
+
+{{Abkürzungen}}
+
+{{Herkunft}}
+:
+    
+{{Synonyme}}
+&lt;!-- hinter jedem oder vor allen Synonymen angegen, auf welche Bedeutung es/sie sich bezieht/en --&gt;
+:
+
+{{Gegenworte}}
+:
+
+{{Oberbegriffe}}
+&lt;!-- Oberbegriffe aufsteigend nach Größe sortiert --&gt;
+:
+
+{{Unterbegriffe}}
+&lt;!-- Unterbegriffe absteigend nach Größe sortiert --&gt;
+:
+
+{{Beispiele}}
+&lt;!-- für Bedeutung [1], andere Bedeutung [2], usw. --&gt;
+:[1] 
+
+{{Redewendungen}}
+:
+
+{{Charakteristische Wortkombinationen}}
+&lt;!-- Einträge üblicher Nachbarworte insbesondere gebräuchlicher Kombinationen (was man sofort damit verbindet)--&gt;
+:
+
+{{Abgeleitete Begriffe}}
+&lt;!-- Abgeleitete Begriffe alphabetisch sortiert (z.B. Wörterbuch, wortgewandt) --&gt;
+:
+
+==== Übersetzungen ====
+{{Ü-links}}
+&lt;!-- Beispiel: &quot;Englisch: [1] [[word]]&quot;, usw. --&gt;
+*{{ar}}: 
+*{{zh}}: 
+*{{en}}: [] [[]]
+{{Ü-Abstand}}
+*{{fr}}: 
+*{{ru}}: 
+*{{es}}: 
+{{Ü-rechts}}
+{{Referenzen}}
+:[1] {{Wikipedia|Familia}}
+
+{{Ähnlichkeiten}}&lt;!-- tot beim Eintrag von Tod, und umgekehrt --&gt;
+
+[[en:familia]]
+[[es:familia]]
+[[fi:familia]]
+[[fr:familia]]
+[[hu:familia]]
+[[io:familia]]
+[[la:familia]]
+[[no:familia]]
+[[pl:familia]]
+[[pt:familia]]</text>
+      <sha1>f8sdssbbo4lwfty10apbk4n339b6gb9</sha1>
+    </revision>
+    <revision>
+      <id>273220</id>
+      <parentid>255979</parentid>
+      <timestamp>2006-06-05T09:43:56Z</timestamp>
+      <contributor>
+        <username>RobotGMwikt</username>
+        <id>1508</id>
+      </contributor>
+      <minor />
+      <comment>Bot:  Ergänze: zh</comment>
+      <origin>273220</origin>
+      <model>wikitext</model>
+      <format>text/x-wiki</format>
+      <text bytes="1985" sha1="n43z0q31ofabbz8983vlnozfuoxwl4v" xml:space="preserve">== familia ({{Sprache|Lateinisch}}) ==
+=== {{Wortart|Substantiv}} ''f'' ===
+{{Lateinisch Substantiv Übersicht| 
+Nominativ Singular=familia
+|Nominativ Plural=familiae
+|Genitiv Singular=familiae
+|Genitiv Plural=familiārum
+|Dativ Singular=familiae
+|Dativ Plural=familiīs
+|Akkusativ Singular=familiam
+|Akkusativ Plural=familiās
+|Ablativ Singular=familiā
+|Ablativ Plural=familiīs
+|Vokativ Singular=familia
+|Vokativ Plural=familiae
+}}&lt;!-- /Flexionstabelle
+/--&gt;
+{{Silbentrennung}} familia, {{Pl.}} familiae
+
+{{Aussprache}}
+:[[Hilfe:Hörbeispiele|Hörbeispiele]]: {{fehlend}}, {{Pl.}} {{fehlend}}
+:[[Hilfe:IPA|IPA]]: [], {{Pl.}} []
+
+{{Bedeutungen}}
+&lt;!-- Bedeutung [1], andere Bedeutung [2],... angeben - möglichst kurze Erklärung--&gt;
+:[1] Hausstand (mit Sklaven)
+:[2] Untergruppe eines Geschlechts
+:[3] Bruderschaft, Sekte. Gruppe
+
+{{Abkürzungen}}
+
+{{Herkunft}}
+:
+    
+{{Synonyme}}
+&lt;!-- hinter jedem oder vor allen Synonymen angegen, auf welche Bedeutung es/sie sich bezieht/en --&gt;
+:
+
+{{Gegenworte}}
+:
+
+{{Oberbegriffe}}
+&lt;!-- Oberbegriffe aufsteigend nach Größe sortiert --&gt;
+:
+
+{{Unterbegriffe}}
+&lt;!-- Unterbegriffe absteigend nach Größe sortiert --&gt;
+:
+
+{{Beispiele}}
+&lt;!-- für Bedeutung [1], andere Bedeutung [2], usw. --&gt;
+:[1] 
+
+{{Redewendungen}}
+:
+
+{{Charakteristische Wortkombinationen}}
+&lt;!-- Einträge üblicher Nachbarworte insbesondere gebräuchlicher Kombinationen (was man sofort damit verbindet)--&gt;
+:
+
+{{Abgeleitete Begriffe}}
+&lt;!-- Abgeleitete Begriffe alphabetisch sortiert (z.B. Wörterbuch, wortgewandt) --&gt;
+:
+
+==== Übersetzungen ====
+{{Ü-links}}
+&lt;!-- Beispiel: &quot;Englisch: [1] [[word]]&quot;, usw. --&gt;
+*{{ar}}: 
+*{{zh}}: 
+*{{en}}: [] [[]]
+{{Ü-Abstand}}
+*{{fr}}: 
+*{{ru}}: 
+*{{es}}: 
+{{Ü-rechts}}
+{{Referenzen}}
+:[1] {{Wikipedia|Familia}}
+
+{{Ähnlichkeiten}}&lt;!-- tot beim Eintrag von Tod, und umgekehrt --&gt;
+
+[[en:familia]]
+[[es:familia]]
+[[fi:familia]]
+[[fr:familia]]
+[[hu:familia]]
+[[io:familia]]
+[[la:familia]]
+[[no:familia]]
+[[pl:familia]]
+[[pt:familia]]
+[[zh:familia]]</text>
+      <sha1>n43z0q31ofabbz8983vlnozfuoxwl4v</sha1>
+    </revision>
+    <revision>
+      <id>292170</id>
+      <parentid>273220</parentid>
+      <timestamp>2006-06-25T14:51:44Z</timestamp>
+      <contributor>
+        <username>RobotGMwikt</username>
+        <id>1508</id>
+      </contributor>
+      <minor />
+      <comment>Bot:  Ergänze: zh-min-nan</comment>
+      <origin>292170</origin>
+      <model>wikitext</model>
+      <format>text/x-wiki</format>
+      <text bytes="2008" sha1="kocpm7z42qbpt9qf48o9ss97fx4cbkt" xml:space="preserve">== familia ({{Sprache|Lateinisch}}) ==
+=== {{Wortart|Substantiv}} ''f'' ===
+{{Lateinisch Substantiv Übersicht| 
+Nominativ Singular=familia
+|Nominativ Plural=familiae
+|Genitiv Singular=familiae
+|Genitiv Plural=familiārum
+|Dativ Singular=familiae
+|Dativ Plural=familiīs
+|Akkusativ Singular=familiam
+|Akkusativ Plural=familiās
+|Ablativ Singular=familiā
+|Ablativ Plural=familiīs
+|Vokativ Singular=familia
+|Vokativ Plural=familiae
+}}&lt;!-- /Flexionstabelle
+/--&gt;
+{{Silbentrennung}} familia, {{Pl.}} familiae
+
+{{Aussprache}}
+:[[Hilfe:Hörbeispiele|Hörbeispiele]]: {{fehlend}}, {{Pl.}} {{fehlend}}
+:[[Hilfe:IPA|IPA]]: [], {{Pl.}} []
+
+{{Bedeutungen}}
+&lt;!-- Bedeutung [1], andere Bedeutung [2],... angeben - möglichst kurze Erklärung--&gt;
+:[1] Hausstand (mit Sklaven)
+:[2] Untergruppe eines Geschlechts
+:[3] Bruderschaft, Sekte. Gruppe
+
+{{Abkürzungen}}
+
+{{Herkunft}}
+:
+    
+{{Synonyme}}
+&lt;!-- hinter jedem oder vor allen Synonymen angegen, auf welche Bedeutung es/sie sich bezieht/en --&gt;
+:
+
+{{Gegenworte}}
+:
+
+{{Oberbegriffe}}
+&lt;!-- Oberbegriffe aufsteigend nach Größe sortiert --&gt;
+:
+
+{{Unterbegriffe}}
+&lt;!-- Unterbegriffe absteigend nach Größe sortiert --&gt;
+:
+
+{{Beispiele}}
+&lt;!-- für Bedeutung [1], andere Bedeutung [2], usw. --&gt;
+:[1] 
+
+{{Redewendungen}}
+:
+
+{{Charakteristische Wortkombinationen}}
+&lt;!-- Einträge üblicher Nachbarworte insbesondere gebräuchlicher Kombinationen (was man sofort damit verbindet)--&gt;
+:
+
+{{Abgeleitete Begriffe}}
+&lt;!-- Abgeleitete Begriffe alphabetisch sortiert (z.B. Wörterbuch, wortgewandt) --&gt;
+:
+
+==== Übersetzungen ====
+{{Ü-links}}
+&lt;!-- Beispiel: &quot;Englisch: [1] [[word]]&quot;, usw. --&gt;
+*{{ar}}: 
+*{{zh}}: 
+*{{en}}: [] [[]]
+{{Ü-Abstand}}
+*{{fr}}: 
+*{{ru}}: 
+*{{es}}: 
+{{Ü-rechts}}
+{{Referenzen}}
+:[1] {{Wikipedia|Familia}}
+
+{{Ähnlichkeiten}}&lt;!-- tot beim Eintrag von Tod, und umgekehrt --&gt;
+
+[[en:familia]]
+[[es:familia]]
+[[fi:familia]]
+[[fr:familia]]
+[[hu:familia]]
+[[io:familia]]
+[[la:familia]]
+[[no:familia]]
+[[pl:familia]]
+[[pt:familia]]
+[[zh:familia]]
+[[zh-min-nan:familia]]</text>
+      <sha1>kocpm7z42qbpt9qf48o9ss97fx4cbkt</sha1>
+    </revision>
+    <revision>
+      <id>339570</id>
+      <parentid>292170</parentid>
+      <timestamp>2006-08-12T11:15:11Z</timestamp>
+      <contributor>
+        <username>RobotGMwikt</username>
+        <id>1508</id>
+      </contributor>
+      <minor />
+      <comment>Bot:  Ergänze: ko</comment>
+      <origin>339570</origin>
+      <model>wikitext</model>
+      <format>text/x-wiki</format>
+      <text bytes="2023" sha1="pcijvukqh82rdyxq5hpz1hzxos2ve3b" xml:space="preserve">== familia ({{Sprache|Lateinisch}}) ==
+=== {{Wortart|Substantiv}} ''f'' ===
+{{Lateinisch Substantiv Übersicht| 
+Nominativ Singular=familia
+|Nominativ Plural=familiae
+|Genitiv Singular=familiae
+|Genitiv Plural=familiārum
+|Dativ Singular=familiae
+|Dativ Plural=familiīs
+|Akkusativ Singular=familiam
+|Akkusativ Plural=familiās
+|Ablativ Singular=familiā
+|Ablativ Plural=familiīs
+|Vokativ Singular=familia
+|Vokativ Plural=familiae
+}}&lt;!-- /Flexionstabelle
+/--&gt;
+{{Silbentrennung}} familia, {{Pl.}} familiae
+
+{{Aussprache}}
+:[[Hilfe:Hörbeispiele|Hörbeispiele]]: {{fehlend}}, {{Pl.}} {{fehlend}}
+:[[Hilfe:IPA|IPA]]: [], {{Pl.}} []
+
+{{Bedeutungen}}
+&lt;!-- Bedeutung [1], andere Bedeutung [2],... angeben - möglichst kurze Erklärung--&gt;
+:[1] Hausstand (mit Sklaven)
+:[2] Untergruppe eines Geschlechts
+:[3] Bruderschaft, Sekte. Gruppe
+
+{{Abkürzungen}}
+
+{{Herkunft}}
+:
+    
+{{Synonyme}}
+&lt;!-- hinter jedem oder vor allen Synonymen angegen, auf welche Bedeutung es/sie sich bezieht/en --&gt;
+:
+
+{{Gegenworte}}
+:
+
+{{Oberbegriffe}}
+&lt;!-- Oberbegriffe aufsteigend nach Größe sortiert --&gt;
+:
+
+{{Unterbegriffe}}
+&lt;!-- Unterbegriffe absteigend nach Größe sortiert --&gt;
+:
+
+{{Beispiele}}
+&lt;!-- für Bedeutung [1], andere Bedeutung [2], usw. --&gt;
+:[1] 
+
+{{Redewendungen}}
+:
+
+{{Charakteristische Wortkombinationen}}
+&lt;!-- Einträge üblicher Nachbarworte insbesondere gebräuchlicher Kombinationen (was man sofort damit verbindet)--&gt;
+:
+
+{{Abgeleitete Begriffe}}
+&lt;!-- Abgeleitete Begriffe alphabetisch sortiert (z.B. Wörterbuch, wortgewandt) --&gt;
+:
+
+==== Übersetzungen ====
+{{Ü-links}}
+&lt;!-- Beispiel: &quot;Englisch: [1] [[word]]&quot;, usw. --&gt;
+*{{ar}}: 
+*{{zh}}: 
+*{{en}}: [] [[]]
+{{Ü-Abstand}}
+*{{fr}}: 
+*{{ru}}: 
+*{{es}}: 
+{{Ü-rechts}}
+{{Referenzen}}
+:[1] {{Wikipedia|Familia}}
+
+{{Ähnlichkeiten}}&lt;!-- tot beim Eintrag von Tod, und umgekehrt --&gt;
+
+[[en:familia]]
+[[es:familia]]
+[[fi:familia]]
+[[fr:familia]]
+[[hu:familia]]
+[[io:familia]]
+[[ko:familia]]
+[[la:familia]]
+[[no:familia]]
+[[pl:familia]]
+[[pt:familia]]
+[[zh:familia]]
+[[zh-min-nan:familia]]</text>
+      <sha1>pcijvukqh82rdyxq5hpz1hzxos2ve3b</sha1>
+    </revision>
+    <revision>
+      <id>340422</id>
+      <parentid>339570</parentid>
+      <timestamp>2006-08-13T18:46:16Z</timestamp>
+      <contributor>
+        <username>RobotGMwikt</username>
+        <id>1508</id>
+      </contributor>
+      <minor />
+      <comment>Bot:  Ergänze: sv</comment>
+      <origin>340422</origin>
+      <model>wikitext</model>
+      <format>text/x-wiki</format>
+      <text bytes="2038" sha1="fb9zex9grcvtme79g6vctb1zlx9gb19" xml:space="preserve">== familia ({{Sprache|Lateinisch}}) ==
+=== {{Wortart|Substantiv}} ''f'' ===
+{{Lateinisch Substantiv Übersicht| 
+Nominativ Singular=familia
+|Nominativ Plural=familiae
+|Genitiv Singular=familiae
+|Genitiv Plural=familiārum
+|Dativ Singular=familiae
+|Dativ Plural=familiīs
+|Akkusativ Singular=familiam
+|Akkusativ Plural=familiās
+|Ablativ Singular=familiā
+|Ablativ Plural=familiīs
+|Vokativ Singular=familia
+|Vokativ Plural=familiae
+}}&lt;!-- /Flexionstabelle
+/--&gt;
+{{Silbentrennung}} familia, {{Pl.}} familiae
+
+{{Aussprache}}
+:[[Hilfe:Hörbeispiele|Hörbeispiele]]: {{fehlend}}, {{Pl.}} {{fehlend}}
+:[[Hilfe:IPA|IPA]]: [], {{Pl.}} []
+
+{{Bedeutungen}}
+&lt;!-- Bedeutung [1], andere Bedeutung [2],... angeben - möglichst kurze Erklärung--&gt;
+:[1] Hausstand (mit Sklaven)
+:[2] Untergruppe eines Geschlechts
+:[3] Bruderschaft, Sekte. Gruppe
+
+{{Abkürzungen}}
+
+{{Herkunft}}
+:
+    
+{{Synonyme}}
+&lt;!-- hinter jedem oder vor allen Synonymen angegen, auf welche Bedeutung es/sie sich bezieht/en --&gt;
+:
+
+{{Gegenworte}}
+:
+
+{{Oberbegriffe}}
+&lt;!-- Oberbegriffe aufsteigend nach Größe sortiert --&gt;
+:
+
+{{Unterbegriffe}}
+&lt;!-- Unterbegriffe absteigend nach Größe sortiert --&gt;
+:
+
+{{Beispiele}}
+&lt;!-- für Bedeutung [1], andere Bedeutung [2], usw. --&gt;
+:[1] 
+
+{{Redewendungen}}
+:
+
+{{Charakteristische Wortkombinationen}}
+&lt;!-- Einträge üblicher Nachbarworte insbesondere gebräuchlicher Kombinationen (was man sofort damit verbindet)--&gt;
+:
+
+{{Abgeleitete Begriffe}}
+&lt;!-- Abgeleitete Begriffe alphabetisch sortiert (z.B. Wörterbuch, wortgewandt) --&gt;
+:
+
+==== Übersetzungen ====
+{{Ü-links}}
+&lt;!-- Beispiel: &quot;Englisch: [1] [[word]]&quot;, usw. --&gt;
+*{{ar}}: 
+*{{zh}}: 
+*{{en}}: [] [[]]
+{{Ü-Abstand}}
+*{{fr}}: 
+*{{ru}}: 
+*{{es}}: 
+{{Ü-rechts}}
+{{Referenzen}}
+:[1] {{Wikipedia|Familia}}
+
+{{Ähnlichkeiten}}&lt;!-- tot beim Eintrag von Tod, und umgekehrt --&gt;
+
+[[en:familia]]
+[[es:familia]]
+[[fi:familia]]
+[[fr:familia]]
+[[hu:familia]]
+[[io:familia]]
+[[ko:familia]]
+[[la:familia]]
+[[no:familia]]
+[[pl:familia]]
+[[pt:familia]]
+[[sv:familia]]
+[[zh:familia]]
+[[zh-min-nan:familia]]</text>
+      <sha1>fb9zex9grcvtme79g6vctb1zlx9gb19</sha1>
+    </revision>
+    <revision>
+      <id>369633</id>
+      <parentid>340422</parentid>
+      <timestamp>2006-08-26T20:58:36Z</timestamp>
+      <contributor>
+        <username>SpaceBirdyBot</username>
+        <id>2227</id>
+      </contributor>
+      <minor />
+      <comment>Bird-o-Mat: ergänze [[Vorlage:Wortart]]/ ersetze Umlaute in [[Vorlage:Ref-Canoo]] und [[Vorlage:Ref-UniLeipzig]]</comment>
+      <origin>369633</origin>
+      <model>wikitext</model>
+      <format>text/x-wiki</format>
+      <text bytes="2050" sha1="etau1v9jw094t9erte1r6vno221qbqa" xml:space="preserve">== familia ({{Sprache|Lateinisch}}) ==
+=== {{Wortart|Substantiv|Lateinisch}}, {{f}} ===
+{{Lateinisch Substantiv Übersicht| 
+Nominativ Singular=familia
+|Nominativ Plural=familiae
+|Genitiv Singular=familiae
+|Genitiv Plural=familiārum
+|Dativ Singular=familiae
+|Dativ Plural=familiīs
+|Akkusativ Singular=familiam
+|Akkusativ Plural=familiās
+|Ablativ Singular=familiā
+|Ablativ Plural=familiīs
+|Vokativ Singular=familia
+|Vokativ Plural=familiae
+}}&lt;!-- /Flexionstabelle
+/--&gt;
+{{Silbentrennung}} familia, {{Pl.}} familiae
+
+{{Aussprache}}
+:[[Hilfe:Hörbeispiele|Hörbeispiele]]: {{fehlend}}, {{Pl.}} {{fehlend}}
+:[[Hilfe:IPA|IPA]]: [], {{Pl.}} []
+
+{{Bedeutungen}}
+&lt;!-- Bedeutung [1], andere Bedeutung [2],... angeben - möglichst kurze Erklärung--&gt;
+:[1] Hausstand (mit Sklaven)
+:[2] Untergruppe eines Geschlechts
+:[3] Bruderschaft, Sekte. Gruppe
+
+{{Abkürzungen}}
+
+{{Herkunft}}
+:
+    
+{{Synonyme}}
+&lt;!-- hinter jedem oder vor allen Synonymen angegen, auf welche Bedeutung es/sie sich bezieht/en --&gt;
+:
+
+{{Gegenworte}}
+:
+
+{{Oberbegriffe}}
+&lt;!-- Oberbegriffe aufsteigend nach Größe sortiert --&gt;
+:
+
+{{Unterbegriffe}}
+&lt;!-- Unterbegriffe absteigend nach Größe sortiert --&gt;
+:
+
+{{Beispiele}}
+&lt;!-- für Bedeutung [1], andere Bedeutung [2], usw. --&gt;
+:[1] 
+
+{{Redewendungen}}
+:
+
+{{Charakteristische Wortkombinationen}}
+&lt;!-- Einträge üblicher Nachbarworte insbesondere gebräuchlicher Kombinationen (was man sofort damit verbindet)--&gt;
+:
+
+{{Abgeleitete Begriffe}}
+&lt;!-- Abgeleitete Begriffe alphabetisch sortiert (z.B. Wörterbuch, wortgewandt) --&gt;
+:
+
+==== Übersetzungen ====
+{{Ü-links}}
+&lt;!-- Beispiel: &quot;Englisch: [1] [[word]]&quot;, usw. --&gt;
+*{{ar}}: 
+*{{zh}}: 
+*{{en}}: [] [[]]
+{{Ü-Abstand}}
+*{{fr}}: 
+*{{ru}}: 
+*{{es}}: 
+{{Ü-rechts}}
+{{Referenzen}}
+:[1] {{Wikipedia|Familia}}
+
+{{Ähnlichkeiten}}&lt;!-- tot beim Eintrag von Tod, und umgekehrt --&gt;
+
+[[en:familia]]
+[[es:familia]]
+[[fi:familia]]
+[[fr:familia]]
+[[hu:familia]]
+[[io:familia]]
+[[ko:familia]]
+[[la:familia]]
+[[no:familia]]
+[[pl:familia]]
+[[pt:familia]]
+[[sv:familia]]
+[[zh:familia]]
+[[zh-min-nan:familia]]</text>
+      <sha1>etau1v9jw094t9erte1r6vno221qbqa</sha1>
+    </revision>
+    <revision>
+      <id>412171</id>
+      <parentid>369633</parentid>
+      <timestamp>2006-10-15T08:57:49Z</timestamp>
+      <contributor>
+        <username>RobotGMwikt</username>
+        <id>1508</id>
+      </contributor>
+      <minor />
+      <comment>Bot:  Ergänze: [[ru:familia]]</comment>
+      <origin>412171</origin>
+      <model>wikitext</model>
+      <format>text/x-wiki</format>
+      <text bytes="2065" sha1="fr6s0x4j17gj2aao7mof5sm2yfwe774" xml:space="preserve">== familia ({{Sprache|Lateinisch}}) ==
+=== {{Wortart|Substantiv|Lateinisch}}, {{f}} ===
+{{Lateinisch Substantiv Übersicht| 
+Nominativ Singular=familia
+|Nominativ Plural=familiae
+|Genitiv Singular=familiae
+|Genitiv Plural=familiārum
+|Dativ Singular=familiae
+|Dativ Plural=familiīs
+|Akkusativ Singular=familiam
+|Akkusativ Plural=familiās
+|Ablativ Singular=familiā
+|Ablativ Plural=familiīs
+|Vokativ Singular=familia
+|Vokativ Plural=familiae
+}}&lt;!-- /Flexionstabelle
+/--&gt;
+{{Silbentrennung}} familia, {{Pl.}} familiae
+
+{{Aussprache}}
+:[[Hilfe:Hörbeispiele|Hörbeispiele]]: {{fehlend}}, {{Pl.}} {{fehlend}}
+:[[Hilfe:IPA|IPA]]: [], {{Pl.}} []
+
+{{Bedeutungen}}
+&lt;!-- Bedeutung [1], andere Bedeutung [2],... angeben - möglichst kurze Erklärung--&gt;
+:[1] Hausstand (mit Sklaven)
+:[2] Untergruppe eines Geschlechts
+:[3] Bruderschaft, Sekte. Gruppe
+
+{{Abkürzungen}}
+
+{{Herkunft}}
+:
+    
+{{Synonyme}}
+&lt;!-- hinter jedem oder vor allen Synonymen angegen, auf welche Bedeutung es/sie sich bezieht/en --&gt;
+:
+
+{{Gegenworte}}
+:
+
+{{Oberbegriffe}}
+&lt;!-- Oberbegriffe aufsteigend nach Größe sortiert --&gt;
+:
+
+{{Unterbegriffe}}
+&lt;!-- Unterbegriffe absteigend nach Größe sortiert --&gt;
+:
+
+{{Beispiele}}
+&lt;!-- für Bedeutung [1], andere Bedeutung [2], usw. --&gt;
+:[1] 
+
+{{Redewendungen}}
+:
+
+{{Charakteristische Wortkombinationen}}
+&lt;!-- Einträge üblicher Nachbarworte insbesondere gebräuchlicher Kombinationen (was man sofort damit verbindet)--&gt;
+:
+
+{{Abgeleitete Begriffe}}
+&lt;!-- Abgeleitete Begriffe alphabetisch sortiert (z.B. Wörterbuch, wortgewandt) --&gt;
+:
+
+==== Übersetzungen ====
+{{Ü-links}}
+&lt;!-- Beispiel: &quot;Englisch: [1] [[word]]&quot;, usw. --&gt;
+*{{ar}}: 
+*{{zh}}: 
+*{{en}}: [] [[]]
+{{Ü-Abstand}}
+*{{fr}}: 
+*{{ru}}: 
+*{{es}}: 
+{{Ü-rechts}}
+{{Referenzen}}
+:[1] {{Wikipedia|Familia}}
+
+{{Ähnlichkeiten}}&lt;!-- tot beim Eintrag von Tod, und umgekehrt --&gt;
+
+[[en:familia]]
+[[es:familia]]
+[[fi:familia]]
+[[fr:familia]]
+[[hu:familia]]
+[[io:familia]]
+[[ko:familia]]
+[[la:familia]]
+[[no:familia]]
+[[pl:familia]]
+[[pt:familia]]
+[[ru:familia]]
+[[sv:familia]]
+[[zh:familia]]
+[[zh-min-nan:familia]]</text>
+      <sha1>fr6s0x4j17gj2aao7mof5sm2yfwe774</sha1>
+    </revision>
+    <revision>
+      <id>538650</id>
+      <parentid>412171</parentid>
+      <timestamp>2007-04-30T11:26:26Z</timestamp>
+      <contributor>
+        <username>RobotGMwikt</username>
+        <id>1508</id>
+      </contributor>
+      <minor />
+      <comment>Bot:  Ergänze: [[tr:familia]]</comment>
+      <origin>538650</origin>
+      <model>wikitext</model>
+      <format>text/x-wiki</format>
+      <text bytes="2080" sha1="sijtgze7ed9lstdlnwd9zce7a3q5qzc" xml:space="preserve">== familia ({{Sprache|Lateinisch}}) ==
+=== {{Wortart|Substantiv|Lateinisch}}, {{f}} ===
+{{Lateinisch Substantiv Übersicht| 
+Nominativ Singular=familia
+|Nominativ Plural=familiae
+|Genitiv Singular=familiae
+|Genitiv Plural=familiārum
+|Dativ Singular=familiae
+|Dativ Plural=familiīs
+|Akkusativ Singular=familiam
+|Akkusativ Plural=familiās
+|Ablativ Singular=familiā
+|Ablativ Plural=familiīs
+|Vokativ Singular=familia
+|Vokativ Plural=familiae
+}}&lt;!-- /Flexionstabelle
+/--&gt;
+{{Silbentrennung}} familia, {{Pl.}} familiae
+
+{{Aussprache}}
+:[[Hilfe:Hörbeispiele|Hörbeispiele]]: {{fehlend}}, {{Pl.}} {{fehlend}}
+:[[Hilfe:IPA|IPA]]: [], {{Pl.}} []
+
+{{Bedeutungen}}
+&lt;!-- Bedeutung [1], andere Bedeutung [2],... angeben - möglichst kurze Erklärung--&gt;
+:[1] Hausstand (mit Sklaven)
+:[2] Untergruppe eines Geschlechts
+:[3] Bruderschaft, Sekte. Gruppe
+
+{{Abkürzungen}}
+
+{{Herkunft}}
+:
+    
+{{Synonyme}}
+&lt;!-- hinter jedem oder vor allen Synonymen angegen, auf welche Bedeutung es/sie sich bezieht/en --&gt;
+:
+
+{{Gegenworte}}
+:
+
+{{Oberbegriffe}}
+&lt;!-- Oberbegriffe aufsteigend nach Größe sortiert --&gt;
+:
+
+{{Unterbegriffe}}
+&lt;!-- Unterbegriffe absteigend nach Größe sortiert --&gt;
+:
+
+{{Beispiele}}
+&lt;!-- für Bedeutung [1], andere Bedeutung [2], usw. --&gt;
+:[1] 
+
+{{Redewendungen}}
+:
+
+{{Charakteristische Wortkombinationen}}
+&lt;!-- Einträge üblicher Nachbarworte insbesondere gebräuchlicher Kombinationen (was man sofort damit verbindet)--&gt;
+:
+
+{{Abgeleitete Begriffe}}
+&lt;!-- Abgeleitete Begriffe alphabetisch sortiert (z.B. Wörterbuch, wortgewandt) --&gt;
+:
+
+==== Übersetzungen ====
+{{Ü-links}}
+&lt;!-- Beispiel: &quot;Englisch: [1] [[word]]&quot;, usw. --&gt;
+*{{ar}}: 
+*{{zh}}: 
+*{{en}}: [] [[]]
+{{Ü-Abstand}}
+*{{fr}}: 
+*{{ru}}: 
+*{{es}}: 
+{{Ü-rechts}}
+{{Referenzen}}
+:[1] {{Wikipedia|Familia}}
+
+{{Ähnlichkeiten}}&lt;!-- tot beim Eintrag von Tod, und umgekehrt --&gt;
+
+[[en:familia]]
+[[es:familia]]
+[[fi:familia]]
+[[fr:familia]]
+[[hu:familia]]
+[[io:familia]]
+[[ko:familia]]
+[[la:familia]]
+[[no:familia]]
+[[pl:familia]]
+[[pt:familia]]
+[[ru:familia]]
+[[sv:familia]]
+[[tr:familia]]
+[[zh:familia]]
+[[zh-min-nan:familia]]</text>
+      <sha1>sijtgze7ed9lstdlnwd9zce7a3q5qzc</sha1>
+    </revision>
+    <revision>
+      <id>631403</id>
+      <parentid>538650</parentid>
+      <timestamp>2007-10-27T09:32:31Z</timestamp>
+      <contributor>
+        <username>VolkovBot</username>
+        <id>7730</id>
+      </contributor>
+      <minor />
+      <comment>Bot:  Ergänze: [[fy:familia]]</comment>
+      <origin>631403</origin>
+      <model>wikitext</model>
+      <format>text/x-wiki</format>
+      <text bytes="2095" sha1="dpupxvrilz0k7i055xox03o7ds6dkmd" xml:space="preserve">== familia ({{Sprache|Lateinisch}}) ==
+=== {{Wortart|Substantiv|Lateinisch}}, {{f}} ===
+{{Lateinisch Substantiv Übersicht| 
+Nominativ Singular=familia
+|Nominativ Plural=familiae
+|Genitiv Singular=familiae
+|Genitiv Plural=familiārum
+|Dativ Singular=familiae
+|Dativ Plural=familiīs
+|Akkusativ Singular=familiam
+|Akkusativ Plural=familiās
+|Ablativ Singular=familiā
+|Ablativ Plural=familiīs
+|Vokativ Singular=familia
+|Vokativ Plural=familiae
+}}&lt;!-- /Flexionstabelle
+/--&gt;
+{{Silbentrennung}} familia, {{Pl.}} familiae
+
+{{Aussprache}}
+:[[Hilfe:Hörbeispiele|Hörbeispiele]]: {{fehlend}}, {{Pl.}} {{fehlend}}
+:[[Hilfe:IPA|IPA]]: [], {{Pl.}} []
+
+{{Bedeutungen}}
+&lt;!-- Bedeutung [1], andere Bedeutung [2],... angeben - möglichst kurze Erklärung--&gt;
+:[1] Hausstand (mit Sklaven)
+:[2] Untergruppe eines Geschlechts
+:[3] Bruderschaft, Sekte. Gruppe
+
+{{Abkürzungen}}
+
+{{Herkunft}}
+:
+    
+{{Synonyme}}
+&lt;!-- hinter jedem oder vor allen Synonymen angegen, auf welche Bedeutung es/sie sich bezieht/en --&gt;
+:
+
+{{Gegenworte}}
+:
+
+{{Oberbegriffe}}
+&lt;!-- Oberbegriffe aufsteigend nach Größe sortiert --&gt;
+:
+
+{{Unterbegriffe}}
+&lt;!-- Unterbegriffe absteigend nach Größe sortiert --&gt;
+:
+
+{{Beispiele}}
+&lt;!-- für Bedeutung [1], andere Bedeutung [2], usw. --&gt;
+:[1] 
+
+{{Redewendungen}}
+:
+
+{{Charakteristische Wortkombinationen}}
+&lt;!-- Einträge üblicher Nachbarworte insbesondere gebräuchlicher Kombinationen (was man sofort damit verbindet)--&gt;
+:
+
+{{Abgeleitete Begriffe}}
+&lt;!-- Abgeleitete Begriffe alphabetisch sortiert (z.B. Wörterbuch, wortgewandt) --&gt;
+:
+
+==== Übersetzungen ====
+{{Ü-links}}
+&lt;!-- Beispiel: &quot;Englisch: [1] [[word]]&quot;, usw. --&gt;
+*{{ar}}: 
+*{{zh}}: 
+*{{en}}: [] [[]]
+{{Ü-Abstand}}
+*{{fr}}: 
+*{{ru}}: 
+*{{es}}: 
+{{Ü-rechts}}
+{{Referenzen}}
+:[1] {{Wikipedia|Familia}}
+
+{{Ähnlichkeiten}}&lt;!-- tot beim Eintrag von Tod, und umgekehrt --&gt;
+
+[[en:familia]]
+[[es:familia]]
+[[fi:familia]]
+[[fr:familia]]
+[[fy:familia]]
+[[hu:familia]]
+[[io:familia]]
+[[ko:familia]]
+[[la:familia]]
+[[no:familia]]
+[[pl:familia]]
+[[pt:familia]]
+[[ru:familia]]
+[[sv:familia]]
+[[tr:familia]]
+[[zh:familia]]
+[[zh-min-nan:familia]]</text>
+      <sha1>dpupxvrilz0k7i055xox03o7ds6dkmd</sha1>
+    </revision>
+    <revision>
+      <id>670492</id>
+      <parentid>631403</parentid>
+      <timestamp>2007-12-20T07:10:32Z</timestamp>
+      <contributor>
+        <username>IBot</username>
+        <id>8521</id>
+      </contributor>
+      <minor />
+      <comment>Bot: Ergänze: +ar</comment>
+      <origin>670492</origin>
+      <model>wikitext</model>
+      <format>text/x-wiki</format>
+      <text bytes="2110" sha1="eufe75nf5n8woiskhfj230g7dhbt4xz" xml:space="preserve">== familia ({{Sprache|Lateinisch}}) ==
+=== {{Wortart|Substantiv|Lateinisch}}, {{f}} ===
+{{Lateinisch Substantiv Übersicht| 
+Nominativ Singular=familia
+|Nominativ Plural=familiae
+|Genitiv Singular=familiae
+|Genitiv Plural=familiārum
+|Dativ Singular=familiae
+|Dativ Plural=familiīs
+|Akkusativ Singular=familiam
+|Akkusativ Plural=familiās
+|Ablativ Singular=familiā
+|Ablativ Plural=familiīs
+|Vokativ Singular=familia
+|Vokativ Plural=familiae
+}}&lt;!-- /Flexionstabelle
+/--&gt;
+{{Silbentrennung}} familia, {{Pl.}} familiae
+
+{{Aussprache}}
+:[[Hilfe:Hörbeispiele|Hörbeispiele]]: {{fehlend}}, {{Pl.}} {{fehlend}}
+:[[Hilfe:IPA|IPA]]: [], {{Pl.}} []
+
+{{Bedeutungen}}
+&lt;!-- Bedeutung [1], andere Bedeutung [2],... angeben - möglichst kurze Erklärung--&gt;
+:[1] Hausstand (mit Sklaven)
+:[2] Untergruppe eines Geschlechts
+:[3] Bruderschaft, Sekte. Gruppe
+
+{{Abkürzungen}}
+
+{{Herkunft}}
+:
+    
+{{Synonyme}}
+&lt;!-- hinter jedem oder vor allen Synonymen angegen, auf welche Bedeutung es/sie sich bezieht/en --&gt;
+:
+
+{{Gegenworte}}
+:
+
+{{Oberbegriffe}}
+&lt;!-- Oberbegriffe aufsteigend nach Größe sortiert --&gt;
+:
+
+{{Unterbegriffe}}
+&lt;!-- Unterbegriffe absteigend nach Größe sortiert --&gt;
+:
+
+{{Beispiele}}
+&lt;!-- für Bedeutung [1], andere Bedeutung [2], usw. --&gt;
+:[1] 
+
+{{Redewendungen}}
+:
+
+{{Charakteristische Wortkombinationen}}
+&lt;!-- Einträge üblicher Nachbarworte insbesondere gebräuchlicher Kombinationen (was man sofort damit verbindet)--&gt;
+:
+
+{{Abgeleitete Begriffe}}
+&lt;!-- Abgeleitete Begriffe alphabetisch sortiert (z.B. Wörterbuch, wortgewandt) --&gt;
+:
+
+==== Übersetzungen ====
+{{Ü-links}}
+&lt;!-- Beispiel: &quot;Englisch: [1] [[word]]&quot;, usw. --&gt;
+*{{ar}}: 
+*{{zh}}: 
+*{{en}}: [] [[]]
+{{Ü-Abstand}}
+*{{fr}}: 
+*{{ru}}: 
+*{{es}}: 
+{{Ü-rechts}}
+{{Referenzen}}
+:[1] {{Wikipedia|Familia}}
+
+{{Ähnlichkeiten}}&lt;!-- tot beim Eintrag von Tod, und umgekehrt --&gt;
+
+[[ar:familia]]
+[[en:familia]]
+[[es:familia]]
+[[fi:familia]]
+[[fr:familia]]
+[[fy:familia]]
+[[hu:familia]]
+[[io:familia]]
+[[ko:familia]]
+[[la:familia]]
+[[no:familia]]
+[[pl:familia]]
+[[pt:familia]]
+[[ru:familia]]
+[[sv:familia]]
+[[tr:familia]]
+[[zh:familia]]
+[[zh-min-nan:familia]]</text>
+      <sha1>eufe75nf5n8woiskhfj230g7dhbt4xz</sha1>
+    </revision>
+    <revision>
+      <id>697441</id>
+      <parentid>670492</parentid>
+      <timestamp>2008-01-15T13:36:05Z</timestamp>
+      <contributor>
+        <username>Elleff Groom</username>
+        <id>7600</id>
+      </contributor>
+      <comment>Vorlage eingebaut</comment>
+      <origin>697441</origin>
+      <model>wikitext</model>
+      <format>text/x-wiki</format>
+      <text bytes="1783" sha1="7dtoho0oe6h2zmug5f1wcctv7eyfawb" xml:space="preserve">== familia ({{Sprache|Lateinisch}}) ==
+=== {{Wortart|Substantiv|Lateinisch}}, {{f}} ===
+{{Lateinisch Substantiv Übersicht a-Deklination|famili}}
+{{Silbentrennung}} familia, {{Pl.}} familiae
+
+{{Aussprache}}
+:[[Hilfe:Hörbeispiele|Hörbeispiele]]: {{fehlend}}, {{Pl.}} {{fehlend}}
+:[[Hilfe:IPA|IPA]]: [], {{Pl.}} []
+
+{{Bedeutungen}}
+&lt;!-- Bedeutung [1], andere Bedeutung [2],... angeben - möglichst kurze Erklärung--&gt;
+:[1] Hausstand (mit Sklaven)
+:[2] Untergruppe eines Geschlechts
+:[3] Bruderschaft, Sekte. Gruppe
+
+{{Abkürzungen}}
+
+{{Herkunft}}
+:
+    
+{{Synonyme}}
+&lt;!-- hinter jedem oder vor allen Synonymen angegen, auf welche Bedeutung es/sie sich bezieht/en --&gt;
+:
+
+{{Gegenworte}}
+:
+
+{{Oberbegriffe}}
+&lt;!-- Oberbegriffe aufsteigend nach Größe sortiert --&gt;
+:
+
+{{Unterbegriffe}}
+&lt;!-- Unterbegriffe absteigend nach Größe sortiert --&gt;
+:
+
+{{Beispiele}}
+&lt;!-- für Bedeutung [1], andere Bedeutung [2], usw. --&gt;
+:[1] 
+
+{{Redewendungen}}
+:
+
+{{Charakteristische Wortkombinationen}}
+&lt;!-- Einträge üblicher Nachbarworte insbesondere gebräuchlicher Kombinationen (was man sofort damit verbindet)--&gt;
+:
+
+{{Abgeleitete Begriffe}}
+&lt;!-- Abgeleitete Begriffe alphabetisch sortiert (z.B. Wörterbuch, wortgewandt) --&gt;
+:
+
+==== Übersetzungen ====
+{{Ü-links}}
+&lt;!-- Beispiel: &quot;Englisch: [1] [[word]]&quot;, usw. --&gt;
+*{{ar}}: 
+*{{zh}}: 
+*{{en}}: [] [[]]
+{{Ü-Abstand}}
+*{{fr}}: 
+*{{ru}}: 
+*{{es}}: 
+{{Ü-rechts}}
+{{Referenzen}}
+:[1] {{Wikipedia|Familia}}
+
+{{Ähnlichkeiten}}&lt;!-- tot beim Eintrag von Tod, und umgekehrt --&gt;
+
+[[ar:familia]]
+[[en:familia]]
+[[es:familia]]
+[[fi:familia]]
+[[fr:familia]]
+[[fy:familia]]
+[[hu:familia]]
+[[io:familia]]
+[[ko:familia]]
+[[la:familia]]
+[[no:familia]]
+[[pl:familia]]
+[[pt:familia]]
+[[ru:familia]]
+[[sv:familia]]
+[[tr:familia]]
+[[zh:familia]]
+[[zh-min-nan:familia]]</text>
+      <sha1>7dtoho0oe6h2zmug5f1wcctv7eyfawb</sha1>
+    </revision>
+    <revision>
+      <id>716474</id>
+      <parentid>697441</parentid>
+      <timestamp>2008-02-04T20:56:12Z</timestamp>
+      <contributor>
+        <username>IBot</username>
+        <id>8521</id>
+      </contributor>
+      <minor />
+      <comment>Bot: Entferne: -ar</comment>
+      <origin>716474</origin>
+      <model>wikitext</model>
+      <format>text/x-wiki</format>
+      <text bytes="1768" sha1="hvn3rw6hxfay2n1y4p4ub9a5p41z25q" xml:space="preserve">== familia ({{Sprache|Lateinisch}}) ==
+=== {{Wortart|Substantiv|Lateinisch}}, {{f}} ===
+{{Lateinisch Substantiv Übersicht a-Deklination|famili}}
+{{Silbentrennung}} familia, {{Pl.}} familiae
+
+{{Aussprache}}
+:[[Hilfe:Hörbeispiele|Hörbeispiele]]: {{fehlend}}, {{Pl.}} {{fehlend}}
+:[[Hilfe:IPA|IPA]]: [], {{Pl.}} []
+
+{{Bedeutungen}}
+&lt;!-- Bedeutung [1], andere Bedeutung [2],... angeben - möglichst kurze Erklärung--&gt;
+:[1] Hausstand (mit Sklaven)
+:[2] Untergruppe eines Geschlechts
+:[3] Bruderschaft, Sekte. Gruppe
+
+{{Abkürzungen}}
+
+{{Herkunft}}
+:
+    
+{{Synonyme}}
+&lt;!-- hinter jedem oder vor allen Synonymen angegen, auf welche Bedeutung es/sie sich bezieht/en --&gt;
+:
+
+{{Gegenworte}}
+:
+
+{{Oberbegriffe}}
+&lt;!-- Oberbegriffe aufsteigend nach Größe sortiert --&gt;
+:
+
+{{Unterbegriffe}}
+&lt;!-- Unterbegriffe absteigend nach Größe sortiert --&gt;
+:
+
+{{Beispiele}}
+&lt;!-- für Bedeutung [1], andere Bedeutung [2], usw. --&gt;
+:[1] 
+
+{{Redewendungen}}
+:
+
+{{Charakteristische Wortkombinationen}}
+&lt;!-- Einträge üblicher Nachbarworte insbesondere gebräuchlicher Kombinationen (was man sofort damit verbindet)--&gt;
+:
+
+{{Abgeleitete Begriffe}}
+&lt;!-- Abgeleitete Begriffe alphabetisch sortiert (z.B. Wörterbuch, wortgewandt) --&gt;
+:
+
+==== Übersetzungen ====
+{{Ü-links}}
+&lt;!-- Beispiel: &quot;Englisch: [1] [[word]]&quot;, usw. --&gt;
+*{{ar}}: 
+*{{zh}}: 
+*{{en}}: [] [[]]
+{{Ü-Abstand}}
+*{{fr}}: 
+*{{ru}}: 
+*{{es}}: 
+{{Ü-rechts}}
+{{Referenzen}}
+:[1] {{Wikipedia|Familia}}
+
+{{Ähnlichkeiten}}&lt;!-- tot beim Eintrag von Tod, und umgekehrt --&gt;
+
+[[en:familia]]
+[[es:familia]]
+[[fi:familia]]
+[[fr:familia]]
+[[fy:familia]]
+[[hu:familia]]
+[[io:familia]]
+[[ko:familia]]
+[[la:familia]]
+[[no:familia]]
+[[pl:familia]]
+[[pt:familia]]
+[[ru:familia]]
+[[sv:familia]]
+[[tr:familia]]
+[[zh:familia]]
+[[zh-min-nan:familia]]</text>
+      <sha1>hvn3rw6hxfay2n1y4p4ub9a5p41z25q</sha1>
+    </revision>
+    <revision>
+      <id>805963</id>
+      <parentid>716474</parentid>
+      <timestamp>2008-06-07T17:51:20Z</timestamp>
+      <contributor>
+        <username>SpaceBirdyBot</username>
+        <id>2227</id>
+      </contributor>
+      <minor />
+      <comment>Bot:  Ergänze: [[lt:familia]], [[sw:familia]]</comment>
+      <origin>805963</origin>
+      <model>wikitext</model>
+      <format>text/x-wiki</format>
+      <text bytes="1798" sha1="d50m1qg6a1ijxwl7yi660gycmzrptqp" xml:space="preserve">== familia ({{Sprache|Lateinisch}}) ==
+=== {{Wortart|Substantiv|Lateinisch}}, {{f}} ===
+{{Lateinisch Substantiv Übersicht a-Deklination|famili}}
+{{Silbentrennung}} familia, {{Pl.}} familiae
+
+{{Aussprache}}
+:[[Hilfe:Hörbeispiele|Hörbeispiele]]: {{fehlend}}, {{Pl.}} {{fehlend}}
+:[[Hilfe:IPA|IPA]]: [], {{Pl.}} []
+
+{{Bedeutungen}}
+&lt;!-- Bedeutung [1], andere Bedeutung [2],... angeben - möglichst kurze Erklärung--&gt;
+:[1] Hausstand (mit Sklaven)
+:[2] Untergruppe eines Geschlechts
+:[3] Bruderschaft, Sekte. Gruppe
+
+{{Abkürzungen}}
+
+{{Herkunft}}
+:
+    
+{{Synonyme}}
+&lt;!-- hinter jedem oder vor allen Synonymen angegen, auf welche Bedeutung es/sie sich bezieht/en --&gt;
+:
+
+{{Gegenworte}}
+:
+
+{{Oberbegriffe}}
+&lt;!-- Oberbegriffe aufsteigend nach Größe sortiert --&gt;
+:
+
+{{Unterbegriffe}}
+&lt;!-- Unterbegriffe absteigend nach Größe sortiert --&gt;
+:
+
+{{Beispiele}}
+&lt;!-- für Bedeutung [1], andere Bedeutung [2], usw. --&gt;
+:[1] 
+
+{{Redewendungen}}
+:
+
+{{Charakteristische Wortkombinationen}}
+&lt;!-- Einträge üblicher Nachbarworte insbesondere gebräuchlicher Kombinationen (was man sofort damit verbindet)--&gt;
+:
+
+{{Abgeleitete Begriffe}}
+&lt;!-- Abgeleitete Begriffe alphabetisch sortiert (z.B. Wörterbuch, wortgewandt) --&gt;
+:
+
+==== Übersetzungen ====
+{{Ü-links}}
+&lt;!-- Beispiel: &quot;Englisch: [1] [[word]]&quot;, usw. --&gt;
+*{{ar}}: 
+*{{zh}}: 
+*{{en}}: [] [[]]
+{{Ü-Abstand}}
+*{{fr}}: 
+*{{ru}}: 
+*{{es}}: 
+{{Ü-rechts}}
+{{Referenzen}}
+:[1] {{Wikipedia|Familia}}
+
+{{Ähnlichkeiten}}&lt;!-- tot beim Eintrag von Tod, und umgekehrt --&gt;
+
+[[en:familia]]
+[[es:familia]]
+[[fi:familia]]
+[[fr:familia]]
+[[fy:familia]]
+[[hu:familia]]
+[[io:familia]]
+[[ko:familia]]
+[[la:familia]]
+[[lt:familia]]
+[[no:familia]]
+[[pl:familia]]
+[[pt:familia]]
+[[ru:familia]]
+[[sv:familia]]
+[[sw:familia]]
+[[tr:familia]]
+[[zh:familia]]
+[[zh-min-nan:familia]]</text>
+      <sha1>d50m1qg6a1ijxwl7yi660gycmzrptqp</sha1>
+    </revision>
+    <revision>
+      <id>822043</id>
+      <parentid>805963</parentid>
+      <timestamp>2008-07-12T21:58:57Z</timestamp>
+      <contributor>
+        <username>Delilahblue</username>
+        <id>10507</id>
+      </contributor>
+      <origin>822043</origin>
+      <model>wikitext</model>
+      <format>text/x-wiki</format>
+      <text bytes="1816" sha1="7m0wv9he20xcoubgg2pgy6fu4s456nh" xml:space="preserve">== familia ({{Sprache|Lateinisch}}) ==
+=== {{Wortart|Substantiv|Lateinisch}}, {{f}} ===
+{{Lateinisch Substantiv Übersicht a-Deklination|famili}}
+{{Silbentrennung}} familia, {{Pl.}} familiae
+
+{{Aussprache}}
+:[[Hilfe:Hörbeispiele|Hörbeispiele]]: {{fehlend}}, {{Pl.}} {{fehlend}}
+:[[Hilfe:IPA|IPA]]: {{fehlend}}, {{Pl.}} {{fehlend}}
+
+{{Bedeutungen}}
+&lt;!-- Bedeutung [1], andere Bedeutung [2],... angeben - möglichst kurze Erklärung--&gt;
+:[1] Hausstand (mit Sklaven)
+:[2] Untergruppe eines Geschlechts
+:[3] Bruderschaft, Sekte. Gruppe
+
+{{Abkürzungen}}
+
+{{Herkunft}}
+:
+    
+{{Synonyme}}
+&lt;!-- hinter jedem oder vor allen Synonymen angegen, auf welche Bedeutung es/sie sich bezieht/en --&gt;
+:
+
+{{Gegenworte}}
+:
+
+{{Oberbegriffe}}
+&lt;!-- Oberbegriffe aufsteigend nach Größe sortiert --&gt;
+:
+
+{{Unterbegriffe}}
+&lt;!-- Unterbegriffe absteigend nach Größe sortiert --&gt;
+:
+
+{{Beispiele}}
+&lt;!-- für Bedeutung [1], andere Bedeutung [2], usw. --&gt;
+:[1] 
+
+{{Redewendungen}}
+:
+
+{{Charakteristische Wortkombinationen}}
+&lt;!-- Einträge üblicher Nachbarworte insbesondere gebräuchlicher Kombinationen (was man sofort damit verbindet)--&gt;
+:
+
+{{Abgeleitete Begriffe}}
+&lt;!-- Abgeleitete Begriffe alphabetisch sortiert (z.B. Wörterbuch, wortgewandt) --&gt;
+:
+
+==== Übersetzungen ====
+{{Ü-links}}
+&lt;!-- Beispiel: &quot;Englisch: [1] [[word]]&quot;, usw. --&gt;
+*{{ar}}: 
+*{{zh}}: 
+*{{en}}: [] [[]]
+{{Ü-Abstand}}
+*{{fr}}: 
+*{{ru}}: 
+*{{es}}: 
+{{Ü-rechts}}
+{{Referenzen}}
+:[1] {{Wikipedia|Familia}}
+
+{{Ähnlichkeiten}}&lt;!-- tot beim Eintrag von Tod, und umgekehrt --&gt;
+
+[[en:familia]]
+[[es:familia]]
+[[fi:familia]]
+[[fr:familia]]
+[[fy:familia]]
+[[hu:familia]]
+[[io:familia]]
+[[ko:familia]]
+[[la:familia]]
+[[lt:familia]]
+[[no:familia]]
+[[pl:familia]]
+[[pt:familia]]
+[[ru:familia]]
+[[sv:familia]]
+[[sw:familia]]
+[[tr:familia]]
+[[zh:familia]]
+[[zh-min-nan:familia]]</text>
+      <sha1>7m0wv9he20xcoubgg2pgy6fu4s456nh</sha1>
+    </revision>
+    <revision>
+      <id>822051</id>
+      <parentid>822043</parentid>
+      <timestamp>2008-07-12T22:44:01Z</timestamp>
+      <contributor>
+        <username>Delilahblue</username>
+        <id>10507</id>
+      </contributor>
+      <origin>822051</origin>
+      <model>wikitext</model>
+      <format>text/x-wiki</format>
+      <text bytes="1832" sha1="ikw7j2qgnnm2c8bibz2grl5jmrca0ze" xml:space="preserve">== familia ({{Sprache|Lateinisch}}) ==
+=== {{Wortart|Substantiv|Lateinisch}}, {{f}} ===
+{{Lateinisch Substantiv Übersicht a-Deklination|famili}}
+{{Silbentrennung}} familia, {{Pl.}} familiae
+
+{{Aussprache}}
+:[[Hilfe:Hörbeispiele|Hörbeispiele]]: {{fehlend}}, {{Pl.}} {{fehlend}}
+:[[Hilfe:IPA|IPA]]: {{Lautschrift|...}}, {{Pl.}} {{Lautschrift|...}}
+
+{{Bedeutungen}}
+&lt;!-- Bedeutung [1], andere Bedeutung [2],... angeben - möglichst kurze Erklärung--&gt;
+:[1] Hausstand (mit Sklaven)
+:[2] Untergruppe eines Geschlechts
+:[3] Bruderschaft, Sekte. Gruppe
+
+{{Abkürzungen}}
+
+{{Herkunft}}
+:
+    
+{{Synonyme}}
+&lt;!-- hinter jedem oder vor allen Synonymen angegen, auf welche Bedeutung es/sie sich bezieht/en --&gt;
+:
+
+{{Gegenworte}}
+:
+
+{{Oberbegriffe}}
+&lt;!-- Oberbegriffe aufsteigend nach Größe sortiert --&gt;
+:
+
+{{Unterbegriffe}}
+&lt;!-- Unterbegriffe absteigend nach Größe sortiert --&gt;
+:
+
+{{Beispiele}}
+&lt;!-- für Bedeutung [1], andere Bedeutung [2], usw. --&gt;
+:[1] 
+
+{{Redewendungen}}
+:
+
+{{Charakteristische Wortkombinationen}}
+&lt;!-- Einträge üblicher Nachbarworte insbesondere gebräuchlicher Kombinationen (was man sofort damit verbindet)--&gt;
+:
+
+{{Abgeleitete Begriffe}}
+&lt;!-- Abgeleitete Begriffe alphabetisch sortiert (z.B. Wörterbuch, wortgewandt) --&gt;
+:
+
+==== Übersetzungen ====
+{{Ü-links}}
+&lt;!-- Beispiel: &quot;Englisch: [1] [[word]]&quot;, usw. --&gt;
+*{{ar}}: 
+*{{zh}}: 
+*{{en}}: [] [[]]
+{{Ü-Abstand}}
+*{{fr}}: 
+*{{ru}}: 
+*{{es}}: 
+{{Ü-rechts}}
+{{Referenzen}}
+:[1] {{Wikipedia|Familia}}
+
+{{Ähnlichkeiten}}&lt;!-- tot beim Eintrag von Tod, und umgekehrt --&gt;
+
+[[en:familia]]
+[[es:familia]]
+[[fi:familia]]
+[[fr:familia]]
+[[fy:familia]]
+[[hu:familia]]
+[[io:familia]]
+[[ko:familia]]
+[[la:familia]]
+[[lt:familia]]
+[[no:familia]]
+[[pl:familia]]
+[[pt:familia]]
+[[ru:familia]]
+[[sv:familia]]
+[[sw:familia]]
+[[tr:familia]]
+[[zh:familia]]
+[[zh-min-nan:familia]]</text>
+      <sha1>ikw7j2qgnnm2c8bibz2grl5jmrca0ze</sha1>
+    </revision>
+    <revision>
+      <id>827294</id>
+      <parentid>822051</parentid>
+      <timestamp>2008-07-23T14:46:26Z</timestamp>
+      <contributor>
+        <username>SpaceBirdyBot</username>
+        <id>2227</id>
+      </contributor>
+      <minor />
+      <comment>Bot:  Ergänze: [[oc:familia]]</comment>
+      <origin>827294</origin>
+      <model>wikitext</model>
+      <format>text/x-wiki</format>
+      <text bytes="1847" sha1="h05soa6xvn35c9qh0shq4wmch1gliug" xml:space="preserve">== familia ({{Sprache|Lateinisch}}) ==
+=== {{Wortart|Substantiv|Lateinisch}}, {{f}} ===
+{{Lateinisch Substantiv Übersicht a-Deklination|famili}}
+{{Silbentrennung}} familia, {{Pl.}} familiae
+
+{{Aussprache}}
+:[[Hilfe:Hörbeispiele|Hörbeispiele]]: {{fehlend}}, {{Pl.}} {{fehlend}}
+:[[Hilfe:IPA|IPA]]: {{Lautschrift|...}}, {{Pl.}} {{Lautschrift|...}}
+
+{{Bedeutungen}}
+&lt;!-- Bedeutung [1], andere Bedeutung [2],... angeben - möglichst kurze Erklärung--&gt;
+:[1] Hausstand (mit Sklaven)
+:[2] Untergruppe eines Geschlechts
+:[3] Bruderschaft, Sekte. Gruppe
+
+{{Abkürzungen}}
+
+{{Herkunft}}
+:
+    
+{{Synonyme}}
+&lt;!-- hinter jedem oder vor allen Synonymen angegen, auf welche Bedeutung es/sie sich bezieht/en --&gt;
+:
+
+{{Gegenworte}}
+:
+
+{{Oberbegriffe}}
+&lt;!-- Oberbegriffe aufsteigend nach Größe sortiert --&gt;
+:
+
+{{Unterbegriffe}}
+&lt;!-- Unterbegriffe absteigend nach Größe sortiert --&gt;
+:
+
+{{Beispiele}}
+&lt;!-- für Bedeutung [1], andere Bedeutung [2], usw. --&gt;
+:[1] 
+
+{{Redewendungen}}
+:
+
+{{Charakteristische Wortkombinationen}}
+&lt;!-- Einträge üblicher Nachbarworte insbesondere gebräuchlicher Kombinationen (was man sofort damit verbindet)--&gt;
+:
+
+{{Abgeleitete Begriffe}}
+&lt;!-- Abgeleitete Begriffe alphabetisch sortiert (z.B. Wörterbuch, wortgewandt) --&gt;
+:
+
+==== Übersetzungen ====
+{{Ü-links}}
+&lt;!-- Beispiel: &quot;Englisch: [1] [[word]]&quot;, usw. --&gt;
+*{{ar}}: 
+*{{zh}}: 
+*{{en}}: [] [[]]
+{{Ü-Abstand}}
+*{{fr}}: 
+*{{ru}}: 
+*{{es}}: 
+{{Ü-rechts}}
+{{Referenzen}}
+:[1] {{Wikipedia|Familia}}
+
+{{Ähnlichkeiten}}&lt;!-- tot beim Eintrag von Tod, und umgekehrt --&gt;
+
+[[en:familia]]
+[[es:familia]]
+[[fi:familia]]
+[[fr:familia]]
+[[fy:familia]]
+[[hu:familia]]
+[[io:familia]]
+[[ko:familia]]
+[[la:familia]]
+[[lt:familia]]
+[[no:familia]]
+[[oc:familia]]
+[[pl:familia]]
+[[pt:familia]]
+[[ru:familia]]
+[[sv:familia]]
+[[sw:familia]]
+[[tr:familia]]
+[[zh:familia]]
+[[zh-min-nan:familia]]</text>
+      <sha1>h05soa6xvn35c9qh0shq4wmch1gliug</sha1>
+    </revision>
+    <revision>
+      <id>939025</id>
+      <parentid>827294</parentid>
+      <timestamp>2009-02-24T14:44:43Z</timestamp>
+      <contributor>
+        <username>Interwicket</username>
+        <id>15085</id>
+      </contributor>
+      <minor />
+      <comment>iwiki +[[:lo:familia]]</comment>
+      <origin>939025</origin>
+      <model>wikitext</model>
+      <format>text/x-wiki</format>
+      <text bytes="1862" sha1="29j50n2wwem7jlty5hxe1642bv9rspq" xml:space="preserve">== familia ({{Sprache|Lateinisch}}) ==
+=== {{Wortart|Substantiv|Lateinisch}}, {{f}} ===
+{{Lateinisch Substantiv Übersicht a-Deklination|famili}}
+{{Silbentrennung}} familia, {{Pl.}} familiae
+
+{{Aussprache}}
+:[[Hilfe:Hörbeispiele|Hörbeispiele]]: {{fehlend}}, {{Pl.}} {{fehlend}}
+:[[Hilfe:IPA|IPA]]: {{Lautschrift|...}}, {{Pl.}} {{Lautschrift|...}}
+
+{{Bedeutungen}}
+&lt;!-- Bedeutung [1], andere Bedeutung [2],... angeben - möglichst kurze Erklärung--&gt;
+:[1] Hausstand (mit Sklaven)
+:[2] Untergruppe eines Geschlechts
+:[3] Bruderschaft, Sekte. Gruppe
+
+{{Abkürzungen}}
+
+{{Herkunft}}
+:
+    
+{{Synonyme}}
+&lt;!-- hinter jedem oder vor allen Synonymen angegen, auf welche Bedeutung es/sie sich bezieht/en --&gt;
+:
+
+{{Gegenworte}}
+:
+
+{{Oberbegriffe}}
+&lt;!-- Oberbegriffe aufsteigend nach Größe sortiert --&gt;
+:
+
+{{Unterbegriffe}}
+&lt;!-- Unterbegriffe absteigend nach Größe sortiert --&gt;
+:
+
+{{Beispiele}}
+&lt;!-- für Bedeutung [1], andere Bedeutung [2], usw. --&gt;
+:[1] 
+
+{{Redewendungen}}
+:
+
+{{Charakteristische Wortkombinationen}}
+&lt;!-- Einträge üblicher Nachbarworte insbesondere gebräuchlicher Kombinationen (was man sofort damit verbindet)--&gt;
+:
+
+{{Abgeleitete Begriffe}}
+&lt;!-- Abgeleitete Begriffe alphabetisch sortiert (z.B. Wörterbuch, wortgewandt) --&gt;
+:
+
+==== Übersetzungen ====
+{{Ü-links}}
+&lt;!-- Beispiel: &quot;Englisch: [1] [[word]]&quot;, usw. --&gt;
+*{{ar}}: 
+*{{zh}}: 
+*{{en}}: [] [[]]
+{{Ü-Abstand}}
+*{{fr}}: 
+*{{ru}}: 
+*{{es}}: 
+{{Ü-rechts}}
+{{Referenzen}}
+:[1] {{Wikipedia|Familia}}
+
+{{Ähnlichkeiten}}&lt;!-- tot beim Eintrag von Tod, und umgekehrt --&gt;
+
+[[en:familia]]
+[[es:familia]]
+[[fi:familia]]
+[[fr:familia]]
+[[fy:familia]]
+[[hu:familia]]
+[[io:familia]]
+[[ko:familia]]
+[[la:familia]]
+[[lo:familia]]
+[[lt:familia]]
+[[no:familia]]
+[[oc:familia]]
+[[pl:familia]]
+[[pt:familia]]
+[[ru:familia]]
+[[sv:familia]]
+[[sw:familia]]
+[[tr:familia]]
+[[zh:familia]]
+[[zh-min-nan:familia]]</text>
+      <sha1>29j50n2wwem7jlty5hxe1642bv9rspq</sha1>
+    </revision>
+    <revision>
+      <id>944460</id>
+      <parentid>939025</parentid>
+      <timestamp>2009-03-02T00:06:05Z</timestamp>
+      <contributor>
+        <username>Interwicket</username>
+        <id>15085</id>
+      </contributor>
+      <minor />
+      <comment>iwiki +[[:th:familia]]</comment>
+      <origin>944460</origin>
+      <model>wikitext</model>
+      <format>text/x-wiki</format>
+      <text bytes="1877" sha1="235ozdpjwcwfjsw4sfnsyiws3jfmjl4" xml:space="preserve">== familia ({{Sprache|Lateinisch}}) ==
+=== {{Wortart|Substantiv|Lateinisch}}, {{f}} ===
+{{Lateinisch Substantiv Übersicht a-Deklination|famili}}
+{{Silbentrennung}} familia, {{Pl.}} familiae
+
+{{Aussprache}}
+:[[Hilfe:Hörbeispiele|Hörbeispiele]]: {{fehlend}}, {{Pl.}} {{fehlend}}
+:[[Hilfe:IPA|IPA]]: {{Lautschrift|...}}, {{Pl.}} {{Lautschrift|...}}
+
+{{Bedeutungen}}
+&lt;!-- Bedeutung [1], andere Bedeutung [2],... angeben - möglichst kurze Erklärung--&gt;
+:[1] Hausstand (mit Sklaven)
+:[2] Untergruppe eines Geschlechts
+:[3] Bruderschaft, Sekte. Gruppe
+
+{{Abkürzungen}}
+
+{{Herkunft}}
+:
+    
+{{Synonyme}}
+&lt;!-- hinter jedem oder vor allen Synonymen angegen, auf welche Bedeutung es/sie sich bezieht/en --&gt;
+:
+
+{{Gegenworte}}
+:
+
+{{Oberbegriffe}}
+&lt;!-- Oberbegriffe aufsteigend nach Größe sortiert --&gt;
+:
+
+{{Unterbegriffe}}
+&lt;!-- Unterbegriffe absteigend nach Größe sortiert --&gt;
+:
+
+{{Beispiele}}
+&lt;!-- für Bedeutung [1], andere Bedeutung [2], usw. --&gt;
+:[1] 
+
+{{Redewendungen}}
+:
+
+{{Charakteristische Wortkombinationen}}
+&lt;!-- Einträge üblicher Nachbarworte insbesondere gebräuchlicher Kombinationen (was man sofort damit verbindet)--&gt;
+:
+
+{{Abgeleitete Begriffe}}
+&lt;!-- Abgeleitete Begriffe alphabetisch sortiert (z.B. Wörterbuch, wortgewandt) --&gt;
+:
+
+==== Übersetzungen ====
+{{Ü-links}}
+&lt;!-- Beispiel: &quot;Englisch: [1] [[word]]&quot;, usw. --&gt;
+*{{ar}}: 
+*{{zh}}: 
+*{{en}}: [] [[]]
+{{Ü-Abstand}}
+*{{fr}}: 
+*{{ru}}: 
+*{{es}}: 
+{{Ü-rechts}}
+{{Referenzen}}
+:[1] {{Wikipedia|Familia}}
+
+{{Ähnlichkeiten}}&lt;!-- tot beim Eintrag von Tod, und umgekehrt --&gt;
+
+[[en:familia]]
+[[es:familia]]
+[[fi:familia]]
+[[fr:familia]]
+[[fy:familia]]
+[[hu:familia]]
+[[io:familia]]
+[[ko:familia]]
+[[la:familia]]
+[[lo:familia]]
+[[lt:familia]]
+[[no:familia]]
+[[oc:familia]]
+[[pl:familia]]
+[[pt:familia]]
+[[ru:familia]]
+[[sv:familia]]
+[[sw:familia]]
+[[th:familia]]
+[[tr:familia]]
+[[zh:familia]]
+[[zh-min-nan:familia]]</text>
+      <sha1>235ozdpjwcwfjsw4sfnsyiws3jfmjl4</sha1>
+    </revision>
+    <revision>
+      <id>1022922</id>
+      <parentid>944460</parentid>
+      <timestamp>2009-07-05T01:45:20Z</timestamp>
+      <contributor>
+        <username>Interwicket</username>
+        <id>15085</id>
+      </contributor>
+      <minor />
+      <comment>iwiki +[[:ta:familia]]</comment>
+      <origin>1022922</origin>
+      <model>wikitext</model>
+      <format>text/x-wiki</format>
+      <text bytes="1892" sha1="j2w590ooqcp25ds4yvmmaux7h8qr3aa" xml:space="preserve">== familia ({{Sprache|Lateinisch}}) ==
+=== {{Wortart|Substantiv|Lateinisch}}, {{f}} ===
+{{Lateinisch Substantiv Übersicht a-Deklination|famili}}
+{{Silbentrennung}} familia, {{Pl.}} familiae
+
+{{Aussprache}}
+:[[Hilfe:Hörbeispiele|Hörbeispiele]]: {{fehlend}}, {{Pl.}} {{fehlend}}
+:[[Hilfe:IPA|IPA]]: {{Lautschrift|...}}, {{Pl.}} {{Lautschrift|...}}
+
+{{Bedeutungen}}
+&lt;!-- Bedeutung [1], andere Bedeutung [2],... angeben - möglichst kurze Erklärung--&gt;
+:[1] Hausstand (mit Sklaven)
+:[2] Untergruppe eines Geschlechts
+:[3] Bruderschaft, Sekte. Gruppe
+
+{{Abkürzungen}}
+
+{{Herkunft}}
+:
+    
+{{Synonyme}}
+&lt;!-- hinter jedem oder vor allen Synonymen angegen, auf welche Bedeutung es/sie sich bezieht/en --&gt;
+:
+
+{{Gegenworte}}
+:
+
+{{Oberbegriffe}}
+&lt;!-- Oberbegriffe aufsteigend nach Größe sortiert --&gt;
+:
+
+{{Unterbegriffe}}
+&lt;!-- Unterbegriffe absteigend nach Größe sortiert --&gt;
+:
+
+{{Beispiele}}
+&lt;!-- für Bedeutung [1], andere Bedeutung [2], usw. --&gt;
+:[1] 
+
+{{Redewendungen}}
+:
+
+{{Charakteristische Wortkombinationen}}
+&lt;!-- Einträge üblicher Nachbarworte insbesondere gebräuchlicher Kombinationen (was man sofort damit verbindet)--&gt;
+:
+
+{{Abgeleitete Begriffe}}
+&lt;!-- Abgeleitete Begriffe alphabetisch sortiert (z.B. Wörterbuch, wortgewandt) --&gt;
+:
+
+==== Übersetzungen ====
+{{Ü-links}}
+&lt;!-- Beispiel: &quot;Englisch: [1] [[word]]&quot;, usw. --&gt;
+*{{ar}}: 
+*{{zh}}: 
+*{{en}}: [] [[]]
+{{Ü-Abstand}}
+*{{fr}}: 
+*{{ru}}: 
+*{{es}}: 
+{{Ü-rechts}}
+{{Referenzen}}
+:[1] {{Wikipedia|Familia}}
+
+{{Ähnlichkeiten}}&lt;!-- tot beim Eintrag von Tod, und umgekehrt --&gt;
+
+[[en:familia]]
+[[es:familia]]
+[[fi:familia]]
+[[fr:familia]]
+[[fy:familia]]
+[[hu:familia]]
+[[io:familia]]
+[[ko:familia]]
+[[la:familia]]
+[[lo:familia]]
+[[lt:familia]]
+[[no:familia]]
+[[oc:familia]]
+[[pl:familia]]
+[[pt:familia]]
+[[ru:familia]]
+[[sv:familia]]
+[[sw:familia]]
+[[ta:familia]]
+[[th:familia]]
+[[tr:familia]]
+[[zh:familia]]
+[[zh-min-nan:familia]]</text>
+      <sha1>j2w590ooqcp25ds4yvmmaux7h8qr3aa</sha1>
+    </revision>
+    <revision>
+      <id>1067618</id>
+      <parentid>1022922</parentid>
+      <timestamp>2009-09-14T21:01:26Z</timestamp>
+      <contributor>
+        <username>Interwicket</username>
+        <id>15085</id>
+      </contributor>
+      <minor />
+      <comment>iwiki +[[:el:familia]]</comment>
+      <origin>1067618</origin>
+      <model>wikitext</model>
+      <format>text/x-wiki</format>
+      <text bytes="1907" sha1="bunt8hycrc0n415rewy4u51n81zimja" xml:space="preserve">== familia ({{Sprache|Lateinisch}}) ==
+=== {{Wortart|Substantiv|Lateinisch}}, {{f}} ===
+{{Lateinisch Substantiv Übersicht a-Deklination|famili}}
+{{Silbentrennung}} familia, {{Pl.}} familiae
+
+{{Aussprache}}
+:[[Hilfe:Hörbeispiele|Hörbeispiele]]: {{fehlend}}, {{Pl.}} {{fehlend}}
+:[[Hilfe:IPA|IPA]]: {{Lautschrift|...}}, {{Pl.}} {{Lautschrift|...}}
+
+{{Bedeutungen}}
+&lt;!-- Bedeutung [1], andere Bedeutung [2],... angeben - möglichst kurze Erklärung--&gt;
+:[1] Hausstand (mit Sklaven)
+:[2] Untergruppe eines Geschlechts
+:[3] Bruderschaft, Sekte. Gruppe
+
+{{Abkürzungen}}
+
+{{Herkunft}}
+:
+    
+{{Synonyme}}
+&lt;!-- hinter jedem oder vor allen Synonymen angegen, auf welche Bedeutung es/sie sich bezieht/en --&gt;
+:
+
+{{Gegenworte}}
+:
+
+{{Oberbegriffe}}
+&lt;!-- Oberbegriffe aufsteigend nach Größe sortiert --&gt;
+:
+
+{{Unterbegriffe}}
+&lt;!-- Unterbegriffe absteigend nach Größe sortiert --&gt;
+:
+
+{{Beispiele}}
+&lt;!-- für Bedeutung [1], andere Bedeutung [2], usw. --&gt;
+:[1] 
+
+{{Redewendungen}}
+:
+
+{{Charakteristische Wortkombinationen}}
+&lt;!-- Einträge üblicher Nachbarworte insbesondere gebräuchlicher Kombinationen (was man sofort damit verbindet)--&gt;
+:
+
+{{Abgeleitete Begriffe}}
+&lt;!-- Abgeleitete Begriffe alphabetisch sortiert (z.B. Wörterbuch, wortgewandt) --&gt;
+:
+
+==== Übersetzungen ====
+{{Ü-links}}
+&lt;!-- Beispiel: &quot;Englisch: [1] [[word]]&quot;, usw. --&gt;
+*{{ar}}: 
+*{{zh}}: 
+*{{en}}: [] [[]]
+{{Ü-Abstand}}
+*{{fr}}: 
+*{{ru}}: 
+*{{es}}: 
+{{Ü-rechts}}
+{{Referenzen}}
+:[1] {{Wikipedia|Familia}}
+
+{{Ähnlichkeiten}}&lt;!-- tot beim Eintrag von Tod, und umgekehrt --&gt;
+
+[[el:familia]]
+[[en:familia]]
+[[es:familia]]
+[[fi:familia]]
+[[fr:familia]]
+[[fy:familia]]
+[[hu:familia]]
+[[io:familia]]
+[[ko:familia]]
+[[la:familia]]
+[[lo:familia]]
+[[lt:familia]]
+[[no:familia]]
+[[oc:familia]]
+[[pl:familia]]
+[[pt:familia]]
+[[ru:familia]]
+[[sv:familia]]
+[[sw:familia]]
+[[ta:familia]]
+[[th:familia]]
+[[tr:familia]]
+[[zh:familia]]
+[[zh-min-nan:familia]]</text>
+      <sha1>bunt8hycrc0n415rewy4u51n81zimja</sha1>
+    </revision>
+    <revision>
+      <id>1081298</id>
+      <parentid>1067618</parentid>
+      <timestamp>2009-10-06T15:05:46Z</timestamp>
+      <contributor>
+        <username>Trevas</username>
+        <id>7006</id>
+      </contributor>
+      <minor />
+      <comment>/* {{Wortart|Substantiv|Lateinisch}}, {{f}} */ flexboxtausch</comment>
+      <origin>1081298</origin>
+      <model>wikitext</model>
+      <format>text/x-wiki</format>
+      <text bytes="1044" sha1="fe6wq21jlmwrdgjzg60k2bwba91w7dg" xml:space="preserve">== familia ({{Sprache|Lateinisch}}) ==
+=== {{Wortart|Substantiv|Lateinisch}}, {{f}} ===
+{{Lateinisch Substantiv Übersicht 2|familia|famili|ae}}
+{{Silbentrennung}}
+:fa·mi·lia, {{Pl.}} fa·mi·liae
+
+{{Aussprache}}
+:[[Hilfe:Hörbeispiele|Hörbeispiele]]: {{fehlend}}, {{Pl.}} {{fehlend}}
+:[[Hilfe:IPA|IPA]]: {{Lautschrift|...}}, {{Pl.}} {{Lautschrift|...}}
+
+{{Bedeutungen}}
+:[1] Hausstand (mit Sklaven)
+:[2] Untergruppe eines Geschlechts
+:[3] Bruderschaft, Sekte. Gruppe
+
+{{Herkunft}}
+:
+    
+{{Beispiele}}
+:[1] 
+
+==== Übersetzungen ====
+{{Ü-links}}
+:{{Übersetzungen umleiten|1|Hausstand|}} {{m}}
+{{Ü-rechts}}
+
+{{Referenzen}}
+:[1] {{Wikipedia|Familia}}
+
+{{Ähnlichkeiten}}
+
+[[el:familia]]
+[[en:familia]]
+[[es:familia]]
+[[fi:familia]]
+[[fr:familia]]
+[[fy:familia]]
+[[hu:familia]]
+[[io:familia]]
+[[ko:familia]]
+[[la:familia]]
+[[lo:familia]]
+[[lt:familia]]
+[[no:familia]]
+[[oc:familia]]
+[[pl:familia]]
+[[pt:familia]]
+[[ru:familia]]
+[[sv:familia]]
+[[sw:familia]]
+[[ta:familia]]
+[[th:familia]]
+[[tr:familia]]
+[[zh:familia]]
+[[zh-min-nan:familia]]</text>
+      <sha1>fe6wq21jlmwrdgjzg60k2bwba91w7dg</sha1>
+    </revision>
+    <revision>
+      <id>1094855</id>
+      <parentid>1081298</parentid>
+      <timestamp>2009-10-21T12:11:22Z</timestamp>
+      <contributor>
+        <username>Wamito</username>
+        <id>720</id>
+      </contributor>
+      <origin>1094855</origin>
+      <model>wikitext</model>
+      <format>text/x-wiki</format>
+      <text bytes="1371" sha1="ri9blypcymi4ee42hr7qy4kaags98ro" xml:space="preserve">== familia ({{Sprache|Lateinisch}}) ==
+=== {{Wortart|Substantiv|Lateinisch}}, {{f}} ===
+{{Lateinisch Substantiv Übersicht 2|familia|famili|ae}}
+{{Silbentrennung}}
+:fa·mi·lia, {{Pl.}} fa·mi·liae
+
+{{Aussprache}}
+:[[Hilfe:Hörbeispiele|Hörbeispiele]]: {{fehlend}}, {{Pl.}} {{fehlend}}
+:[[Hilfe:IPA|IPA]]: {{Lautschrift|...}}, {{Pl.}} {{Lautschrift|...}}
+
+{{Bedeutungen}}
+:[1] das [[Haus]], der [[Hausstand]] (mit Sklaven)
+:[2] das [[Geschlecht]], die [[Familie]]
+:[3] die [[Dienerschaft]]
+
+{{Herkunft}}
+:
+    
+{{Beispiele}}
+:[1] 
+
+==== Übersetzungen ====
+{{Ü-links}}
+: {{Übersetzungen umleiten|1|Hausstand|}} {{m}}, {{Übersetzungen umleiten||Haus|}} {{m}}
+: {{Übersetzungen umleiten|2|Geschlecht|}}, {{Übersetzungen umleiten||Familie|}}
+: {{Übersetzungen umleiten|3|Dienerschaft|}}
+{{Ü-rechts}}
+
+{{Referenzen}}
+:[2] {{Wikipedia|Familie}}
+:[1-3] Lateinischer {{Wikipedia2|la|familia}}
+:[1-3] {{Literaturliste|Georges|sup=2004}}
+:[1-3] {{Literaturliste|Stowasser|sup=1998}}
+
+{{Ähnlichkeiten}}
+
+[[el:familia]]
+[[en:familia]]
+[[es:familia]]
+[[fi:familia]]
+[[fr:familia]]
+[[fy:familia]]
+[[hu:familia]]
+[[io:familia]]
+[[ko:familia]]
+[[la:familia]]
+[[lo:familia]]
+[[lt:familia]]
+[[no:familia]]
+[[oc:familia]]
+[[pl:familia]]
+[[pt:familia]]
+[[ru:familia]]
+[[sv:familia]]
+[[sw:familia]]
+[[ta:familia]]
+[[th:familia]]
+[[tr:familia]]
+[[zh:familia]]
+[[zh-min-nan:familia]]</text>
+      <sha1>ri9blypcymi4ee42hr7qy4kaags98ro</sha1>
+    </revision>
+    <revision>
+      <id>1119918</id>
+      <parentid>1094855</parentid>
+      <timestamp>2009-11-23T07:19:22Z</timestamp>
+      <contributor>
+        <username>BaluBot</username>
+        <id>734</id>
+      </contributor>
+      <minor />
+      <comment>Bindestrich -&gt; Halbgeviertstrich</comment>
+      <origin>1119918</origin>
+      <model>wikitext</model>
+      <format>text/x-wiki</format>
+      <text bytes="1377" sha1="3g9jf8sql6xah7mko8iqq4hpsg5250u" xml:space="preserve">== familia ({{Sprache|Lateinisch}}) ==
+=== {{Wortart|Substantiv|Lateinisch}}, {{f}} ===
+{{Lateinisch Substantiv Übersicht 2|familia|famili|ae}}
+{{Silbentrennung}}
+:fa·mi·lia, {{Pl.}} fa·mi·liae
+
+{{Aussprache}}
+:[[Hilfe:Hörbeispiele|Hörbeispiele]]: {{fehlend}}, {{Pl.}} {{fehlend}}
+:[[Hilfe:IPA|IPA]]: {{Lautschrift|...}}, {{Pl.}} {{Lautschrift|...}}
+
+{{Bedeutungen}}
+:[1] das [[Haus]], der [[Hausstand]] (mit Sklaven)
+:[2] das [[Geschlecht]], die [[Familie]]
+:[3] die [[Dienerschaft]]
+
+{{Herkunft}}
+:
+    
+{{Beispiele}}
+:[1] 
+
+==== Übersetzungen ====
+{{Ü-links}}
+: {{Übersetzungen umleiten|1|Hausstand|}} {{m}}, {{Übersetzungen umleiten||Haus|}} {{m}}
+: {{Übersetzungen umleiten|2|Geschlecht|}}, {{Übersetzungen umleiten||Familie|}}
+: {{Übersetzungen umleiten|3|Dienerschaft|}}
+{{Ü-rechts}}
+
+{{Referenzen}}
+:[2] {{Wikipedia|Familie}}
+:[1–3] Lateinischer {{Wikipedia2|la|familia}}
+:[1–3] {{Literaturliste|Georges|sup=2004}}
+:[1–3] {{Literaturliste|Stowasser|sup=1998}}
+
+{{Ähnlichkeiten}}
+
+[[el:familia]]
+[[en:familia]]
+[[es:familia]]
+[[fi:familia]]
+[[fr:familia]]
+[[fy:familia]]
+[[hu:familia]]
+[[io:familia]]
+[[ko:familia]]
+[[la:familia]]
+[[lo:familia]]
+[[lt:familia]]
+[[no:familia]]
+[[oc:familia]]
+[[pl:familia]]
+[[pt:familia]]
+[[ru:familia]]
+[[sv:familia]]
+[[sw:familia]]
+[[ta:familia]]
+[[th:familia]]
+[[tr:familia]]
+[[zh:familia]]
+[[zh-min-nan:familia]]</text>
+      <sha1>3g9jf8sql6xah7mko8iqq4hpsg5250u</sha1>
+    </revision>
+    <revision>
+      <id>1250001</id>
+      <parentid>1119918</parentid>
+      <timestamp>2010-03-03T04:59:19Z</timestamp>
+      <contributor>
+        <username>Interwicket</username>
+        <id>15085</id>
+      </contributor>
+      <minor />
+      <comment>iwiki +[[:sr:familia]]</comment>
+      <origin>1250001</origin>
+      <model>wikitext</model>
+      <format>text/x-wiki</format>
+      <text bytes="1392" sha1="i02mirwd3c5ztydpvnjjay50oraglkr" xml:space="preserve">== familia ({{Sprache|Lateinisch}}) ==
+=== {{Wortart|Substantiv|Lateinisch}}, {{f}} ===
+{{Lateinisch Substantiv Übersicht 2|familia|famili|ae}}
+{{Silbentrennung}}
+:fa·mi·lia, {{Pl.}} fa·mi·liae
+
+{{Aussprache}}
+:[[Hilfe:Hörbeispiele|Hörbeispiele]]: {{fehlend}}, {{Pl.}} {{fehlend}}
+:[[Hilfe:IPA|IPA]]: {{Lautschrift|...}}, {{Pl.}} {{Lautschrift|...}}
+
+{{Bedeutungen}}
+:[1] das [[Haus]], der [[Hausstand]] (mit Sklaven)
+:[2] das [[Geschlecht]], die [[Familie]]
+:[3] die [[Dienerschaft]]
+
+{{Herkunft}}
+:
+    
+{{Beispiele}}
+:[1] 
+
+==== Übersetzungen ====
+{{Ü-links}}
+: {{Übersetzungen umleiten|1|Hausstand|}} {{m}}, {{Übersetzungen umleiten||Haus|}} {{m}}
+: {{Übersetzungen umleiten|2|Geschlecht|}}, {{Übersetzungen umleiten||Familie|}}
+: {{Übersetzungen umleiten|3|Dienerschaft|}}
+{{Ü-rechts}}
+
+{{Referenzen}}
+:[2] {{Wikipedia|Familie}}
+:[1–3] Lateinischer {{Wikipedia2|la|familia}}
+:[1–3] {{Literaturliste|Georges|sup=2004}}
+:[1–3] {{Literaturliste|Stowasser|sup=1998}}
+
+{{Ähnlichkeiten}}
+
+[[el:familia]]
+[[en:familia]]
+[[es:familia]]
+[[fi:familia]]
+[[fr:familia]]
+[[fy:familia]]
+[[hu:familia]]
+[[io:familia]]
+[[ko:familia]]
+[[la:familia]]
+[[lo:familia]]
+[[lt:familia]]
+[[no:familia]]
+[[oc:familia]]
+[[pl:familia]]
+[[pt:familia]]
+[[ru:familia]]
+[[sr:familia]]
+[[sv:familia]]
+[[sw:familia]]
+[[ta:familia]]
+[[th:familia]]
+[[tr:familia]]
+[[zh:familia]]
+[[zh-min-nan:familia]]</text>
+      <sha1>i02mirwd3c5ztydpvnjjay50oraglkr</sha1>
+    </revision>
+    <revision>
+      <id>1452505</id>
+      <parentid>1250001</parentid>
+      <timestamp>2010-10-29T09:58:33Z</timestamp>
+      <contributor>
+        <username>Interwicket</username>
+        <id>15085</id>
+      </contributor>
+      <minor />
+      <comment>iwiki +[[:gl:familia]]</comment>
+      <origin>1452505</origin>
+      <model>wikitext</model>
+      <format>text/x-wiki</format>
+      <text bytes="1407" sha1="afrn1mk1ls773shkp90walhgrj63bxh" xml:space="preserve">== familia ({{Sprache|Lateinisch}}) ==
+=== {{Wortart|Substantiv|Lateinisch}}, {{f}} ===
+{{Lateinisch Substantiv Übersicht 2|familia|famili|ae}}
+{{Silbentrennung}}
+:fa·mi·lia, {{Pl.}} fa·mi·liae
+
+{{Aussprache}}
+:[[Hilfe:Hörbeispiele|Hörbeispiele]]: {{fehlend}}, {{Pl.}} {{fehlend}}
+:[[Hilfe:IPA|IPA]]: {{Lautschrift|...}}, {{Pl.}} {{Lautschrift|...}}
+
+{{Bedeutungen}}
+:[1] das [[Haus]], der [[Hausstand]] (mit Sklaven)
+:[2] das [[Geschlecht]], die [[Familie]]
+:[3] die [[Dienerschaft]]
+
+{{Herkunft}}
+:
+    
+{{Beispiele}}
+:[1] 
+
+==== Übersetzungen ====
+{{Ü-links}}
+: {{Übersetzungen umleiten|1|Hausstand|}} {{m}}, {{Übersetzungen umleiten||Haus|}} {{m}}
+: {{Übersetzungen umleiten|2|Geschlecht|}}, {{Übersetzungen umleiten||Familie|}}
+: {{Übersetzungen umleiten|3|Dienerschaft|}}
+{{Ü-rechts}}
+
+{{Referenzen}}
+:[2] {{Wikipedia|Familie}}
+:[1–3] Lateinischer {{Wikipedia2|la|familia}}
+:[1–3] {{Literaturliste|Georges|sup=2004}}
+:[1–3] {{Literaturliste|Stowasser|sup=1998}}
+
+{{Ähnlichkeiten}}
+
+[[el:familia]]
+[[en:familia]]
+[[es:familia]]
+[[fi:familia]]
+[[fr:familia]]
+[[fy:familia]]
+[[gl:familia]]
+[[hu:familia]]
+[[io:familia]]
+[[ko:familia]]
+[[la:familia]]
+[[lo:familia]]
+[[lt:familia]]
+[[no:familia]]
+[[oc:familia]]
+[[pl:familia]]
+[[pt:familia]]
+[[ru:familia]]
+[[sr:familia]]
+[[sv:familia]]
+[[sw:familia]]
+[[ta:familia]]
+[[th:familia]]
+[[tr:familia]]
+[[zh:familia]]
+[[zh-min-nan:familia]]</text>
+      <sha1>afrn1mk1ls773shkp90walhgrj63bxh</sha1>
+    </revision>
+    <revision>
+      <id>1457345</id>
+      <parentid>1452505</parentid>
+      <timestamp>2010-11-02T01:31:16Z</timestamp>
+      <contributor>
+        <username>Interwicket</username>
+        <id>15085</id>
+      </contributor>
+      <minor />
+      <comment>iwiki +[[:ca:familia]]</comment>
+      <origin>1457345</origin>
+      <model>wikitext</model>
+      <format>text/x-wiki</format>
+      <text bytes="1422" sha1="eu4amsfnt5plht2j0brhjlxytqivc3l" xml:space="preserve">== familia ({{Sprache|Lateinisch}}) ==
+=== {{Wortart|Substantiv|Lateinisch}}, {{f}} ===
+{{Lateinisch Substantiv Übersicht 2|familia|famili|ae}}
+{{Silbentrennung}}
+:fa·mi·lia, {{Pl.}} fa·mi·liae
+
+{{Aussprache}}
+:[[Hilfe:Hörbeispiele|Hörbeispiele]]: {{fehlend}}, {{Pl.}} {{fehlend}}
+:[[Hilfe:IPA|IPA]]: {{Lautschrift|...}}, {{Pl.}} {{Lautschrift|...}}
+
+{{Bedeutungen}}
+:[1] das [[Haus]], der [[Hausstand]] (mit Sklaven)
+:[2] das [[Geschlecht]], die [[Familie]]
+:[3] die [[Dienerschaft]]
+
+{{Herkunft}}
+:
+    
+{{Beispiele}}
+:[1] 
+
+==== Übersetzungen ====
+{{Ü-links}}
+: {{Übersetzungen umleiten|1|Hausstand|}} {{m}}, {{Übersetzungen umleiten||Haus|}} {{m}}
+: {{Übersetzungen umleiten|2|Geschlecht|}}, {{Übersetzungen umleiten||Familie|}}
+: {{Übersetzungen umleiten|3|Dienerschaft|}}
+{{Ü-rechts}}
+
+{{Referenzen}}
+:[2] {{Wikipedia|Familie}}
+:[1–3] Lateinischer {{Wikipedia2|la|familia}}
+:[1–3] {{Literaturliste|Georges|sup=2004}}
+:[1–3] {{Literaturliste|Stowasser|sup=1998}}
+
+{{Ähnlichkeiten}}
+
+[[ca:familia]]
+[[el:familia]]
+[[en:familia]]
+[[es:familia]]
+[[fi:familia]]
+[[fr:familia]]
+[[fy:familia]]
+[[gl:familia]]
+[[hu:familia]]
+[[io:familia]]
+[[ko:familia]]
+[[la:familia]]
+[[lo:familia]]
+[[lt:familia]]
+[[no:familia]]
+[[oc:familia]]
+[[pl:familia]]
+[[pt:familia]]
+[[ru:familia]]
+[[sr:familia]]
+[[sv:familia]]
+[[sw:familia]]
+[[ta:familia]]
+[[th:familia]]
+[[tr:familia]]
+[[zh:familia]]
+[[zh-min-nan:familia]]</text>
+      <sha1>eu4amsfnt5plht2j0brhjlxytqivc3l</sha1>
+    </revision>
+    <revision>
+      <id>1482428</id>
+      <parentid>1457345</parentid>
+      <timestamp>2010-12-06T22:20:48Z</timestamp>
+      <contributor>
+        <username>Luckas-bot</username>
+        <id>13315</id>
+      </contributor>
+      <minor />
+      <comment>r2.6.2) (Bot: Ergänze: [[cs:familia]]</comment>
+      <origin>1482428</origin>
+      <model>wikitext</model>
+      <format>text/x-wiki</format>
+      <text bytes="1437" sha1="lhtd2hhmkendjnvl639nkbdbrmrg8p6" xml:space="preserve">== familia ({{Sprache|Lateinisch}}) ==
+=== {{Wortart|Substantiv|Lateinisch}}, {{f}} ===
+{{Lateinisch Substantiv Übersicht 2|familia|famili|ae}}
+{{Silbentrennung}}
+:fa·mi·lia, {{Pl.}} fa·mi·liae
+
+{{Aussprache}}
+:[[Hilfe:Hörbeispiele|Hörbeispiele]]: {{fehlend}}, {{Pl.}} {{fehlend}}
+:[[Hilfe:IPA|IPA]]: {{Lautschrift|...}}, {{Pl.}} {{Lautschrift|...}}
+
+{{Bedeutungen}}
+:[1] das [[Haus]], der [[Hausstand]] (mit Sklaven)
+:[2] das [[Geschlecht]], die [[Familie]]
+:[3] die [[Dienerschaft]]
+
+{{Herkunft}}
+:
+    
+{{Beispiele}}
+:[1] 
+
+==== Übersetzungen ====
+{{Ü-links}}
+: {{Übersetzungen umleiten|1|Hausstand|}} {{m}}, {{Übersetzungen umleiten||Haus|}} {{m}}
+: {{Übersetzungen umleiten|2|Geschlecht|}}, {{Übersetzungen umleiten||Familie|}}
+: {{Übersetzungen umleiten|3|Dienerschaft|}}
+{{Ü-rechts}}
+
+{{Referenzen}}
+:[2] {{Wikipedia|Familie}}
+:[1–3] Lateinischer {{Wikipedia2|la|familia}}
+:[1–3] {{Literaturliste|Georges|sup=2004}}
+:[1–3] {{Literaturliste|Stowasser|sup=1998}}
+
+{{Ähnlichkeiten}}
+
+[[ca:familia]]
+[[cs:familia]]
+[[el:familia]]
+[[en:familia]]
+[[es:familia]]
+[[fi:familia]]
+[[fr:familia]]
+[[fy:familia]]
+[[gl:familia]]
+[[hu:familia]]
+[[io:familia]]
+[[ko:familia]]
+[[la:familia]]
+[[lo:familia]]
+[[lt:familia]]
+[[no:familia]]
+[[oc:familia]]
+[[pl:familia]]
+[[pt:familia]]
+[[ru:familia]]
+[[sr:familia]]
+[[sv:familia]]
+[[sw:familia]]
+[[ta:familia]]
+[[th:familia]]
+[[tr:familia]]
+[[zh:familia]]
+[[zh-min-nan:familia]]</text>
+      <sha1>lhtd2hhmkendjnvl639nkbdbrmrg8p6</sha1>
+    </revision>
+    <revision>
+      <id>1525463</id>
+      <parentid>1482428</parentid>
+      <timestamp>2011-01-14T16:31:04Z</timestamp>
+      <contributor>
+        <username>BaluBot</username>
+        <id>734</id>
+      </contributor>
+      <minor />
+      <comment>typografische/IPA-Korrekturen</comment>
+      <origin>1525463</origin>
+      <model>wikitext</model>
+      <format>text/x-wiki</format>
+      <text bytes="1405" sha1="0iw2t58fvopznhqluuqdra2tihjolhu" xml:space="preserve">== familia ({{Sprache|Lateinisch}}) ==
+=== {{Wortart|Substantiv|Lateinisch}}, {{f}} ===
+{{Lateinisch Substantiv Übersicht 2|familia|famili|ae}}
+{{Silbentrennung}}
+:fa·mi·lia, {{Pl.}} fa·mi·liae
+
+{{Aussprache}}
+:{{Hörbeispiele}} {{fehlend}}, {{Pl.}} {{fehlend}}
+:{{IPA}} {{Lautschrift|...}}, {{Pl.}} {{Lautschrift|...}}
+
+{{Bedeutungen}}
+:[1] das [[Haus]], der [[Hausstand]] (mit Sklaven)
+:[2] das [[Geschlecht]], die [[Familie]]
+:[3] die [[Dienerschaft]]
+
+{{Herkunft}}
+:
+    
+{{Beispiele}}
+:[1] 
+
+==== Übersetzungen ====
+{{Ü-links}}
+: {{Übersetzungen umleiten|1|Hausstand|}} {{m}}, {{Übersetzungen umleiten||Haus|}} {{m}}
+: {{Übersetzungen umleiten|2|Geschlecht|}}, {{Übersetzungen umleiten||Familie|}}
+: {{Übersetzungen umleiten|3|Dienerschaft|}}
+{{Ü-rechts}}
+
+{{Referenzen}}
+:[2] {{Wikipedia|Familie}}
+:[1–3] Lateinischer {{Wikipedia2|la|familia}}
+:[1–3] {{Literaturliste|Georges|sup=2004}}
+:[1–3] {{Literaturliste|Stowasser|sup=1998}}
+
+{{Ähnlichkeiten}}
+
+[[ca:familia]]
+[[cs:familia]]
+[[el:familia]]
+[[en:familia]]
+[[es:familia]]
+[[fi:familia]]
+[[fr:familia]]
+[[fy:familia]]
+[[gl:familia]]
+[[hu:familia]]
+[[io:familia]]
+[[ko:familia]]
+[[la:familia]]
+[[lo:familia]]
+[[lt:familia]]
+[[no:familia]]
+[[oc:familia]]
+[[pl:familia]]
+[[pt:familia]]
+[[ru:familia]]
+[[sr:familia]]
+[[sv:familia]]
+[[sw:familia]]
+[[ta:familia]]
+[[th:familia]]
+[[tr:familia]]
+[[zh:familia]]
+[[zh-min-nan:familia]]</text>
+      <sha1>0iw2t58fvopznhqluuqdra2tihjolhu</sha1>
+    </revision>
+    <revision>
+      <id>1681920</id>
+      <parentid>1525463</parentid>
+      <timestamp>2011-03-02T16:07:38Z</timestamp>
+      <contributor>
+        <ip>217.224.166.55</ip>
+      </contributor>
+      <comment>hk, ref</comment>
+      <origin>1681920</origin>
+      <model>wikitext</model>
+      <format>text/x-wiki</format>
+      <text bytes="1481" sha1="bj6l0ij7y8wxtepplz78bhhjcp256kh" xml:space="preserve">== familia ({{Sprache|Lateinisch}}) ==
+=== {{Wortart|Substantiv|Lateinisch}}, {{f}} ===
+{{Lateinisch Substantiv Übersicht 2|familia|famili|ae}}
+{{Silbentrennung}}
+:fa·mi·lia, {{Pl.}} fa·mi·li·ae
+
+{{Bedeutungen}}
+:[1] das [[Haus]], der [[Hausstand]] (mit Sklaven)
+:[2] das [[Geschlecht]], die [[Familie]]
+:[3] die [[Dienerschaft]]
+
+{{Herkunft}}
+:zu dem Adjektiv ''{{Ü|la|famulus}}''&lt;ref&gt;{{Ref-Georges}}&lt;/ref&gt; „dienend“; ursprüngliche Bedeutung: die Gesamtheit der unter einem ''[[dominus]]'' stehenden Sklaven, besonders als Angehörige und Teil der Familie, dann übertragen die ganze Hausgenossenschaft (Freie und Sklaven)
+    
+{{Beispiele}}
+:[1] 
+
+==== Übersetzungen ====
+{{Ü-links}}
+:{{Übersetzungen umleiten|1|Hausstand|}} {{m}}, {{Übersetzungen umleiten||Haus|}} {{m}}
+:{{Übersetzungen umleiten|2|Geschlecht|}}, {{Übersetzungen umleiten||Familie|}}
+:{{Übersetzungen umleiten|3|Dienerschaft|}}
+{{Ü-rechts}}
+
+{{Referenzen}}
+:[1–3] Lateinischer {{Wikipedia2|la|familia}}
+:[1–3] {{Ref-Georges}}
+
+{{Quellen}}
+
+{{Ähnlichkeiten}}
+
+[[ca:familia]]
+[[cs:familia]]
+[[el:familia]]
+[[en:familia]]
+[[es:familia]]
+[[fi:familia]]
+[[fr:familia]]
+[[fy:familia]]
+[[gl:familia]]
+[[hu:familia]]
+[[io:familia]]
+[[ko:familia]]
+[[la:familia]]
+[[lo:familia]]
+[[lt:familia]]
+[[no:familia]]
+[[oc:familia]]
+[[pl:familia]]
+[[pt:familia]]
+[[ru:familia]]
+[[sr:familia]]
+[[sv:familia]]
+[[sw:familia]]
+[[ta:familia]]
+[[th:familia]]
+[[tr:familia]]
+[[zh:familia]]
+[[zh-min-nan:familia]]</text>
+      <sha1>bj6l0ij7y8wxtepplz78bhhjcp256kh</sha1>
+    </revision>
+    <revision>
+      <id>1987357</id>
+      <parentid>1681920</parentid>
+      <timestamp>2011-10-13T12:22:34Z</timestamp>
+      <contributor>
+        <username>JAnDbot</username>
+        <id>12875</id>
+      </contributor>
+      <minor />
+      <comment>r2.5.2) (Bot: Ergänze: [[mg:familia]]</comment>
+      <origin>1987357</origin>
+      <model>wikitext</model>
+      <format>text/x-wiki</format>
+      <text bytes="1496" sha1="fwignm3e29k30nkaq3a4o9kdc9zcfzo" xml:space="preserve">== familia ({{Sprache|Lateinisch}}) ==
+=== {{Wortart|Substantiv|Lateinisch}}, {{f}} ===
+{{Lateinisch Substantiv Übersicht 2|familia|famili|ae}}
+{{Silbentrennung}}
+:fa·mi·lia, {{Pl.}} fa·mi·li·ae
+
+{{Bedeutungen}}
+:[1] das [[Haus]], der [[Hausstand]] (mit Sklaven)
+:[2] das [[Geschlecht]], die [[Familie]]
+:[3] die [[Dienerschaft]]
+
+{{Herkunft}}
+:zu dem Adjektiv ''{{Ü|la|famulus}}''&lt;ref&gt;{{Ref-Georges}}&lt;/ref&gt; „dienend“; ursprüngliche Bedeutung: die Gesamtheit der unter einem ''[[dominus]]'' stehenden Sklaven, besonders als Angehörige und Teil der Familie, dann übertragen die ganze Hausgenossenschaft (Freie und Sklaven)
+    
+{{Beispiele}}
+:[1] 
+
+==== Übersetzungen ====
+{{Ü-links}}
+:{{Übersetzungen umleiten|1|Hausstand|}} {{m}}, {{Übersetzungen umleiten||Haus|}} {{m}}
+:{{Übersetzungen umleiten|2|Geschlecht|}}, {{Übersetzungen umleiten||Familie|}}
+:{{Übersetzungen umleiten|3|Dienerschaft|}}
+{{Ü-rechts}}
+
+{{Referenzen}}
+:[1–3] Lateinischer {{Wikipedia2|la|familia}}
+:[1–3] {{Ref-Georges}}
+
+{{Quellen}}
+
+{{Ähnlichkeiten}}
+
+[[ca:familia]]
+[[cs:familia]]
+[[el:familia]]
+[[en:familia]]
+[[es:familia]]
+[[fi:familia]]
+[[fr:familia]]
+[[fy:familia]]
+[[gl:familia]]
+[[hu:familia]]
+[[io:familia]]
+[[ko:familia]]
+[[la:familia]]
+[[lo:familia]]
+[[lt:familia]]
+[[mg:familia]]
+[[no:familia]]
+[[oc:familia]]
+[[pl:familia]]
+[[pt:familia]]
+[[ru:familia]]
+[[sr:familia]]
+[[sv:familia]]
+[[sw:familia]]
+[[ta:familia]]
+[[th:familia]]
+[[tr:familia]]
+[[zh:familia]]
+[[zh-min-nan:familia]]</text>
+      <sha1>fwignm3e29k30nkaq3a4o9kdc9zcfzo</sha1>
+    </revision>
+    <revision>
+      <id>1999965</id>
+      <parentid>1987357</parentid>
+      <timestamp>2011-10-30T14:51:19Z</timestamp>
+      <contributor>
+        <username>Luckas-bot</username>
+        <id>13315</id>
+      </contributor>
+      <minor />
+      <comment>r2.7.1) (Bot: Ergänze: [[nl:familia]]</comment>
+      <origin>1999965</origin>
+      <model>wikitext</model>
+      <format>text/x-wiki</format>
+      <text bytes="1511" sha1="dnp3ox7na2z1962ti8ou26nclbk87ou" xml:space="preserve">== familia ({{Sprache|Lateinisch}}) ==
+=== {{Wortart|Substantiv|Lateinisch}}, {{f}} ===
+{{Lateinisch Substantiv Übersicht 2|familia|famili|ae}}
+{{Silbentrennung}}
+:fa·mi·lia, {{Pl.}} fa·mi·li·ae
+
+{{Bedeutungen}}
+:[1] das [[Haus]], der [[Hausstand]] (mit Sklaven)
+:[2] das [[Geschlecht]], die [[Familie]]
+:[3] die [[Dienerschaft]]
+
+{{Herkunft}}
+:zu dem Adjektiv ''{{Ü|la|famulus}}''&lt;ref&gt;{{Ref-Georges}}&lt;/ref&gt; „dienend“; ursprüngliche Bedeutung: die Gesamtheit der unter einem ''[[dominus]]'' stehenden Sklaven, besonders als Angehörige und Teil der Familie, dann übertragen die ganze Hausgenossenschaft (Freie und Sklaven)
+    
+{{Beispiele}}
+:[1] 
+
+==== Übersetzungen ====
+{{Ü-links}}
+:{{Übersetzungen umleiten|1|Hausstand|}} {{m}}, {{Übersetzungen umleiten||Haus|}} {{m}}
+:{{Übersetzungen umleiten|2|Geschlecht|}}, {{Übersetzungen umleiten||Familie|}}
+:{{Übersetzungen umleiten|3|Dienerschaft|}}
+{{Ü-rechts}}
+
+{{Referenzen}}
+:[1–3] Lateinischer {{Wikipedia2|la|familia}}
+:[1–3] {{Ref-Georges}}
+
+{{Quellen}}
+
+{{Ähnlichkeiten}}
+
+[[ca:familia]]
+[[cs:familia]]
+[[el:familia]]
+[[en:familia]]
+[[es:familia]]
+[[fi:familia]]
+[[fr:familia]]
+[[fy:familia]]
+[[gl:familia]]
+[[hu:familia]]
+[[io:familia]]
+[[ko:familia]]
+[[la:familia]]
+[[lo:familia]]
+[[lt:familia]]
+[[mg:familia]]
+[[nl:familia]]
+[[no:familia]]
+[[oc:familia]]
+[[pl:familia]]
+[[pt:familia]]
+[[ru:familia]]
+[[sr:familia]]
+[[sv:familia]]
+[[sw:familia]]
+[[ta:familia]]
+[[th:familia]]
+[[tr:familia]]
+[[zh:familia]]
+[[zh-min-nan:familia]]</text>
+      <sha1>dnp3ox7na2z1962ti8ou26nclbk87ou</sha1>
+    </revision>
+    <revision>
+      <id>2067082</id>
+      <parentid>1999965</parentid>
+      <timestamp>2011-12-16T04:29:59Z</timestamp>
+      <contributor>
+        <username>Luckas-bot</username>
+        <id>13315</id>
+      </contributor>
+      <minor />
+      <comment>r2.7.2) (Bot: Ergänze: [[eu:familia]]</comment>
+      <origin>2067082</origin>
+      <model>wikitext</model>
+      <format>text/x-wiki</format>
+      <text bytes="1526" sha1="rri4zmzkq1e4q5yrkr22kepthokyba2" xml:space="preserve">== familia ({{Sprache|Lateinisch}}) ==
+=== {{Wortart|Substantiv|Lateinisch}}, {{f}} ===
+{{Lateinisch Substantiv Übersicht 2|familia|famili|ae}}
+{{Silbentrennung}}
+:fa·mi·lia, {{Pl.}} fa·mi·li·ae
+
+{{Bedeutungen}}
+:[1] das [[Haus]], der [[Hausstand]] (mit Sklaven)
+:[2] das [[Geschlecht]], die [[Familie]]
+:[3] die [[Dienerschaft]]
+
+{{Herkunft}}
+:zu dem Adjektiv ''{{Ü|la|famulus}}''&lt;ref&gt;{{Ref-Georges}}&lt;/ref&gt; „dienend“; ursprüngliche Bedeutung: die Gesamtheit der unter einem ''[[dominus]]'' stehenden Sklaven, besonders als Angehörige und Teil der Familie, dann übertragen die ganze Hausgenossenschaft (Freie und Sklaven)
+    
+{{Beispiele}}
+:[1] 
+
+==== Übersetzungen ====
+{{Ü-links}}
+:{{Übersetzungen umleiten|1|Hausstand|}} {{m}}, {{Übersetzungen umleiten||Haus|}} {{m}}
+:{{Übersetzungen umleiten|2|Geschlecht|}}, {{Übersetzungen umleiten||Familie|}}
+:{{Übersetzungen umleiten|3|Dienerschaft|}}
+{{Ü-rechts}}
+
+{{Referenzen}}
+:[1–3] Lateinischer {{Wikipedia2|la|familia}}
+:[1–3] {{Ref-Georges}}
+
+{{Quellen}}
+
+{{Ähnlichkeiten}}
+
+[[ca:familia]]
+[[cs:familia]]
+[[el:familia]]
+[[en:familia]]
+[[es:familia]]
+[[eu:familia]]
+[[fi:familia]]
+[[fr:familia]]
+[[fy:familia]]
+[[gl:familia]]
+[[hu:familia]]
+[[io:familia]]
+[[ko:familia]]
+[[la:familia]]
+[[lo:familia]]
+[[lt:familia]]
+[[mg:familia]]
+[[nl:familia]]
+[[no:familia]]
+[[oc:familia]]
+[[pl:familia]]
+[[pt:familia]]
+[[ru:familia]]
+[[sr:familia]]
+[[sv:familia]]
+[[sw:familia]]
+[[ta:familia]]
+[[th:familia]]
+[[tr:familia]]
+[[zh:familia]]
+[[zh-min-nan:familia]]</text>
+      <sha1>rri4zmzkq1e4q5yrkr22kepthokyba2</sha1>
+    </revision>
+    <revision>
+      <id>2079718</id>
+      <parentid>2067082</parentid>
+      <timestamp>2011-12-23T23:43:58Z</timestamp>
+      <contributor>
+        <username>Luckas-bot</username>
+        <id>13315</id>
+      </contributor>
+      <minor />
+      <comment>r2.7.2) (Bot: Ergänze: [[id:familia]]</comment>
+      <origin>2079718</origin>
+      <model>wikitext</model>
+      <format>text/x-wiki</format>
+      <text bytes="1541" sha1="pqr0wlebn6w701cgs88plr2mjkejtat" xml:space="preserve">== familia ({{Sprache|Lateinisch}}) ==
+=== {{Wortart|Substantiv|Lateinisch}}, {{f}} ===
+{{Lateinisch Substantiv Übersicht 2|familia|famili|ae}}
+{{Silbentrennung}}
+:fa·mi·lia, {{Pl.}} fa·mi·li·ae
+
+{{Bedeutungen}}
+:[1] das [[Haus]], der [[Hausstand]] (mit Sklaven)
+:[2] das [[Geschlecht]], die [[Familie]]
+:[3] die [[Dienerschaft]]
+
+{{Herkunft}}
+:zu dem Adjektiv ''{{Ü|la|famulus}}''&lt;ref&gt;{{Ref-Georges}}&lt;/ref&gt; „dienend“; ursprüngliche Bedeutung: die Gesamtheit der unter einem ''[[dominus]]'' stehenden Sklaven, besonders als Angehörige und Teil der Familie, dann übertragen die ganze Hausgenossenschaft (Freie und Sklaven)
+    
+{{Beispiele}}
+:[1] 
+
+==== Übersetzungen ====
+{{Ü-links}}
+:{{Übersetzungen umleiten|1|Hausstand|}} {{m}}, {{Übersetzungen umleiten||Haus|}} {{m}}
+:{{Übersetzungen umleiten|2|Geschlecht|}}, {{Übersetzungen umleiten||Familie|}}
+:{{Übersetzungen umleiten|3|Dienerschaft|}}
+{{Ü-rechts}}
+
+{{Referenzen}}
+:[1–3] Lateinischer {{Wikipedia2|la|familia}}
+:[1–3] {{Ref-Georges}}
+
+{{Quellen}}
+
+{{Ähnlichkeiten}}
+
+[[ca:familia]]
+[[cs:familia]]
+[[el:familia]]
+[[en:familia]]
+[[es:familia]]
+[[eu:familia]]
+[[fi:familia]]
+[[fr:familia]]
+[[fy:familia]]
+[[gl:familia]]
+[[hu:familia]]
+[[id:familia]]
+[[io:familia]]
+[[ko:familia]]
+[[la:familia]]
+[[lo:familia]]
+[[lt:familia]]
+[[mg:familia]]
+[[nl:familia]]
+[[no:familia]]
+[[oc:familia]]
+[[pl:familia]]
+[[pt:familia]]
+[[ru:familia]]
+[[sr:familia]]
+[[sv:familia]]
+[[sw:familia]]
+[[ta:familia]]
+[[th:familia]]
+[[tr:familia]]
+[[zh:familia]]
+[[zh-min-nan:familia]]</text>
+      <sha1>pqr0wlebn6w701cgs88plr2mjkejtat</sha1>
+    </revision>
+    <revision>
+      <id>2161916</id>
+      <parentid>2079718</parentid>
+      <timestamp>2012-03-27T10:38:57Z</timestamp>
+      <contributor>
+        <username>JAnDbot</username>
+        <id>12875</id>
+      </contributor>
+      <minor />
+      <comment>r2.5.4) (Bot: Ergänze: [[ast:familia]]</comment>
+      <origin>2161916</origin>
+      <model>wikitext</model>
+      <format>text/x-wiki</format>
+      <text bytes="1557" sha1="70ika1jzffhajl6ibyln2j9nrwchdxa" xml:space="preserve">== familia ({{Sprache|Lateinisch}}) ==
+=== {{Wortart|Substantiv|Lateinisch}}, {{f}} ===
+{{Lateinisch Substantiv Übersicht 2|familia|famili|ae}}
+{{Silbentrennung}}
+:fa·mi·lia, {{Pl.}} fa·mi·li·ae
+
+{{Bedeutungen}}
+:[1] das [[Haus]], der [[Hausstand]] (mit Sklaven)
+:[2] das [[Geschlecht]], die [[Familie]]
+:[3] die [[Dienerschaft]]
+
+{{Herkunft}}
+:zu dem Adjektiv ''{{Ü|la|famulus}}''&lt;ref&gt;{{Ref-Georges}}&lt;/ref&gt; „dienend“; ursprüngliche Bedeutung: die Gesamtheit der unter einem ''[[dominus]]'' stehenden Sklaven, besonders als Angehörige und Teil der Familie, dann übertragen die ganze Hausgenossenschaft (Freie und Sklaven)
+    
+{{Beispiele}}
+:[1] 
+
+==== Übersetzungen ====
+{{Ü-links}}
+:{{Übersetzungen umleiten|1|Hausstand|}} {{m}}, {{Übersetzungen umleiten||Haus|}} {{m}}
+:{{Übersetzungen umleiten|2|Geschlecht|}}, {{Übersetzungen umleiten||Familie|}}
+:{{Übersetzungen umleiten|3|Dienerschaft|}}
+{{Ü-rechts}}
+
+{{Referenzen}}
+:[1–3] Lateinischer {{Wikipedia2|la|familia}}
+:[1–3] {{Ref-Georges}}
+
+{{Quellen}}
+
+{{Ähnlichkeiten}}
+
+[[ast:familia]]
+[[ca:familia]]
+[[cs:familia]]
+[[el:familia]]
+[[en:familia]]
+[[es:familia]]
+[[eu:familia]]
+[[fi:familia]]
+[[fr:familia]]
+[[fy:familia]]
+[[gl:familia]]
+[[hu:familia]]
+[[id:familia]]
+[[io:familia]]
+[[ko:familia]]
+[[la:familia]]
+[[lo:familia]]
+[[lt:familia]]
+[[mg:familia]]
+[[nl:familia]]
+[[no:familia]]
+[[oc:familia]]
+[[pl:familia]]
+[[pt:familia]]
+[[ru:familia]]
+[[sr:familia]]
+[[sv:familia]]
+[[sw:familia]]
+[[ta:familia]]
+[[th:familia]]
+[[tr:familia]]
+[[zh:familia]]
+[[zh-min-nan:familia]]</text>
+      <sha1>70ika1jzffhajl6ibyln2j9nrwchdxa</sha1>
+    </revision>
+    <revision>
+      <id>2170601</id>
+      <parentid>2161916</parentid>
+      <timestamp>2012-04-08T16:07:06Z</timestamp>
+      <contributor>
+        <username>BetterkBot</username>
+        <id>49296</id>
+      </contributor>
+      <minor />
+      <comment>Bot: {Silbentrennung} -&gt; {Worttrennung}, Form</comment>
+      <origin>2170601</origin>
+      <model>wikitext</model>
+      <format>text/x-wiki</format>
+      <text bytes="1532" sha1="rumrshn2swfkvkb97k6cw9bdyc5odsm" xml:space="preserve">== familia ({{Sprache|Lateinisch}}) ==
+=== {{Wortart|Substantiv|Lateinisch}}, {{f}} ===
+
+{{Lateinisch Substantiv Übersicht 2|familia|famili|ae}}
+{{Worttrennung}}
+:fa·mi·lia, {{Pl.}} fa·mi·li·ae
+
+{{Bedeutungen}}
+:[1] das [[Haus]], der [[Hausstand]] (mit Sklaven)
+:[2] das [[Geschlecht]], die [[Familie]]
+:[3] die [[Dienerschaft]]
+
+{{Herkunft}}
+:zu dem Adjektiv ''{{Ü|la|famulus}}''&lt;ref&gt;{{Ref-Georges}}&lt;/ref&gt; „dienend“; ursprüngliche Bedeutung: die Gesamtheit der unter einem ''[[dominus]]'' stehenden Sklaven, besonders als Angehörige und Teil der Familie, dann übertragen die ganze Hausgenossenschaft (Freie und Sklaven)
+
+{{Beispiele}}
+:[1] 
+
+==== Übersetzungen ====
+{{Ü-links}}
+:{{Übersetzungen umleiten|1|Hausstand|}} {{m}}, {{Übersetzungen umleiten||Haus|}} {{m}}
+:{{Übersetzungen umleiten|2|Geschlecht|}}, {{Übersetzungen umleiten||Familie|}}
+:{{Übersetzungen umleiten|3|Dienerschaft|}}
+{{Ü-rechts}}
+
+{{Referenzen}}
+:[1–3] Lateinischer {{Wikipedia2|la|familia}}
+:[1–3] {{Ref-Georges}}
+
+{{Quellen}}
+
+[[ast:familia]]
+[[ca:familia]]
+[[cs:familia]]
+[[el:familia]]
+[[en:familia]]
+[[es:familia]]
+[[eu:familia]]
+[[fi:familia]]
+[[fr:familia]]
+[[fy:familia]]
+[[gl:familia]]
+[[hu:familia]]
+[[id:familia]]
+[[io:familia]]
+[[ko:familia]]
+[[la:familia]]
+[[lo:familia]]
+[[lt:familia]]
+[[mg:familia]]
+[[nl:familia]]
+[[no:familia]]
+[[oc:familia]]
+[[pl:familia]]
+[[pt:familia]]
+[[ru:familia]]
+[[sr:familia]]
+[[sv:familia]]
+[[sw:familia]]
+[[ta:familia]]
+[[th:familia]]
+[[tr:familia]]
+[[zh:familia]]
+[[zh-min-nan:familia]]</text>
+      <sha1>rumrshn2swfkvkb97k6cw9bdyc5odsm</sha1>
+    </revision>
+    <revision>
+      <id>2368725</id>
+      <parentid>2170601</parentid>
+      <timestamp>2012-05-24T20:57:21Z</timestamp>
+      <contributor>
+        <username>Nasobema lyricum</username>
+        <id>30375</id>
+      </contributor>
+      <origin>2368725</origin>
+      <model>wikitext</model>
+      <format>text/x-wiki</format>
+      <text bytes="1638" sha1="njghs7c86gsqeni5b7gwwo6rc4jxlu0" xml:space="preserve">== familia ({{Sprache|Lateinisch}}) ==
+=== {{Wortart|Substantiv|Lateinisch}}, {{f}} ===
+
+{{Lateinisch Substantiv Übersicht 2|familia|famili|ae}}
+{{Worttrennung}}
+:fa·mi·lia, {{Pl.}} fa·mi·li·ae
+
+{{Bedeutungen}}
+:[1] das [[Haus]], der [[Hausstand]] (mit Sklaven)
+:[2] das [[Geschlecht]], die [[Familie]]
+:[3] die [[Dienerschaft]]
+
+{{Herkunft}}
+:zu dem Adjektiv ''{{Ü|la|famulus}}''&lt;ref&gt;{{Ref-Georges}}&lt;/ref&gt; „dienend“; ursprüngliche Bedeutung: die Gesamtheit der unter einem ''[[dominus]]'' stehenden Sklaven, besonders als Angehörige und Teil der Familie, dann übertragen die ganze Hausgenossenschaft (Freie und Sklaven)
+
+{{Beispiele}}
+:[1] 
+
+==== Übersetzungen ====
+{{Ü-links}}
+:{{Übersetzungen umleiten|1|Hausstand|}} {{m}}, {{Übersetzungen umleiten||Haus|}} {{m}}
+:{{Übersetzungen umleiten|2|Geschlecht|}}, {{Übersetzungen umleiten||Familie|}}
+:{{Übersetzungen umleiten|3|Dienerschaft|}}
+{{Ü-rechts}}
+
+{{Referenzen}}
+:[1–3] Lateinischer {{Wikipedia2|la|familia}}
+:[1–3] {{Ref-Georges}}
+:[1-3] {{Lit-Stowasser: Lateinisch-deutsches Schulwörterbuch|A=1994}}, Seite 202, Eintrag „familia“
+
+{{Quellen|}}
+
+[[ast:familia]]
+[[ca:familia]]
+[[cs:familia]]
+[[el:familia]]
+[[en:familia]]
+[[es:familia]]
+[[eu:familia]]
+[[fi:familia]]
+[[fr:familia]]
+[[fy:familia]]
+[[gl:familia]]
+[[hu:familia]]
+[[id:familia]]
+[[io:familia]]
+[[ko:familia]]
+[[la:familia]]
+[[lo:familia]]
+[[lt:familia]]
+[[mg:familia]]
+[[nl:familia]]
+[[no:familia]]
+[[oc:familia]]
+[[pl:familia]]
+[[pt:familia]]
+[[ru:familia]]
+[[sr:familia]]
+[[sv:familia]]
+[[sw:familia]]
+[[ta:familia]]
+[[th:familia]]
+[[tr:familia]]
+[[zh:familia]]
+[[zh-min-nan:familia]]</text>
+      <sha1>njghs7c86gsqeni5b7gwwo6rc4jxlu0</sha1>
+    </revision>
+    <revision>
+      <id>2453463</id>
+      <parentid>2368725</parentid>
+      <timestamp>2012-07-15T18:07:26Z</timestamp>
+      <contributor>
+        <username>YS-Bot</username>
+        <id>52155</id>
+      </contributor>
+      <minor />
+      <comment>Bot: {{Wikipedia2}} =&gt; {{Wikipedia}}, Form</comment>
+      <origin>2453463</origin>
+      <model>wikitext</model>
+      <format>text/x-wiki</format>
+      <text bytes="1628" sha1="jbav5mlh4ftuwk1rl5xuxl4ldhdmzde" xml:space="preserve">== familia ({{Sprache|Lateinisch}}) ==
+=== {{Wortart|Substantiv|Lateinisch}}, {{f}} ===
+
+{{Lateinisch Substantiv Übersicht 2|familia|famili|ae}}
+{{Worttrennung}}
+:fa·mi·lia, {{Pl.}} fa·mi·li·ae
+
+{{Bedeutungen}}
+:[1] das [[Haus]], der [[Hausstand]] (mit Sklaven)
+:[2] das [[Geschlecht]], die [[Familie]]
+:[3] die [[Dienerschaft]]
+
+{{Herkunft}}
+:zu dem Adjektiv ''{{Ü|la|famulus}}''&lt;ref&gt;{{Ref-Georges}}&lt;/ref&gt; „dienend“; ursprüngliche Bedeutung: die Gesamtheit der unter einem ''[[dominus]]'' stehenden Sklaven, besonders als Angehörige und Teil der Familie, dann übertragen die ganze Hausgenossenschaft (Freie und Sklaven)
+
+{{Beispiele}}
+:[1] 
+
+==== Übersetzungen ====
+{{Ü-links}}
+:{{Übersetzungen umleiten|1|Hausstand|}} {{m}}, {{Übersetzungen umleiten||Haus|}} {{m}}
+:{{Übersetzungen umleiten|2|Geschlecht|}}, {{Übersetzungen umleiten||Familie|}}
+:{{Übersetzungen umleiten|3|Dienerschaft|}}
+{{Ü-rechts}}
+
+{{Referenzen}}
+:[1–3] {{Wikipedia|spr=la|familia}}
+:[1–3] {{Ref-Georges}}
+:[1-3] {{Lit-Stowasser: Lateinisch-deutsches Schulwörterbuch|A=1994}}, Seite 202, Eintrag „familia“
+
+{{Quellen|}}
+
+[[ast:familia]]
+[[ca:familia]]
+[[cs:familia]]
+[[el:familia]]
+[[en:familia]]
+[[es:familia]]
+[[eu:familia]]
+[[fi:familia]]
+[[fr:familia]]
+[[fy:familia]]
+[[gl:familia]]
+[[hu:familia]]
+[[id:familia]]
+[[io:familia]]
+[[ko:familia]]
+[[la:familia]]
+[[lo:familia]]
+[[lt:familia]]
+[[mg:familia]]
+[[nl:familia]]
+[[no:familia]]
+[[oc:familia]]
+[[pl:familia]]
+[[pt:familia]]
+[[ru:familia]]
+[[sr:familia]]
+[[sv:familia]]
+[[sw:familia]]
+[[ta:familia]]
+[[th:familia]]
+[[tr:familia]]
+[[zh:familia]]
+[[zh-min-nan:familia]]</text>
+      <sha1>jbav5mlh4ftuwk1rl5xuxl4ldhdmzde</sha1>
+    </revision>
+    <revision>
+      <id>2506184</id>
+      <parentid>2453463</parentid>
+      <timestamp>2012-07-29T19:02:02Z</timestamp>
+      <contributor>
+        <username>BetterkBot</username>
+        <id>49296</id>
+      </contributor>
+      <minor />
+      <comment>Bot: Form</comment>
+      <origin>2506184</origin>
+      <model>wikitext</model>
+      <format>text/x-wiki</format>
+      <text bytes="1629" sha1="26x3b4yipike1pdsoerkljdeotfmb7n" xml:space="preserve">== familia ({{Sprache|Lateinisch}}) ==
+=== {{Wortart|Substantiv|Lateinisch}}, {{f}} ===
+
+{{Lateinisch Substantiv Übersicht 2|familia|famili|ae}}
+
+{{Worttrennung}}
+:fa·mi·lia, {{Pl.}} fa·mi·li·ae
+
+{{Bedeutungen}}
+:[1] das [[Haus]], der [[Hausstand]] (mit Sklaven)
+:[2] das [[Geschlecht]], die [[Familie]]
+:[3] die [[Dienerschaft]]
+
+{{Herkunft}}
+:zu dem Adjektiv ''{{Ü|la|famulus}}''&lt;ref&gt;{{Ref-Georges}}&lt;/ref&gt; „dienend“; ursprüngliche Bedeutung: die Gesamtheit der unter einem ''[[dominus]]'' stehenden Sklaven, besonders als Angehörige und Teil der Familie, dann übertragen die ganze Hausgenossenschaft (Freie und Sklaven)
+
+{{Beispiele}}
+:[1] 
+
+==== Übersetzungen ====
+{{Ü-links}}
+:{{Übersetzungen umleiten|1|Hausstand|}} {{m}}, {{Übersetzungen umleiten||Haus|}} {{m}}
+:{{Übersetzungen umleiten|2|Geschlecht|}}, {{Übersetzungen umleiten||Familie|}}
+:{{Übersetzungen umleiten|3|Dienerschaft|}}
+{{Ü-rechts}}
+
+{{Referenzen}}
+:[1–3] {{Wikipedia|spr=la|familia}}
+:[1–3] {{Ref-Georges}}
+:[1-3] {{Lit-Stowasser: Lateinisch-deutsches Schulwörterbuch|A=1994}}, Seite 202, Eintrag „familia“
+
+{{Quellen|}}
+
+[[ast:familia]]
+[[ca:familia]]
+[[cs:familia]]
+[[el:familia]]
+[[en:familia]]
+[[es:familia]]
+[[eu:familia]]
+[[fi:familia]]
+[[fr:familia]]
+[[fy:familia]]
+[[gl:familia]]
+[[hu:familia]]
+[[id:familia]]
+[[io:familia]]
+[[ko:familia]]
+[[la:familia]]
+[[lo:familia]]
+[[lt:familia]]
+[[mg:familia]]
+[[nl:familia]]
+[[no:familia]]
+[[oc:familia]]
+[[pl:familia]]
+[[pt:familia]]
+[[ru:familia]]
+[[sr:familia]]
+[[sv:familia]]
+[[sw:familia]]
+[[ta:familia]]
+[[th:familia]]
+[[tr:familia]]
+[[zh:familia]]
+[[zh-min-nan:familia]]</text>
+      <sha1>26x3b4yipike1pdsoerkljdeotfmb7n</sha1>
+    </revision>
+    <revision>
+      <id>2710129</id>
+      <parentid>2506184</parentid>
+      <timestamp>2012-10-23T12:08:34Z</timestamp>
+      <contributor>
+        <username>JAnDbot</username>
+        <id>12875</id>
+      </contributor>
+      <minor />
+      <comment>r2.7.2) (Bot: Ergänze: [[sm:familia]]</comment>
+      <origin>2710129</origin>
+      <model>wikitext</model>
+      <format>text/x-wiki</format>
+      <text bytes="1644" sha1="hwtwrrurr60opargaozaj5iek0rsy2i" xml:space="preserve">== familia ({{Sprache|Lateinisch}}) ==
+=== {{Wortart|Substantiv|Lateinisch}}, {{f}} ===
+
+{{Lateinisch Substantiv Übersicht 2|familia|famili|ae}}
+
+{{Worttrennung}}
+:fa·mi·lia, {{Pl.}} fa·mi·li·ae
+
+{{Bedeutungen}}
+:[1] das [[Haus]], der [[Hausstand]] (mit Sklaven)
+:[2] das [[Geschlecht]], die [[Familie]]
+:[3] die [[Dienerschaft]]
+
+{{Herkunft}}
+:zu dem Adjektiv ''{{Ü|la|famulus}}''&lt;ref&gt;{{Ref-Georges}}&lt;/ref&gt; „dienend“; ursprüngliche Bedeutung: die Gesamtheit der unter einem ''[[dominus]]'' stehenden Sklaven, besonders als Angehörige und Teil der Familie, dann übertragen die ganze Hausgenossenschaft (Freie und Sklaven)
+
+{{Beispiele}}
+:[1] 
+
+==== Übersetzungen ====
+{{Ü-links}}
+:{{Übersetzungen umleiten|1|Hausstand|}} {{m}}, {{Übersetzungen umleiten||Haus|}} {{m}}
+:{{Übersetzungen umleiten|2|Geschlecht|}}, {{Übersetzungen umleiten||Familie|}}
+:{{Übersetzungen umleiten|3|Dienerschaft|}}
+{{Ü-rechts}}
+
+{{Referenzen}}
+:[1–3] {{Wikipedia|spr=la|familia}}
+:[1–3] {{Ref-Georges}}
+:[1-3] {{Lit-Stowasser: Lateinisch-deutsches Schulwörterbuch|A=1994}}, Seite 202, Eintrag „familia“
+
+{{Quellen|}}
+
+[[ast:familia]]
+[[ca:familia]]
+[[cs:familia]]
+[[el:familia]]
+[[en:familia]]
+[[es:familia]]
+[[eu:familia]]
+[[fi:familia]]
+[[fr:familia]]
+[[fy:familia]]
+[[gl:familia]]
+[[hu:familia]]
+[[id:familia]]
+[[io:familia]]
+[[ko:familia]]
+[[la:familia]]
+[[lo:familia]]
+[[lt:familia]]
+[[mg:familia]]
+[[nl:familia]]
+[[no:familia]]
+[[oc:familia]]
+[[pl:familia]]
+[[pt:familia]]
+[[ru:familia]]
+[[sm:familia]]
+[[sr:familia]]
+[[sv:familia]]
+[[sw:familia]]
+[[ta:familia]]
+[[th:familia]]
+[[tr:familia]]
+[[zh:familia]]
+[[zh-min-nan:familia]]</text>
+      <sha1>hwtwrrurr60opargaozaj5iek0rsy2i</sha1>
+    </revision>
+    <revision>
+      <id>2910671</id>
+      <parentid>2710129</parentid>
+      <timestamp>2013-03-20T23:37:06Z</timestamp>
+      <contributor>
+        <username>HydrizBot</username>
+        <id>67291</id>
+      </contributor>
+      <minor />
+      <comment>r2.7.3) (Bot: Ergänze: [[ka:familia]]</comment>
+      <origin>2910671</origin>
+      <model>wikitext</model>
+      <format>text/x-wiki</format>
+      <text bytes="1659" sha1="41m2311soeeixtjrb85xgia12qem9dm" xml:space="preserve">== familia ({{Sprache|Lateinisch}}) ==
+=== {{Wortart|Substantiv|Lateinisch}}, {{f}} ===
+
+{{Lateinisch Substantiv Übersicht 2|familia|famili|ae}}
+
+{{Worttrennung}}
+:fa·mi·lia, {{Pl.}} fa·mi·li·ae
+
+{{Bedeutungen}}
+:[1] das [[Haus]], der [[Hausstand]] (mit Sklaven)
+:[2] das [[Geschlecht]], die [[Familie]]
+:[3] die [[Dienerschaft]]
+
+{{Herkunft}}
+:zu dem Adjektiv ''{{Ü|la|famulus}}''&lt;ref&gt;{{Ref-Georges}}&lt;/ref&gt; „dienend“; ursprüngliche Bedeutung: die Gesamtheit der unter einem ''[[dominus]]'' stehenden Sklaven, besonders als Angehörige und Teil der Familie, dann übertragen die ganze Hausgenossenschaft (Freie und Sklaven)
+
+{{Beispiele}}
+:[1] 
+
+==== Übersetzungen ====
+{{Ü-links}}
+:{{Übersetzungen umleiten|1|Hausstand|}} {{m}}, {{Übersetzungen umleiten||Haus|}} {{m}}
+:{{Übersetzungen umleiten|2|Geschlecht|}}, {{Übersetzungen umleiten||Familie|}}
+:{{Übersetzungen umleiten|3|Dienerschaft|}}
+{{Ü-rechts}}
+
+{{Referenzen}}
+:[1–3] {{Wikipedia|spr=la|familia}}
+:[1–3] {{Ref-Georges}}
+:[1-3] {{Lit-Stowasser: Lateinisch-deutsches Schulwörterbuch|A=1994}}, Seite 202, Eintrag „familia“
+
+{{Quellen|}}
+
+[[ast:familia]]
+[[ca:familia]]
+[[cs:familia]]
+[[el:familia]]
+[[en:familia]]
+[[es:familia]]
+[[eu:familia]]
+[[fi:familia]]
+[[fr:familia]]
+[[fy:familia]]
+[[gl:familia]]
+[[hu:familia]]
+[[id:familia]]
+[[io:familia]]
+[[ka:familia]]
+[[ko:familia]]
+[[la:familia]]
+[[lo:familia]]
+[[lt:familia]]
+[[mg:familia]]
+[[nl:familia]]
+[[no:familia]]
+[[oc:familia]]
+[[pl:familia]]
+[[pt:familia]]
+[[ru:familia]]
+[[sm:familia]]
+[[sr:familia]]
+[[sv:familia]]
+[[sw:familia]]
+[[ta:familia]]
+[[th:familia]]
+[[tr:familia]]
+[[zh:familia]]
+[[zh-min-nan:familia]]</text>
+      <sha1>41m2311soeeixtjrb85xgia12qem9dm</sha1>
+    </revision>
+    <revision>
+      <id>3219641</id>
+      <parentid>2910671</parentid>
+      <timestamp>2013-11-05T11:05:41Z</timestamp>
+      <contributor>
+        <username>Fisch21</username>
+        <id>45050</id>
+      </contributor>
+      <minor />
+      <comment>:[1] {{Beispiele fehlen|spr=la}}</comment>
+      <origin>3219641</origin>
+      <model>wikitext</model>
+      <format>text/x-wiki</format>
+      <text bytes="1686" sha1="0ksk5kyy6ht0a0qqo9w0qwcg66dzuxz" xml:space="preserve">== familia ({{Sprache|Lateinisch}}) ==
+=== {{Wortart|Substantiv|Lateinisch}}, {{f}} ===
+
+{{Lateinisch Substantiv Übersicht 2|familia|famili|ae}}
+
+{{Worttrennung}}
+:fa·mi·lia, {{Pl.}} fa·mi·li·ae
+
+{{Bedeutungen}}
+:[1] das [[Haus]], der [[Hausstand]] (mit Sklaven)
+:[2] das [[Geschlecht]], die [[Familie]]
+:[3] die [[Dienerschaft]]
+
+{{Herkunft}}
+:zu dem Adjektiv ''{{Ü|la|famulus}}''&lt;ref&gt;{{Ref-Georges}}&lt;/ref&gt; „dienend“; ursprüngliche Bedeutung: die Gesamtheit der unter einem ''[[dominus]]'' stehenden Sklaven, besonders als Angehörige und Teil der Familie, dann übertragen die ganze Hausgenossenschaft (Freie und Sklaven)
+
+{{Beispiele}}
+:[1] {{Beispiele fehlen|spr=la}}
+
+==== Übersetzungen ====
+{{Ü-links}}
+:{{Übersetzungen umleiten|1|Hausstand|}} {{m}}, {{Übersetzungen umleiten||Haus|}} {{m}}
+:{{Übersetzungen umleiten|2|Geschlecht|}}, {{Übersetzungen umleiten||Familie|}}
+:{{Übersetzungen umleiten|3|Dienerschaft|}}
+{{Ü-rechts}}
+
+{{Referenzen}}
+:[1–3] {{Wikipedia|spr=la|familia}}
+:[1–3] {{Ref-Georges}}
+:[1-3] {{Lit-Stowasser: Lateinisch-deutsches Schulwörterbuch|A=1994}}, Seite 202, Eintrag „familia“
+
+{{Quellen|}}
+
+[[ast:familia]]
+[[ca:familia]]
+[[cs:familia]]
+[[el:familia]]
+[[en:familia]]
+[[es:familia]]
+[[eu:familia]]
+[[fi:familia]]
+[[fr:familia]]
+[[fy:familia]]
+[[gl:familia]]
+[[hu:familia]]
+[[id:familia]]
+[[io:familia]]
+[[ka:familia]]
+[[ko:familia]]
+[[la:familia]]
+[[lo:familia]]
+[[lt:familia]]
+[[mg:familia]]
+[[nl:familia]]
+[[no:familia]]
+[[oc:familia]]
+[[pl:familia]]
+[[pt:familia]]
+[[ru:familia]]
+[[sm:familia]]
+[[sr:familia]]
+[[sv:familia]]
+[[sw:familia]]
+[[ta:familia]]
+[[th:familia]]
+[[tr:familia]]
+[[zh:familia]]
+[[zh-min-nan:familia]]</text>
+      <sha1>0ksk5kyy6ht0a0qqo9w0qwcg66dzuxz</sha1>
+    </revision>
+    <revision>
+      <id>3223479</id>
+      <parentid>3219641</parentid>
+      <timestamp>2013-11-10T02:03:34Z</timestamp>
+      <contributor>
+        <username>MalafayaBot</username>
+        <id>46516</id>
+      </contributor>
+      <minor />
+      <comment>r2.7.5) (Bot: Ergänze: [[az:familia]], [[chr:familia]], [[ku:familia]]</comment>
+      <origin>3223479</origin>
+      <model>wikitext</model>
+      <format>text/x-wiki</format>
+      <text bytes="1732" sha1="eljm97moe7p8etburqrdwxnmn49rs6r" xml:space="preserve">== familia ({{Sprache|Lateinisch}}) ==
+=== {{Wortart|Substantiv|Lateinisch}}, {{f}} ===
+
+{{Lateinisch Substantiv Übersicht 2|familia|famili|ae}}
+
+{{Worttrennung}}
+:fa·mi·lia, {{Pl.}} fa·mi·li·ae
+
+{{Bedeutungen}}
+:[1] das [[Haus]], der [[Hausstand]] (mit Sklaven)
+:[2] das [[Geschlecht]], die [[Familie]]
+:[3] die [[Dienerschaft]]
+
+{{Herkunft}}
+:zu dem Adjektiv ''{{Ü|la|famulus}}''&lt;ref&gt;{{Ref-Georges}}&lt;/ref&gt; „dienend“; ursprüngliche Bedeutung: die Gesamtheit der unter einem ''[[dominus]]'' stehenden Sklaven, besonders als Angehörige und Teil der Familie, dann übertragen die ganze Hausgenossenschaft (Freie und Sklaven)
+
+{{Beispiele}}
+:[1] {{Beispiele fehlen|spr=la}}
+
+==== Übersetzungen ====
+{{Ü-links}}
+:{{Übersetzungen umleiten|1|Hausstand|}} {{m}}, {{Übersetzungen umleiten||Haus|}} {{m}}
+:{{Übersetzungen umleiten|2|Geschlecht|}}, {{Übersetzungen umleiten||Familie|}}
+:{{Übersetzungen umleiten|3|Dienerschaft|}}
+{{Ü-rechts}}
+
+{{Referenzen}}
+:[1–3] {{Wikipedia|spr=la|familia}}
+:[1–3] {{Ref-Georges}}
+:[1-3] {{Lit-Stowasser: Lateinisch-deutsches Schulwörterbuch|A=1994}}, Seite 202, Eintrag „familia“
+
+{{Quellen|}}
+
+[[ast:familia]]
+[[az:familia]]
+[[ca:familia]]
+[[chr:familia]]
+[[cs:familia]]
+[[el:familia]]
+[[en:familia]]
+[[es:familia]]
+[[eu:familia]]
+[[fi:familia]]
+[[fr:familia]]
+[[fy:familia]]
+[[gl:familia]]
+[[hu:familia]]
+[[id:familia]]
+[[io:familia]]
+[[ka:familia]]
+[[ko:familia]]
+[[ku:familia]]
+[[la:familia]]
+[[lo:familia]]
+[[lt:familia]]
+[[mg:familia]]
+[[nl:familia]]
+[[no:familia]]
+[[oc:familia]]
+[[pl:familia]]
+[[pt:familia]]
+[[ru:familia]]
+[[sm:familia]]
+[[sr:familia]]
+[[sv:familia]]
+[[sw:familia]]
+[[ta:familia]]
+[[th:familia]]
+[[tr:familia]]
+[[zh:familia]]
+[[zh-min-nan:familia]]</text>
+      <sha1>eljm97moe7p8etburqrdwxnmn49rs6r</sha1>
+    </revision>
+    <revision>
+      <id>3242644</id>
+      <parentid>3223479</parentid>
+      <timestamp>2013-11-29T14:05:39Z</timestamp>
+      <contributor>
+        <username>BetterkBot</username>
+        <id>49296</id>
+      </contributor>
+      <minor />
+      <comment>Bot: Ü-links -&gt; Ü-Tabelle, Verbtabelle, Form</comment>
+      <origin>3242644</origin>
+      <model>wikitext</model>
+      <format>text/x-wiki</format>
+      <text bytes="1732" sha1="goxthll6o4khu7p3m5iaxpqfz5qmhnl" xml:space="preserve">== familia ({{Sprache|Lateinisch}}) ==
+=== {{Wortart|Substantiv|Lateinisch}}, {{f}} ===
+
+{{Lateinisch Substantiv Übersicht|familia|famili|ae}}
+
+{{Worttrennung}}
+:fa·mi·lia, {{Pl.}} fa·mi·li·ae
+
+{{Bedeutungen}}
+:[1] das [[Haus]], der [[Hausstand]] (mit Sklaven)
+:[2] das [[Geschlecht]], die [[Familie]]
+:[3] die [[Dienerschaft]]
+
+{{Herkunft}}
+:zu dem Adjektiv ''{{Ü|la|famulus}}''&lt;ref&gt;{{Ref-Georges}}&lt;/ref&gt; „dienend“; ursprüngliche Bedeutung: die Gesamtheit der unter einem ''[[dominus]]'' stehenden Sklaven, besonders als Angehörige und Teil der Familie, dann übertragen die ganze Hausgenossenschaft (Freie und Sklaven)
+
+{{Beispiele}}
+:[1] {{Beispiele fehlen|spr=la}}
+
+==== Übersetzungen ====
+{{Ü-links}}
+:{{Übersetzungen umleiten|1|Hausstand|}} {{m}}, {{Übersetzungen umleiten||Haus|}} {{m}}
+:{{Übersetzungen umleiten|2|Geschlecht|}}, {{Übersetzungen umleiten||Familie|}}
+:{{Übersetzungen umleiten|3|Dienerschaft|}}
+{{Ü-rechts}}
+
+{{Referenzen}}
+:[1–3] {{Wikipedia|spr=la|familia}}
+:[1–3] {{Ref-Georges}}
+:[1–3] {{Lit-Stowasser: Lateinisch-deutsches Schulwörterbuch|A=1994}}, Seite 202, Eintrag „familia“
+
+{{Quellen|}}
+
+[[ast:familia]]
+[[az:familia]]
+[[ca:familia]]
+[[chr:familia]]
+[[cs:familia]]
+[[el:familia]]
+[[en:familia]]
+[[es:familia]]
+[[eu:familia]]
+[[fi:familia]]
+[[fr:familia]]
+[[fy:familia]]
+[[gl:familia]]
+[[hu:familia]]
+[[id:familia]]
+[[io:familia]]
+[[ka:familia]]
+[[ko:familia]]
+[[ku:familia]]
+[[la:familia]]
+[[lo:familia]]
+[[lt:familia]]
+[[mg:familia]]
+[[nl:familia]]
+[[no:familia]]
+[[oc:familia]]
+[[pl:familia]]
+[[pt:familia]]
+[[ru:familia]]
+[[sm:familia]]
+[[sr:familia]]
+[[sv:familia]]
+[[sw:familia]]
+[[ta:familia]]
+[[th:familia]]
+[[tr:familia]]
+[[zh:familia]]
+[[zh-min-nan:familia]]</text>
+      <sha1>goxthll6o4khu7p3m5iaxpqfz5qmhnl</sha1>
+    </revision>
+    <revision>
+      <id>3245171</id>
+      <parentid>3242644</parentid>
+      <timestamp>2013-11-30T23:15:48Z</timestamp>
+      <contributor>
+        <username>BetterkBot</username>
+        <id>49296</id>
+      </contributor>
+      <minor />
+      <comment>Bot: Ü-links -&gt; Ü-Tabelle, Verbtabelle, Form</comment>
+      <origin>3245171</origin>
+      <model>wikitext</model>
+      <format>text/x-wiki</format>
+      <text bytes="1743" sha1="hxmja07zfpvabbi50ezfi05ydnzg2cm" xml:space="preserve">== familia ({{Sprache|Lateinisch}}) ==
+=== {{Wortart|Substantiv|Lateinisch}}, {{f}} ===
+
+{{Lateinisch Substantiv Übersicht|familia|famili|ae}}
+
+{{Worttrennung}}
+:fa·mi·lia, {{Pl.}} fa·mi·li·ae
+
+{{Bedeutungen}}
+:[1] das [[Haus]], der [[Hausstand]] (mit Sklaven)
+:[2] das [[Geschlecht]], die [[Familie]]
+:[3] die [[Dienerschaft]]
+
+{{Herkunft}}
+:zu dem Adjektiv ''{{Ü|la|famulus}}''&lt;ref&gt;{{Ref-Georges}}&lt;/ref&gt; „dienend“; ursprüngliche Bedeutung: die Gesamtheit der unter einem ''[[dominus]]'' stehenden Sklaven, besonders als Angehörige und Teil der Familie, dann übertragen die ganze Hausgenossenschaft (Freie und Sklaven)
+
+{{Beispiele}}
+:[1] {{Beispiele fehlen|spr=la}}
+
+==== Übersetzungen ====
+{{Ü-Tabelle|Ü-links=
+:{{Übersetzungen umleiten|1|Hausstand|}} {{m}}, {{Übersetzungen umleiten||Haus|}} {{m}}
+:{{Übersetzungen umleiten|2|Geschlecht|}}, {{Übersetzungen umleiten||Familie|}}
+:{{Übersetzungen umleiten|3|Dienerschaft|}}
+|Ü-rechts=
+}}
+
+{{Referenzen}}
+:[1–3] {{Wikipedia|spr=la|familia}}
+:[1–3] {{Ref-Georges}}
+:[1–3] {{Lit-Stowasser: Lateinisch-deutsches Schulwörterbuch|A=1994}}, Seite 202, Eintrag „familia“
+
+{{Quellen|}}
+
+[[ast:familia]]
+[[az:familia]]
+[[ca:familia]]
+[[chr:familia]]
+[[cs:familia]]
+[[el:familia]]
+[[en:familia]]
+[[es:familia]]
+[[eu:familia]]
+[[fi:familia]]
+[[fr:familia]]
+[[fy:familia]]
+[[gl:familia]]
+[[hu:familia]]
+[[id:familia]]
+[[io:familia]]
+[[ka:familia]]
+[[ko:familia]]
+[[ku:familia]]
+[[la:familia]]
+[[lo:familia]]
+[[lt:familia]]
+[[mg:familia]]
+[[nl:familia]]
+[[no:familia]]
+[[oc:familia]]
+[[pl:familia]]
+[[pt:familia]]
+[[ru:familia]]
+[[sm:familia]]
+[[sr:familia]]
+[[sv:familia]]
+[[sw:familia]]
+[[ta:familia]]
+[[th:familia]]
+[[tr:familia]]
+[[zh:familia]]
+[[zh-min-nan:familia]]</text>
+      <sha1>hxmja07zfpvabbi50ezfi05ydnzg2cm</sha1>
+    </revision>
+    <revision>
+      <id>3897128</id>
+      <parentid>3245171</parentid>
+      <timestamp>2014-08-23T17:37:00Z</timestamp>
+      <contributor>
+        <username>JAnDbot</username>
+        <id>12875</id>
+      </contributor>
+      <minor />
+      <comment>r2.7.3) (Bot: Ergänze: [[cy:familia]]</comment>
+      <origin>3897128</origin>
+      <model>wikitext</model>
+      <format>text/x-wiki</format>
+      <text bytes="1758" sha1="objit2oc86vc69s9bb0wbrkulv7k26x" xml:space="preserve">== familia ({{Sprache|Lateinisch}}) ==
+=== {{Wortart|Substantiv|Lateinisch}}, {{f}} ===
+
+{{Lateinisch Substantiv Übersicht|familia|famili|ae}}
+
+{{Worttrennung}}
+:fa·mi·lia, {{Pl.}} fa·mi·li·ae
+
+{{Bedeutungen}}
+:[1] das [[Haus]], der [[Hausstand]] (mit Sklaven)
+:[2] das [[Geschlecht]], die [[Familie]]
+:[3] die [[Dienerschaft]]
+
+{{Herkunft}}
+:zu dem Adjektiv ''{{Ü|la|famulus}}''&lt;ref&gt;{{Ref-Georges}}&lt;/ref&gt; „dienend“; ursprüngliche Bedeutung: die Gesamtheit der unter einem ''[[dominus]]'' stehenden Sklaven, besonders als Angehörige und Teil der Familie, dann übertragen die ganze Hausgenossenschaft (Freie und Sklaven)
+
+{{Beispiele}}
+:[1] {{Beispiele fehlen|spr=la}}
+
+==== Übersetzungen ====
+{{Ü-Tabelle|Ü-links=
+:{{Übersetzungen umleiten|1|Hausstand|}} {{m}}, {{Übersetzungen umleiten||Haus|}} {{m}}
+:{{Übersetzungen umleiten|2|Geschlecht|}}, {{Übersetzungen umleiten||Familie|}}
+:{{Übersetzungen umleiten|3|Dienerschaft|}}
+|Ü-rechts=
+}}
+
+{{Referenzen}}
+:[1–3] {{Wikipedia|spr=la|familia}}
+:[1–3] {{Ref-Georges}}
+:[1–3] {{Lit-Stowasser: Lateinisch-deutsches Schulwörterbuch|A=1994}}, Seite 202, Eintrag „familia“
+
+{{Quellen|}}
+
+[[ast:familia]]
+[[az:familia]]
+[[ca:familia]]
+[[chr:familia]]
+[[cs:familia]]
+[[cy:familia]]
+[[el:familia]]
+[[en:familia]]
+[[es:familia]]
+[[eu:familia]]
+[[fi:familia]]
+[[fr:familia]]
+[[fy:familia]]
+[[gl:familia]]
+[[hu:familia]]
+[[id:familia]]
+[[io:familia]]
+[[ka:familia]]
+[[ko:familia]]
+[[ku:familia]]
+[[la:familia]]
+[[lo:familia]]
+[[lt:familia]]
+[[mg:familia]]
+[[nl:familia]]
+[[no:familia]]
+[[oc:familia]]
+[[pl:familia]]
+[[pt:familia]]
+[[ru:familia]]
+[[sm:familia]]
+[[sr:familia]]
+[[sv:familia]]
+[[sw:familia]]
+[[ta:familia]]
+[[th:familia]]
+[[tr:familia]]
+[[zh:familia]]
+[[zh-min-nan:familia]]</text>
+      <sha1>objit2oc86vc69s9bb0wbrkulv7k26x</sha1>
+    </revision>
+    <revision>
+      <id>3941664</id>
+      <parentid>3897128</parentid>
+      <timestamp>2014-09-04T21:31:57Z</timestamp>
+      <contributor>
+        <username>KronfBot</username>
+        <id>90392</id>
+      </contributor>
+      <minor />
+      <comment>Bot: Lateinisch →‎ Latein</comment>
+      <origin>3941664</origin>
+      <model>wikitext</model>
+      <format>text/x-wiki</format>
+      <text bytes="1746" sha1="6meqoq3vbq6tcyg5heerrzqrw74sveu" xml:space="preserve">== familia ({{Sprache|Latein}}) ==
+=== {{Wortart|Substantiv|Latein}}, {{f}} ===
+
+{{Latein Substantiv Übersicht|familia|famili|ae}}
+
+{{Worttrennung}}
+:fa·mi·lia, {{Pl.}} fa·mi·li·ae
+
+{{Bedeutungen}}
+:[1] das [[Haus]], der [[Hausstand]] (mit Sklaven)
+:[2] das [[Geschlecht]], die [[Familie]]
+:[3] die [[Dienerschaft]]
+
+{{Herkunft}}
+:zu dem Adjektiv ''{{Ü|la|famulus}}''&lt;ref&gt;{{Ref-Georges}}&lt;/ref&gt; „dienend“; ursprüngliche Bedeutung: die Gesamtheit der unter einem ''[[dominus]]'' stehenden Sklaven, besonders als Angehörige und Teil der Familie, dann übertragen die ganze Hausgenossenschaft (Freie und Sklaven)
+
+{{Beispiele}}
+:[1] {{Beispiele fehlen|spr=la}}
+
+==== Übersetzungen ====
+{{Ü-Tabelle|Ü-links=
+:{{Übersetzungen umleiten|1|Hausstand|}} {{m}}, {{Übersetzungen umleiten||Haus|}} {{m}}
+:{{Übersetzungen umleiten|2|Geschlecht|}}, {{Übersetzungen umleiten||Familie|}}
+:{{Übersetzungen umleiten|3|Dienerschaft|}}
+|Ü-rechts=
+}}
+
+{{Referenzen}}
+:[1–3] {{Wikipedia|spr=la|familia}}
+:[1–3] {{Ref-Georges}}
+:[1–3] {{Lit-Stowasser: Lateinisch-deutsches Schulwörterbuch|A=1994}}, Seite 202, Eintrag „familia“
+
+{{Quellen|}}
+
+[[ast:familia]]
+[[az:familia]]
+[[ca:familia]]
+[[chr:familia]]
+[[cs:familia]]
+[[cy:familia]]
+[[el:familia]]
+[[en:familia]]
+[[es:familia]]
+[[eu:familia]]
+[[fi:familia]]
+[[fr:familia]]
+[[fy:familia]]
+[[gl:familia]]
+[[hu:familia]]
+[[id:familia]]
+[[io:familia]]
+[[ka:familia]]
+[[ko:familia]]
+[[ku:familia]]
+[[la:familia]]
+[[lo:familia]]
+[[lt:familia]]
+[[mg:familia]]
+[[nl:familia]]
+[[no:familia]]
+[[oc:familia]]
+[[pl:familia]]
+[[pt:familia]]
+[[ru:familia]]
+[[sm:familia]]
+[[sr:familia]]
+[[sv:familia]]
+[[sw:familia]]
+[[ta:familia]]
+[[th:familia]]
+[[tr:familia]]
+[[zh:familia]]
+[[zh-min-nan:familia]]</text>
+      <sha1>6meqoq3vbq6tcyg5heerrzqrw74sveu</sha1>
+    </revision>
+    <revision>
+      <id>4224900</id>
+      <parentid>3941664</parentid>
+      <timestamp>2015-04-23T04:24:34Z</timestamp>
+      <contributor>
+        <username>JAnDbot</username>
+        <id>12875</id>
+      </contributor>
+      <minor />
+      <comment>r2.7.3) (Bot: Ergänze: [[ja:familia]], [[so:familia]]</comment>
+      <origin>4224900</origin>
+      <model>wikitext</model>
+      <format>text/x-wiki</format>
+      <text bytes="1776" sha1="nlyg7zpqe81ultluszcozcvvolooqzj" xml:space="preserve">== familia ({{Sprache|Latein}}) ==
+=== {{Wortart|Substantiv|Latein}}, {{f}} ===
+
+{{Latein Substantiv Übersicht|familia|famili|ae}}
+
+{{Worttrennung}}
+:fa·mi·lia, {{Pl.}} fa·mi·li·ae
+
+{{Bedeutungen}}
+:[1] das [[Haus]], der [[Hausstand]] (mit Sklaven)
+:[2] das [[Geschlecht]], die [[Familie]]
+:[3] die [[Dienerschaft]]
+
+{{Herkunft}}
+:zu dem Adjektiv ''{{Ü|la|famulus}}''&lt;ref&gt;{{Ref-Georges}}&lt;/ref&gt; „dienend“; ursprüngliche Bedeutung: die Gesamtheit der unter einem ''[[dominus]]'' stehenden Sklaven, besonders als Angehörige und Teil der Familie, dann übertragen die ganze Hausgenossenschaft (Freie und Sklaven)
+
+{{Beispiele}}
+:[1] {{Beispiele fehlen|spr=la}}
+
+==== Übersetzungen ====
+{{Ü-Tabelle|Ü-links=
+:{{Übersetzungen umleiten|1|Hausstand|}} {{m}}, {{Übersetzungen umleiten||Haus|}} {{m}}
+:{{Übersetzungen umleiten|2|Geschlecht|}}, {{Übersetzungen umleiten||Familie|}}
+:{{Übersetzungen umleiten|3|Dienerschaft|}}
+|Ü-rechts=
+}}
+
+{{Referenzen}}
+:[1–3] {{Wikipedia|spr=la|familia}}
+:[1–3] {{Ref-Georges}}
+:[1–3] {{Lit-Stowasser: Lateinisch-deutsches Schulwörterbuch|A=1994}}, Seite 202, Eintrag „familia“
+
+{{Quellen|}}
+
+[[ast:familia]]
+[[az:familia]]
+[[ca:familia]]
+[[chr:familia]]
+[[cs:familia]]
+[[cy:familia]]
+[[el:familia]]
+[[en:familia]]
+[[es:familia]]
+[[eu:familia]]
+[[fi:familia]]
+[[fr:familia]]
+[[fy:familia]]
+[[gl:familia]]
+[[hu:familia]]
+[[id:familia]]
+[[io:familia]]
+[[ja:familia]]
+[[ka:familia]]
+[[ko:familia]]
+[[ku:familia]]
+[[la:familia]]
+[[lo:familia]]
+[[lt:familia]]
+[[mg:familia]]
+[[nl:familia]]
+[[no:familia]]
+[[oc:familia]]
+[[pl:familia]]
+[[pt:familia]]
+[[ru:familia]]
+[[sm:familia]]
+[[so:familia]]
+[[sr:familia]]
+[[sv:familia]]
+[[sw:familia]]
+[[ta:familia]]
+[[th:familia]]
+[[tr:familia]]
+[[zh:familia]]
+[[zh-min-nan:familia]]</text>
+      <sha1>nlyg7zpqe81ultluszcozcvvolooqzj</sha1>
+    </revision>
+    <revision>
+      <id>4484249</id>
+      <parentid>4224900</parentid>
+      <timestamp>2015-08-25T01:18:34Z</timestamp>
+      <contributor>
+        <ip>80.133.99.105</ip>
+      </contributor>
+      <comment>wie in &quot;pater familiās&quot;</comment>
+      <origin>4484249</origin>
+      <model>wikitext</model>
+      <format>text/x-wiki</format>
+      <text bytes="1819" sha1="mc57b74sm4r8b3e45fxts3oeygtjwij" xml:space="preserve">== familia ({{Sprache|Latein}}) ==
+=== {{Wortart|Substantiv|Latein}}, {{f}} ===
+
+{{Latein Substantiv Übersicht|familia|famili|ae|Genitiv Singular=familiae&lt;br /&gt;(familiās)}}
+
+{{Worttrennung}}
+:fa·mi·lia, {{Pl.}} fa·mi·li·ae
+
+{{Bedeutungen}}
+:[1] das [[Haus]], der [[Hausstand]] (mit Sklaven)
+:[2] das [[Geschlecht]], die [[Familie]]
+:[3] die [[Dienerschaft]]
+
+{{Herkunft}}
+:zu dem Adjektiv ''{{Ü|la|famulus}}''&lt;ref&gt;{{Ref-Georges}}&lt;/ref&gt; „dienend“; ursprüngliche Bedeutung: die Gesamtheit der unter einem ''[[dominus]]'' stehenden Sklaven, besonders als Angehörige und Teil der Familie, dann übertragen die ganze Hausgenossenschaft (Freie und Sklaven)
+
+{{Beispiele}}
+:[1] {{Beispiele fehlen|spr=la}}
+
+==== Übersetzungen ====
+{{Ü-Tabelle|Ü-links=
+:{{Übersetzungen umleiten|1|Hausstand|}} {{m}}, {{Übersetzungen umleiten||Haus|}} {{m}}
+:{{Übersetzungen umleiten|2|Geschlecht|}}, {{Übersetzungen umleiten||Familie|}}
+:{{Übersetzungen umleiten|3|Dienerschaft|}}
+|Ü-rechts=
+}}
+
+{{Referenzen}}
+:[1–3] {{Wikipedia|spr=la|familia}}
+:[1–3] {{Ref-Georges}}
+:[1–3] {{Lit-Stowasser: Lateinisch-deutsches Schulwörterbuch|A=1994}}, Seite 202, Eintrag „familia“
+
+{{Quellen|}}
+
+[[ast:familia]]
+[[az:familia]]
+[[ca:familia]]
+[[chr:familia]]
+[[cs:familia]]
+[[cy:familia]]
+[[el:familia]]
+[[en:familia]]
+[[es:familia]]
+[[eu:familia]]
+[[fi:familia]]
+[[fr:familia]]
+[[fy:familia]]
+[[gl:familia]]
+[[hu:familia]]
+[[id:familia]]
+[[io:familia]]
+[[ja:familia]]
+[[ka:familia]]
+[[ko:familia]]
+[[ku:familia]]
+[[la:familia]]
+[[lo:familia]]
+[[lt:familia]]
+[[mg:familia]]
+[[nl:familia]]
+[[no:familia]]
+[[oc:familia]]
+[[pl:familia]]
+[[pt:familia]]
+[[ru:familia]]
+[[sm:familia]]
+[[so:familia]]
+[[sr:familia]]
+[[sv:familia]]
+[[sw:familia]]
+[[ta:familia]]
+[[th:familia]]
+[[tr:familia]]
+[[zh:familia]]
+[[zh-min-nan:familia]]</text>
+      <sha1>mc57b74sm4r8b3e45fxts3oeygtjwij</sha1>
+    </revision>
+    <revision>
+      <id>4485962</id>
+      <parentid>4484249</parentid>
+      <timestamp>2015-08-25T21:05:58Z</timestamp>
+      <contributor>
+        <username>Edfyr</username>
+        <id>39781</id>
+      </contributor>
+      <comment>Gen. familias als grammatisches Merkmal, +char. Wortkombi p. familias</comment>
+      <origin>4485962</origin>
+      <model>wikitext</model>
+      <format>text/x-wiki</format>
+      <text bytes="2006" sha1="0kine41wrp1da80pj1dxnzymnsanyg8" xml:space="preserve">== familia ({{Sprache|Latein}}) ==
+=== {{Wortart|Substantiv|Latein}}, {{f}} ===
+
+{{Latein Substantiv Übersicht|familia|famili|ae}}
+
+{{Worttrennung}}
+:fa·mi·lia, {{Pl.}} fa·mi·li·ae
+
+{{Grammatische Merkmale}}
+:[[Genitiv]] Singular nach [[pater]], [[mater]], [[filius]], [[filia]]: ''familiās''&lt;ref name=&quot;Georges&quot;&gt;{{Ref-Georges}}&lt;/ref&gt;
+
+{{Bedeutungen}}
+:[1] das [[Haus]], der [[Hausstand]] (mit Sklaven)
+:[2] das [[Geschlecht]], die [[Familie]]
+:[3] die [[Dienerschaft]]
+
+{{Herkunft}}
+:zu dem Adjektiv ''{{Ü|la|famulus}}''&lt;ref name=&quot;Georges&quot; /&gt; „dienend“; ursprüngliche Bedeutung: die Gesamtheit der unter einem ''[[dominus]]'' stehenden Sklaven, besonders als Angehörige und Teil der Familie, dann übertragen die ganze Hausgenossenschaft (Freie und Sklaven)
+
+{{Beispiele}}
+:[1] {{Beispiele fehlen|spr=la}}
+
+{{Charakteristische Wortkombinationen}}
+:[[pater familias|''pater'' familias]]
+
+==== Übersetzungen ====
+{{Ü-Tabelle|Ü-links=
+:{{Übersetzungen umleiten|1|Hausstand|}} {{m}}, {{Übersetzungen umleiten||Haus|}} {{m}}
+:{{Übersetzungen umleiten|2|Geschlecht|}}, {{Übersetzungen umleiten||Familie|}}
+:{{Übersetzungen umleiten|3|Dienerschaft|}}
+|Ü-rechts=
+}}
+
+{{Referenzen}}
+:[1–3] {{Wikipedia|spr=la|familia}}
+:[1–3] {{Ref-Georges}}
+:[1–3] {{Lit-Stowasser: Lateinisch-deutsches Schulwörterbuch|A=1994}}, Seite 202, Eintrag „familia“
+
+{{Quellen|}}
+
+[[ast:familia]]
+[[az:familia]]
+[[ca:familia]]
+[[chr:familia]]
+[[cs:familia]]
+[[cy:familia]]
+[[el:familia]]
+[[en:familia]]
+[[es:familia]]
+[[eu:familia]]
+[[fi:familia]]
+[[fr:familia]]
+[[fy:familia]]
+[[gl:familia]]
+[[hu:familia]]
+[[id:familia]]
+[[io:familia]]
+[[ja:familia]]
+[[ka:familia]]
+[[ko:familia]]
+[[ku:familia]]
+[[la:familia]]
+[[lo:familia]]
+[[lt:familia]]
+[[mg:familia]]
+[[nl:familia]]
+[[no:familia]]
+[[oc:familia]]
+[[pl:familia]]
+[[pt:familia]]
+[[ru:familia]]
+[[sm:familia]]
+[[so:familia]]
+[[sr:familia]]
+[[sv:familia]]
+[[sw:familia]]
+[[ta:familia]]
+[[th:familia]]
+[[tr:familia]]
+[[zh:familia]]
+[[zh-min-nan:familia]]</text>
+      <sha1>0kine41wrp1da80pj1dxnzymnsanyg8</sha1>
+    </revision>
+    <revision>
+      <id>4485965</id>
+      <parentid>4485962</parentid>
+      <timestamp>2015-08-25T21:07:42Z</timestamp>
+      <contributor>
+        <username>Edfyr</username>
+        <id>39781</id>
+      </contributor>
+      <minor />
+      <comment>char. Wortk. wieder raus: besser zu pater</comment>
+      <origin>4485965</origin>
+      <model>wikitext</model>
+      <format>text/x-wiki</format>
+      <text bytes="1926" sha1="ozswh2pvupbygv41pq9pdcdk9vjee34" xml:space="preserve">== familia ({{Sprache|Latein}}) ==
+=== {{Wortart|Substantiv|Latein}}, {{f}} ===
+
+{{Latein Substantiv Übersicht|familia|famili|ae}}
+
+{{Worttrennung}}
+:fa·mi·lia, {{Pl.}} fa·mi·li·ae
+
+{{Grammatische Merkmale}}
+:[[Genitiv]] Singular nach [[pater]], [[mater]], [[filius]], [[filia]]: ''familiās''&lt;ref name=&quot;Georges&quot;&gt;{{Ref-Georges}}&lt;/ref&gt;
+
+{{Bedeutungen}}
+:[1] das [[Haus]], der [[Hausstand]] (mit Sklaven)
+:[2] das [[Geschlecht]], die [[Familie]]
+:[3] die [[Dienerschaft]]
+
+{{Herkunft}}
+:zu dem Adjektiv ''{{Ü|la|famulus}}''&lt;ref name=&quot;Georges&quot; /&gt; „dienend“; ursprüngliche Bedeutung: die Gesamtheit der unter einem ''[[dominus]]'' stehenden Sklaven, besonders als Angehörige und Teil der Familie, dann übertragen die ganze Hausgenossenschaft (Freie und Sklaven)
+
+{{Beispiele}}
+:[1] {{Beispiele fehlen|spr=la}}
+
+==== Übersetzungen ====
+{{Ü-Tabelle|Ü-links=
+:{{Übersetzungen umleiten|1|Hausstand|}} {{m}}, {{Übersetzungen umleiten||Haus|}} {{m}}
+:{{Übersetzungen umleiten|2|Geschlecht|}}, {{Übersetzungen umleiten||Familie|}}
+:{{Übersetzungen umleiten|3|Dienerschaft|}}
+|Ü-rechts=
+}}
+
+{{Referenzen}}
+:[1–3] {{Wikipedia|spr=la|familia}}
+:[1–3] {{Ref-Georges}}
+:[1–3] {{Lit-Stowasser: Lateinisch-deutsches Schulwörterbuch|A=1994}}, Seite 202, Eintrag „familia“
+
+{{Quellen|}}
+
+[[ast:familia]]
+[[az:familia]]
+[[ca:familia]]
+[[chr:familia]]
+[[cs:familia]]
+[[cy:familia]]
+[[el:familia]]
+[[en:familia]]
+[[es:familia]]
+[[eu:familia]]
+[[fi:familia]]
+[[fr:familia]]
+[[fy:familia]]
+[[gl:familia]]
+[[hu:familia]]
+[[id:familia]]
+[[io:familia]]
+[[ja:familia]]
+[[ka:familia]]
+[[ko:familia]]
+[[ku:familia]]
+[[la:familia]]
+[[lo:familia]]
+[[lt:familia]]
+[[mg:familia]]
+[[nl:familia]]
+[[no:familia]]
+[[oc:familia]]
+[[pl:familia]]
+[[pt:familia]]
+[[ru:familia]]
+[[sm:familia]]
+[[so:familia]]
+[[sr:familia]]
+[[sv:familia]]
+[[sw:familia]]
+[[ta:familia]]
+[[th:familia]]
+[[tr:familia]]
+[[zh:familia]]
+[[zh-min-nan:familia]]</text>
+      <sha1>ozswh2pvupbygv41pq9pdcdk9vjee34</sha1>
+    </revision>
+    <revision>
+      <id>4487399</id>
+      <parentid>4485965</parentid>
+      <timestamp>2015-08-27T15:05:06Z</timestamp>
+      <contributor>
+        <username>YS-Bot</username>
+        <id>52155</id>
+      </contributor>
+      <minor />
+      <comment>r2.7.3) (Bot: Ergänze: [[mi:familia]]</comment>
+      <origin>4487399</origin>
+      <model>wikitext</model>
+      <format>text/x-wiki</format>
+      <text bytes="1941" sha1="rvryqk5uqr3sn979x67ow47h39lg9zd" xml:space="preserve">== familia ({{Sprache|Latein}}) ==
+=== {{Wortart|Substantiv|Latein}}, {{f}} ===
+
+{{Latein Substantiv Übersicht|familia|famili|ae}}
+
+{{Worttrennung}}
+:fa·mi·lia, {{Pl.}} fa·mi·li·ae
+
+{{Grammatische Merkmale}}
+:[[Genitiv]] Singular nach [[pater]], [[mater]], [[filius]], [[filia]]: ''familiās''&lt;ref name=&quot;Georges&quot;&gt;{{Ref-Georges}}&lt;/ref&gt;
+
+{{Bedeutungen}}
+:[1] das [[Haus]], der [[Hausstand]] (mit Sklaven)
+:[2] das [[Geschlecht]], die [[Familie]]
+:[3] die [[Dienerschaft]]
+
+{{Herkunft}}
+:zu dem Adjektiv ''{{Ü|la|famulus}}''&lt;ref name=&quot;Georges&quot; /&gt; „dienend“; ursprüngliche Bedeutung: die Gesamtheit der unter einem ''[[dominus]]'' stehenden Sklaven, besonders als Angehörige und Teil der Familie, dann übertragen die ganze Hausgenossenschaft (Freie und Sklaven)
+
+{{Beispiele}}
+:[1] {{Beispiele fehlen|spr=la}}
+
+==== Übersetzungen ====
+{{Ü-Tabelle|Ü-links=
+:{{Übersetzungen umleiten|1|Hausstand|}} {{m}}, {{Übersetzungen umleiten||Haus|}} {{m}}
+:{{Übersetzungen umleiten|2|Geschlecht|}}, {{Übersetzungen umleiten||Familie|}}
+:{{Übersetzungen umleiten|3|Dienerschaft|}}
+|Ü-rechts=
+}}
+
+{{Referenzen}}
+:[1–3] {{Wikipedia|spr=la|familia}}
+:[1–3] {{Ref-Georges}}
+:[1–3] {{Lit-Stowasser: Lateinisch-deutsches Schulwörterbuch|A=1994}}, Seite 202, Eintrag „familia“
+
+{{Quellen|}}
+
+[[ast:familia]]
+[[az:familia]]
+[[ca:familia]]
+[[chr:familia]]
+[[cs:familia]]
+[[cy:familia]]
+[[el:familia]]
+[[en:familia]]
+[[es:familia]]
+[[eu:familia]]
+[[fi:familia]]
+[[fr:familia]]
+[[fy:familia]]
+[[gl:familia]]
+[[hu:familia]]
+[[id:familia]]
+[[io:familia]]
+[[ja:familia]]
+[[ka:familia]]
+[[ko:familia]]
+[[ku:familia]]
+[[la:familia]]
+[[lo:familia]]
+[[lt:familia]]
+[[mg:familia]]
+[[mi:familia]]
+[[nl:familia]]
+[[no:familia]]
+[[oc:familia]]
+[[pl:familia]]
+[[pt:familia]]
+[[ru:familia]]
+[[sm:familia]]
+[[so:familia]]
+[[sr:familia]]
+[[sv:familia]]
+[[sw:familia]]
+[[ta:familia]]
+[[th:familia]]
+[[tr:familia]]
+[[zh:familia]]
+[[zh-min-nan:familia]]</text>
+      <sha1>rvryqk5uqr3sn979x67ow47h39lg9zd</sha1>
+    </revision>
+    <revision>
+      <id>5298753</id>
+      <parentid>4487399</parentid>
+      <timestamp>2017-01-18T23:23:28Z</timestamp>
+      <contributor>
+        <username>UT-interwiki-Bot</username>
+        <id>117378</id>
+      </contributor>
+      <minor />
+      <comment>Bot: Ergänze: [[eo:familia]]</comment>
+      <origin>5298753</origin>
+      <model>wikitext</model>
+      <format>text/x-wiki</format>
+      <text bytes="1956" sha1="3lmjcrib6wg7lzp32y8lo059qpzigo7" xml:space="preserve">== familia ({{Sprache|Latein}}) ==
+=== {{Wortart|Substantiv|Latein}}, {{f}} ===
+
+{{Latein Substantiv Übersicht|familia|famili|ae}}
+
+{{Worttrennung}}
+:fa·mi·lia, {{Pl.}} fa·mi·li·ae
+
+{{Grammatische Merkmale}}
+:[[Genitiv]] Singular nach [[pater]], [[mater]], [[filius]], [[filia]]: ''familiās''&lt;ref name=&quot;Georges&quot;&gt;{{Ref-Georges}}&lt;/ref&gt;
+
+{{Bedeutungen}}
+:[1] das [[Haus]], der [[Hausstand]] (mit Sklaven)
+:[2] das [[Geschlecht]], die [[Familie]]
+:[3] die [[Dienerschaft]]
+
+{{Herkunft}}
+:zu dem Adjektiv ''{{Ü|la|famulus}}''&lt;ref name=&quot;Georges&quot; /&gt; „dienend“; ursprüngliche Bedeutung: die Gesamtheit der unter einem ''[[dominus]]'' stehenden Sklaven, besonders als Angehörige und Teil der Familie, dann übertragen die ganze Hausgenossenschaft (Freie und Sklaven)
+
+{{Beispiele}}
+:[1] {{Beispiele fehlen|spr=la}}
+
+==== Übersetzungen ====
+{{Ü-Tabelle|Ü-links=
+:{{Übersetzungen umleiten|1|Hausstand|}} {{m}}, {{Übersetzungen umleiten||Haus|}} {{m}}
+:{{Übersetzungen umleiten|2|Geschlecht|}}, {{Übersetzungen umleiten||Familie|}}
+:{{Übersetzungen umleiten|3|Dienerschaft|}}
+|Ü-rechts=
+}}
+
+{{Referenzen}}
+:[1–3] {{Wikipedia|spr=la|familia}}
+:[1–3] {{Ref-Georges}}
+:[1–3] {{Lit-Stowasser: Lateinisch-deutsches Schulwörterbuch|A=1994}}, Seite 202, Eintrag „familia“
+
+{{Quellen|}}
+
+[[ast:familia]]
+[[az:familia]]
+[[ca:familia]]
+[[chr:familia]]
+[[cs:familia]]
+[[cy:familia]]
+[[el:familia]]
+[[en:familia]]
+[[eo:familia]]
+[[es:familia]]
+[[eu:familia]]
+[[fi:familia]]
+[[fr:familia]]
+[[fy:familia]]
+[[gl:familia]]
+[[hu:familia]]
+[[id:familia]]
+[[io:familia]]
+[[ja:familia]]
+[[ka:familia]]
+[[ko:familia]]
+[[ku:familia]]
+[[la:familia]]
+[[lo:familia]]
+[[lt:familia]]
+[[mg:familia]]
+[[mi:familia]]
+[[nl:familia]]
+[[no:familia]]
+[[oc:familia]]
+[[pl:familia]]
+[[pt:familia]]
+[[ru:familia]]
+[[sm:familia]]
+[[so:familia]]
+[[sr:familia]]
+[[sv:familia]]
+[[sw:familia]]
+[[ta:familia]]
+[[th:familia]]
+[[tr:familia]]
+[[zh:familia]]
+[[zh-min-nan:familia]]</text>
+      <sha1>3lmjcrib6wg7lzp32y8lo059qpzigo7</sha1>
+    </revision>
+    <revision>
+      <id>5490285</id>
+      <parentid>5298753</parentid>
+      <timestamp>2017-05-11T07:36:51Z</timestamp>
+      <contributor>
+        <username>BetterkBot</username>
+        <id>49296</id>
+      </contributor>
+      <minor />
+      <comment>Bot: iw-Links entfernt</comment>
+      <origin>5490285</origin>
+      <model>wikitext</model>
+      <format>text/x-wiki</format>
+      <text bytes="1299" sha1="kelayur2wtkrcng80mz9x572a00cckc" xml:space="preserve">== familia ({{Sprache|Latein}}) ==
+=== {{Wortart|Substantiv|Latein}}, {{f}} ===
+
+{{Latein Substantiv Übersicht|familia|famili|ae}}
+
+{{Worttrennung}}
+:fa·mi·lia, {{Pl.}} fa·mi·li·ae
+
+{{Grammatische Merkmale}}
+:[[Genitiv]] Singular nach [[pater]], [[mater]], [[filius]], [[filia]]: ''familiās''&lt;ref name=&quot;Georges&quot;&gt;{{Ref-Georges}}&lt;/ref&gt;
+
+{{Bedeutungen}}
+:[1] das [[Haus]], der [[Hausstand]] (mit Sklaven)
+:[2] das [[Geschlecht]], die [[Familie]]
+:[3] die [[Dienerschaft]]
+
+{{Herkunft}}
+:zu dem Adjektiv ''{{Ü|la|famulus}}''&lt;ref name=&quot;Georges&quot; /&gt; „dienend“; ursprüngliche Bedeutung: die Gesamtheit der unter einem ''[[dominus]]'' stehenden Sklaven, besonders als Angehörige und Teil der Familie, dann übertragen die ganze Hausgenossenschaft (Freie und Sklaven)
+
+{{Beispiele}}
+:[1] {{Beispiele fehlen|spr=la}}
+
+==== Übersetzungen ====
+{{Ü-Tabelle|Ü-links=
+:{{Übersetzungen umleiten|1|Hausstand|}} {{m}}, {{Übersetzungen umleiten||Haus|}} {{m}}
+:{{Übersetzungen umleiten|2|Geschlecht|}}, {{Übersetzungen umleiten||Familie|}}
+:{{Übersetzungen umleiten|3|Dienerschaft|}}
+|Ü-rechts=
+}}
+
+{{Referenzen}}
+:[1–3] {{Wikipedia|spr=la|familia}}
+:[1–3] {{Ref-Georges}}
+:[1–3] {{Lit-Stowasser: Lateinisch-deutsches Schulwörterbuch|A=1994}}, Seite 202, Eintrag „familia“
+
+{{Quellen}}</text>
+      <sha1>kelayur2wtkrcng80mz9x572a00cckc</sha1>
+    </revision>
+    <revision>
+      <id>6066422</id>
+      <parentid>5490285</parentid>
+      <timestamp>2017-06-30T06:36:40Z</timestamp>
+      <contributor>
+        <username>UT-Bot</username>
+        <id>112805</id>
+      </contributor>
+      <minor />
+      <comment>Bot: Ersetze Übersetzungen mit {{Übersetzungen}}</comment>
+      <origin>6066422</origin>
+      <model>wikitext</model>
+      <format>text/x-wiki</format>
+      <text bytes="1303" sha1="bitin1yvl1tidapx1edrisu9au30cbu" xml:space="preserve">== familia ({{Sprache|Latein}}) ==
+=== {{Wortart|Substantiv|Latein}}, {{f}} ===
+
+{{Latein Substantiv Übersicht|familia|famili|ae}}
+
+{{Worttrennung}}
+:fa·mi·lia, {{Pl.}} fa·mi·li·ae
+
+{{Grammatische Merkmale}}
+:[[Genitiv]] Singular nach [[pater]], [[mater]], [[filius]], [[filia]]: ''familiās''&lt;ref name=&quot;Georges&quot;&gt;{{Ref-Georges}}&lt;/ref&gt;
+
+{{Bedeutungen}}
+:[1] das [[Haus]], der [[Hausstand]] (mit Sklaven)
+:[2] das [[Geschlecht]], die [[Familie]]
+:[3] die [[Dienerschaft]]
+
+{{Herkunft}}
+:zu dem Adjektiv ''{{Ü|la|famulus}}''&lt;ref name=&quot;Georges&quot; /&gt; „dienend“; ursprüngliche Bedeutung: die Gesamtheit der unter einem ''[[dominus]]'' stehenden Sklaven, besonders als Angehörige und Teil der Familie, dann übertragen die ganze Hausgenossenschaft (Freie und Sklaven)
+
+{{Beispiele}}
+:[1] {{Beispiele fehlen|spr=la}}
+
+==== {{Übersetzungen}} ====
+{{Ü-Tabelle|Ü-links=
+:{{Übersetzungen umleiten|1|Hausstand|}} {{m}}, {{Übersetzungen umleiten||Haus|}} {{m}}
+:{{Übersetzungen umleiten|2|Geschlecht|}}, {{Übersetzungen umleiten||Familie|}}
+:{{Übersetzungen umleiten|3|Dienerschaft|}}
+|Ü-rechts=
+}}
+
+{{Referenzen}}
+:[1–3] {{Wikipedia|spr=la|familia}}
+:[1–3] {{Ref-Georges}}
+:[1–3] {{Lit-Stowasser: Lateinisch-deutsches Schulwörterbuch|A=1994}}, Seite 202, Eintrag „familia“
+
+{{Quellen}}</text>
+      <sha1>bitin1yvl1tidapx1edrisu9au30cbu</sha1>
+    </revision>
+    <revision>
+      <id>6400798</id>
+      <parentid>6066422</parentid>
+      <timestamp>2018-06-22T16:44:16Z</timestamp>
+      <contributor>
+        <username>Instance of Bot</username>
+        <id>153371</id>
+      </contributor>
+      <minor />
+      <comment>Siehe auch ergänzt (IoB 1.03)</comment>
+      <origin>6400798</origin>
+      <model>wikitext</model>
+      <format>text/x-wiki</format>
+      <text bytes="1331" sha1="2g4bbptlfgyqps5s9aohfmshwzwzowc" xml:space="preserve">{{Siehe auch|[[família]]}}
+== familia ({{Sprache|Latein}}) ==
+=== {{Wortart|Substantiv|Latein}}, {{f}} ===
+
+{{Latein Substantiv Übersicht|familia|famili|ae}}
+
+{{Worttrennung}}
+:fa·mi·lia, {{Pl.}} fa·mi·li·ae
+
+{{Grammatische Merkmale}}
+:[[Genitiv]] Singular nach [[pater]], [[mater]], [[filius]], [[filia]]: ''familiās''&lt;ref name=&quot;Georges&quot;&gt;{{Ref-Georges}}&lt;/ref&gt;
+
+{{Bedeutungen}}
+:[1] das [[Haus]], der [[Hausstand]] (mit Sklaven)
+:[2] das [[Geschlecht]], die [[Familie]]
+:[3] die [[Dienerschaft]]
+
+{{Herkunft}}
+:zu dem Adjektiv ''{{Ü|la|famulus}}''&lt;ref name=&quot;Georges&quot; /&gt; „dienend“; ursprüngliche Bedeutung: die Gesamtheit der unter einem ''[[dominus]]'' stehenden Sklaven, besonders als Angehörige und Teil der Familie, dann übertragen die ganze Hausgenossenschaft (Freie und Sklaven)
+
+{{Beispiele}}
+:[1] {{Beispiele fehlen|spr=la}}
+
+==== {{Übersetzungen}} ====
+{{Ü-Tabelle|Ü-links=
+:{{Übersetzungen umleiten|1|Hausstand|}} {{m}}, {{Übersetzungen umleiten||Haus|}} {{m}}
+:{{Übersetzungen umleiten|2|Geschlecht|}}, {{Übersetzungen umleiten||Familie|}}
+:{{Übersetzungen umleiten|3|Dienerschaft|}}
+|Ü-rechts=
+}}
+
+{{Referenzen}}
+:[1–3] {{Wikipedia|spr=la|familia}}
+:[1–3] {{Ref-Georges}}
+:[1–3] {{Lit-Stowasser: Lateinisch-deutsches Schulwörterbuch|A=1994}}, Seite 202, Eintrag „familia“
+
+{{Quellen}}</text>
+      <sha1>2g4bbptlfgyqps5s9aohfmshwzwzowc</sha1>
+    </revision>
+    <revision>
+      <id>8608436</id>
+      <parentid>6400798</parentid>
+      <timestamp>2021-06-11T21:12:48Z</timestamp>
+      <contributor>
+        <username>Susann Schweden</username>
+        <id>44622</id>
+      </contributor>
+      <comment>{{Ü|de|Dienerschaft}}</comment>
+      <origin>8608436</origin>
+      <model>wikitext</model>
+      <format>text/x-wiki</format>
+      <text bytes="1229" sha1="r1pr8r9s4fa533vwl88snjvmq7k32pl" xml:space="preserve">{{Siehe auch|[[família]]}}
+== familia ({{Sprache|Latein}}) ==
+=== {{Wortart|Substantiv|Latein}}, {{f}} ===
+
+{{Latein Substantiv Übersicht|familia|famili|ae}}
+
+{{Worttrennung}}
+:fa·mi·lia, {{Pl.}} fa·mi·li·ae
+
+{{Grammatische Merkmale}}
+:[[Genitiv]] Singular nach [[pater]], [[mater]], [[filius]], [[filia]]: ''familiās''&lt;ref name=&quot;Georges&quot;&gt;{{Ref-Georges}}&lt;/ref&gt;
+
+{{Bedeutungen}}
+:[1] das [[Haus]], der [[Hausstand]] (mit Sklaven)
+:[2] das [[Geschlecht]], die [[Familie]]
+:[3] die [[Dienerschaft]]
+
+{{Herkunft}}
+:zu dem Adjektiv ''{{Ü|la|famulus}}''&lt;ref name=&quot;Georges&quot; /&gt; „dienend“; ursprüngliche Bedeutung: die Gesamtheit der unter einem ''[[dominus]]'' stehenden Sklaven, besonders als Angehörige und Teil der Familie, dann übertragen die ganze Hausgenossenschaft (Freie und Sklaven)
+
+{{Beispiele}}
+:[1] {{Beispiele fehlen|spr=la}}
+
+==== {{Übersetzungen}} ====
+{{Ü-Tabelle|Ü-links=
+: [1] {{Ü|de|Hausstand}}, {{Ü|de|Haus}}; [2] {{Ü|de|Geschlecht}}, {{Ü|de|Familie}}; [3] {{Ü|de|Dienerschaft}}
+|Ü-rechts=
+}}
+
+{{Referenzen}}
+:[1–3] {{Wikipedia|spr=la|familia}}
+:[1–3] {{Ref-Georges}}
+:[1–3] {{Lit-Stowasser: Lateinisch-deutsches Schulwörterbuch|A=1994}}, Seite 202, Eintrag „familia“
+
+{{Quellen}}</text>
+      <sha1>r1pr8r9s4fa533vwl88snjvmq7k32pl</sha1>
+    </revision>
+    <revision>
+      <id>9304488</id>
+      <parentid>8608436</parentid>
+      <timestamp>2022-09-19T15:43:04Z</timestamp>
+      <contributor>
+        <username>Instance of Bot</username>
+        <id>153371</id>
+      </contributor>
+      <minor />
+      <comment>-Ü-rechts= -D-rechts= ggf. +G= (IoB 1.05)</comment>
+      <origin>9304488</origin>
+      <model>wikitext</model>
+      <format>text/x-wiki</format>
+      <text bytes="1217" sha1="ly54c1n0ryq9ey29puvrnt6ikr373o4" xml:space="preserve">{{Siehe auch|[[família]]}}
+== familia ({{Sprache|Latein}}) ==
+=== {{Wortart|Substantiv|Latein}}, {{f}} ===
+
+{{Latein Substantiv Übersicht|familia|famili|ae}}
+
+{{Worttrennung}}
+:fa·mi·lia, {{Pl.}} fa·mi·li·ae
+
+{{Grammatische Merkmale}}
+:[[Genitiv]] Singular nach [[pater]], [[mater]], [[filius]], [[filia]]: ''familiās''&lt;ref name=&quot;Georges&quot;&gt;{{Ref-Georges}}&lt;/ref&gt;
+
+{{Bedeutungen}}
+:[1] das [[Haus]], der [[Hausstand]] (mit Sklaven)
+:[2] das [[Geschlecht]], die [[Familie]]
+:[3] die [[Dienerschaft]]
+
+{{Herkunft}}
+:zu dem Adjektiv ''{{Ü|la|famulus}}''&lt;ref name=&quot;Georges&quot; /&gt; „dienend“; ursprüngliche Bedeutung: die Gesamtheit der unter einem ''[[dominus]]'' stehenden Sklaven, besonders als Angehörige und Teil der Familie, dann übertragen die ganze Hausgenossenschaft (Freie und Sklaven)
+
+{{Beispiele}}
+:[1] {{Beispiele fehlen|spr=la}}
+
+==== {{Übersetzungen}} ====
+{{Ü-Tabelle|Ü-links=
+: [1] {{Ü|de|Hausstand}}, {{Ü|de|Haus}}; [2] {{Ü|de|Geschlecht}}, {{Ü|de|Familie}}; [3] {{Ü|de|Dienerschaft}}
+}}
+
+{{Referenzen}}
+:[1–3] {{Wikipedia|spr=la|familia}}
+:[1–3] {{Ref-Georges}}
+:[1–3] {{Lit-Stowasser: Lateinisch-deutsches Schulwörterbuch|A=1994}}, Seite 202, Eintrag „familia“
+
+{{Quellen}}</text>
+      <sha1>ly54c1n0ryq9ey29puvrnt6ikr373o4</sha1>
+    </revision>
+    <revision>
+      <id>9357520</id>
+      <parentid>9304488</parentid>
+      <timestamp>2022-12-08T16:39:38Z</timestamp>
+      <contributor>
+        <username>Instance of Bot</username>
+        <id>153371</id>
+      </contributor>
+      <minor />
+      <comment>Ü-rechts D-rechts ggf. +G= (IoB 1.05)</comment>
+      <origin>9357520</origin>
+      <model>wikitext</model>
+      <format>text/x-wiki</format>
+      <text bytes="1351" sha1="0xifk0iu63hgag2nrllrgncnus7uans" xml:space="preserve">{{Siehe auch|[[família]]}}
+== familia ({{Sprache|Latein}}) ==
+=== {{Wortart|Substantiv|Latein}}, {{f}} ===
+
+{{Latein Substantiv Übersicht|familia|famili|ae}}
+
+{{Worttrennung}}
+:fa·mi·lia, {{Pl.}} fa·mi·li·ae
+
+{{Grammatische Merkmale}}
+:[[Genitiv]] Singular nach [[pater]], [[mater]], [[filius]], [[filia]]: ''familiās''&lt;ref name=&quot;Georges&quot;&gt;{{Ref-Georges}}&lt;/ref&gt;
+
+{{Bedeutungen}}
+:[1] das [[Haus]], der [[Hausstand]] (mit Sklaven)
+:[2] das [[Geschlecht]], die [[Familie]]
+:[3] die [[Dienerschaft]]
+
+{{Herkunft}}
+:zu dem Adjektiv ''{{Ü|la|famulus}}''&lt;ref name=&quot;Georges&quot; /&gt; „dienend“; ursprüngliche Bedeutung: die Gesamtheit der unter einem ''[[dominus]]'' stehenden Sklaven, besonders als Angehörige und Teil der Familie, dann übertragen die ganze Hausgenossenschaft (Freie und Sklaven)
+
+{{Beispiele}}
+:[1] {{Beispiele fehlen|spr=la}}
+
+==== {{Übersetzungen}} ====
+{{Ü-Tabelle|1|G=|Ü-Liste=
+: [{{Ü|de|Hausstand}}, {{Ü|de|Haus}};
+}}
+{{Ü-Tabelle|2|G=|Ü-Liste=
+: [{{Ü|de|Hausstand}}, {{Ü|de|Haus}};{{Ü|de|Geschlecht}}, {{Ü|de|Familie}};
+}}
+{{Ü-Tabelle|3|G=|Ü-Liste=
+: [{{Ü|de|Hausstand}}, {{Ü|de|Haus}};{{Ü|de|Dienerschaft}}
+}}
+
+{{Referenzen}}
+:[1–3] {{Wikipedia|spr=la|familia}}
+:[1–3] {{Ref-Georges}}
+:[1–3] {{Lit-Stowasser: Lateinisch-deutsches Schulwörterbuch|A=1994}}, Seite 202, Eintrag „familia“
+
+{{Quellen}}</text>
+      <sha1>0xifk0iu63hgag2nrllrgncnus7uans</sha1>
+    </revision>
+    <revision>
+      <id>9357581</id>
+      <parentid>9357520</parentid>
+      <timestamp>2022-12-08T17:57:05Z</timestamp>
+      <contributor>
+        <username>Formatierer</username>
+        <id>38134</id>
+      </contributor>
+      <minor />
+      <comment>Ü-Tabelle</comment>
+      <origin>9357581</origin>
+      <model>wikitext</model>
+      <format>text/x-wiki</format>
+      <text bytes="1295" sha1="guh2pcmm198xpp0y8pd7vck6g5u7kmm" xml:space="preserve">{{Siehe auch|[[família]]}}
+== familia ({{Sprache|Latein}}) ==
+=== {{Wortart|Substantiv|Latein}}, {{f}} ===
+
+{{Latein Substantiv Übersicht|familia|famili|ae}}
+
+{{Worttrennung}}
+:fa·mi·lia, {{Pl.}} fa·mi·li·ae
+
+{{Grammatische Merkmale}}
+:[[Genitiv]] Singular nach [[pater]], [[mater]], [[filius]], [[filia]]: ''familiās''&lt;ref name=&quot;Georges&quot;&gt;{{Ref-Georges}}&lt;/ref&gt;
+
+{{Bedeutungen}}
+:[1] das [[Haus]], der [[Hausstand]] (mit Sklaven)
+:[2] das [[Geschlecht]], die [[Familie]]
+:[3] die [[Dienerschaft]]
+
+{{Herkunft}}
+:zu dem Adjektiv ''{{Ü|la|famulus}}''&lt;ref name=&quot;Georges&quot; /&gt; „dienend“; ursprüngliche Bedeutung: die Gesamtheit der unter einem ''[[dominus]]'' stehenden Sklaven, besonders als Angehörige und Teil der Familie, dann übertragen die ganze Hausgenossenschaft (Freie und Sklaven)
+
+{{Beispiele}}
+:[1] {{Beispiele fehlen|spr=la}}
+
+==== {{Übersetzungen}} ====
+{{Ü-Tabelle|1|G=|Ü-Liste=
+*{{de}}: {{Ü|de|Hausstand}}, {{Ü|de|Haus}}
+}}
+{{Ü-Tabelle|2|G=|Ü-Liste=
+*{{de}}: {{Ü|de|Geschlecht}}, {{Ü|de|Familie}}
+}}
+{{Ü-Tabelle|3|G=|Ü-Liste=
+*{{de}}: {{Ü|de|Dienerschaft}}
+}}
+
+{{Referenzen}}
+:[1–3] {{Wikipedia|spr=la|familia}}
+:[1–3] {{Ref-Georges}}
+:[1–3] {{Lit-Stowasser: Lateinisch-deutsches Schulwörterbuch|A=1994}}, Seite 202, Eintrag „familia“
+
+{{Quellen}}</text>
+      <sha1>guh2pcmm198xpp0y8pd7vck6g5u7kmm</sha1>
+    </revision>
+    <revision>
+      <id>9638357</id>
+      <parentid>9357581</parentid>
+      <timestamp>2023-01-13T18:09:21Z</timestamp>
+      <contributor>
+        <username>Instance of Bot</username>
+        <id>153371</id>
+      </contributor>
+      <minor />
+      <comment>+Glosse (IoB 1.05)</comment>
+      <origin>9638357</origin>
+      <model>wikitext</model>
+      <format>text/x-wiki</format>
+      <text bytes="1377" sha1="kohezsoieyd0s0rk51yt4bna9yciqaz" xml:space="preserve">{{Siehe auch|[[família]]}}
+== familia ({{Sprache|Latein}}) ==
+=== {{Wortart|Substantiv|Latein}}, {{f}} ===
+
+{{Latein Substantiv Übersicht|familia|famili|ae}}
+
+{{Worttrennung}}
+:fa·mi·lia, {{Pl.}} fa·mi·li·ae
+
+{{Grammatische Merkmale}}
+:[[Genitiv]] Singular nach [[pater]], [[mater]], [[filius]], [[filia]]: ''familiās''&lt;ref name=&quot;Georges&quot;&gt;{{Ref-Georges}}&lt;/ref&gt;
+
+{{Bedeutungen}}
+:[1] das [[Haus]], der [[Hausstand]] (mit Sklaven)
+:[2] das [[Geschlecht]], die [[Familie]]
+:[3] die [[Dienerschaft]]
+
+{{Herkunft}}
+:zu dem Adjektiv ''{{Ü|la|famulus}}''&lt;ref name=&quot;Georges&quot; /&gt; „dienend“; ursprüngliche Bedeutung: die Gesamtheit der unter einem ''[[dominus]]'' stehenden Sklaven, besonders als Angehörige und Teil der Familie, dann übertragen die ganze Hausgenossenschaft (Freie und Sklaven)
+
+{{Beispiele}}
+:[1] {{Beispiele fehlen|spr=la}}
+
+==== {{Übersetzungen}} ====
+{{Ü-Tabelle|1|G=das Haus, der Hausstand (mit Sklaven)|Ü-Liste=
+*{{de}}: {{Ü|de|Hausstand}}, {{Ü|de|Haus}}
+}}
+
+{{Ü-Tabelle|2|G=das Geschlecht, die Familie|Ü-Liste=
+*{{de}}: {{Ü|de|Geschlecht}}, {{Ü|de|Familie}}
+}}
+
+{{Ü-Tabelle|3|G=die Dienerschaft|Ü-Liste=
+*{{de}}: {{Ü|de|Dienerschaft}}
+}}
+
+{{Referenzen}}
+:[1–3] {{Wikipedia|spr=la|familia}}
+:[1–3] {{Ref-Georges}}
+:[1–3] {{Lit-Stowasser: Lateinisch-deutsches Schulwörterbuch|A=1994}}, Seite 202, Eintrag „familia“
+
+{{Quellen}}</text>
+      <sha1>kohezsoieyd0s0rk51yt4bna9yciqaz</sha1>
+    </revision>
+  </page>
+</mediawiki>

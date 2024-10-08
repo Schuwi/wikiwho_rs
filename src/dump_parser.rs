@@ -205,7 +205,7 @@ pub struct Contributor {
     pub id: Option<i32>,
 }
 
-#[derive(Clone, PartialEq, Eq)]
+#[derive(Clone, PartialEq, Eq, Hash)]
 pub enum Text {
     Normal(String),
     Deleted,
@@ -250,7 +250,7 @@ impl Debug for Sha1Hash {
 }
 
 // apparently `restricted` is never set in mwxml (https://github.com/mediawiki-utilities/python-mwxml/blob/2b477be6aa9794064d03b5be38c7759d1570488b/mwxml/iteration/revision.py#L80)
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct Revision {
     pub id: i32,
     pub timestamp: chrono::DateTime<chrono::Utc>,
@@ -321,14 +321,16 @@ impl RevisionBuilder {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct Page {
     pub title: CompactString,
     pub namespace: i32,
     pub revisions: Vec<Revision>,
 }
 
+#[derive(Clone, PartialEq, Eq, Hash, Default)]
 pub enum Namespace {
+    #[default]
     Default,
     Named(CompactString),
 }

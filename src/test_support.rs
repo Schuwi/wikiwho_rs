@@ -54,6 +54,7 @@ pub struct PyRevision {
     pub id: i32,
     pub paragraphs: HashMap<String, Vec<PyParagraph>>,
     pub ordered_paragraphs: Vec<String>,
+    pub original_adds: usize,
 }
 
 #[derive(FromPyObject)]
@@ -71,7 +72,12 @@ pub struct PySentence {
 
 #[derive(FromPyObject)]
 pub struct PyWord {
+    pub token_id: i32,
     pub value: String,
+    pub origin_rev_id: i32,
+    pub last_rev_id: i32,
+    pub outbound: Vec<i32>,
+    pub inbound: Vec<i32>,
 }
 
 pub fn page_to_xml(page: &Page) -> String {
@@ -134,6 +140,25 @@ pub fn page_to_xml(page: &Page) -> String {
     writer
         .write_event(Event::Start(BytesStart::new("title")))
         .unwrap();
+    // if let Some(site_info) = site_info {
+    //     let namespace = site_info.namespaces.get(&page.namespace);
+    //     if let Some(Namespace::Named(namespace)) = namespace {
+    //         writer
+    //             .write_event(Event::Text(BytesText::new(&format!(
+    //                 "{}:{}",
+    //                 namespace, page.title
+    //             ))))
+    //             .unwrap();
+    //     } else {
+    //         writer
+    //             .write_event(Event::Text(BytesText::new(&page.title)))
+    //             .unwrap();
+    //     }
+    // } else {
+    //     writer
+    //         .write_event(Event::Text(BytesText::new(&page.title)))
+    //         .unwrap();
+    // }
     writer
         .write_event(Event::Text(BytesText::new(&page.title)))
         .unwrap();
@@ -144,8 +169,12 @@ pub fn page_to_xml(page: &Page) -> String {
     writer
         .write_event(Event::Start(BytesStart::new("ns")))
         .unwrap();
+    // writer
+    //     .write_event(Event::Text(BytesText::new(&page.namespace.to_string())))
+    //     .unwrap();
+    // namespaces are not supported by python if using `Dump.from_page_xml` (i.e. the `siteinfo` is not present)
     writer
-        .write_event(Event::Text(BytesText::new(&page.namespace.to_string())))
+        .write_event(Event::Text(BytesText::new("0")))
         .unwrap();
     writer.write_event(Event::End(BytesEnd::new("ns"))).unwrap();
 
@@ -364,10 +393,10 @@ pub mod proptest {
         ]
     }
 
-    pub fn correct_text() -> impl Strategy<Value = Text> {
+    pub fn correct_text(text_strategy: BoxedStrategy<String>) -> impl Strategy<Value = Text> {
         prop_oneof![
             1 => Just(Text::Deleted),
-            3 => any::<String>().prop_map(|s| Text::Normal(s))
+            3 => text_strategy.prop_map(|s| Text::Normal(s))
         ]
     }
 
@@ -393,8 +422,8 @@ pub mod proptest {
     }
 
     prop_compose! {
-        pub fn correct_revision(id: i32, has_hash: bool)
-                (text in correct_text())
+        pub fn correct_revision(id: i32, has_hash: bool, text_strategy: BoxedStrategy<String>)
+                (text in correct_text(text_strategy))
                 (sha1 in maybe_sha1(&text, has_hash), text in Just(text), comment in maybe_comment(), minor in proptest::bool::weighted(0.125))
         -> Revision {
             Revision {
@@ -412,20 +441,24 @@ pub mod proptest {
         }
     }
 
-    pub fn correct_revision_vec(has_hash: bool) -> impl Strategy<Value = Vec<Revision>> {
-        (1..50).prop_flat_map(move |num_revisions| {
+    pub fn correct_revision_vec(
+        has_hash: bool,
+        text_strategy: BoxedStrategy<String>,
+        max_revisions: i32,
+    ) -> impl Strategy<Value = Vec<Revision>> {
+        (1..max_revisions).prop_flat_map(move |num_revisions| {
             let mut revisions = Vec::new();
             for i in 0..num_revisions {
-                revisions.push(correct_revision(i + 1, has_hash));
+                revisions.push(correct_revision(i + 1, has_hash, text_strategy.clone()));
             }
             revisions
         })
     }
 
     prop_compose! {
-        pub fn correct_page()
+        pub fn correct_page(text_strategy: BoxedStrategy<String>, max_revisions: i32)
                 (has_hash in proptest::bool::weighted(0.8))
-                (revisions in correct_revision_vec(has_hash))
+                (revisions in correct_revision_vec(has_hash, text_strategy.clone(), max_revisions))
         -> Page {
             Page {
                 title: "Pagetitle".into(), /* ignored in algorithm */

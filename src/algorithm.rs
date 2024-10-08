@@ -136,7 +136,7 @@ pub struct RevisionAnalysis {
     pub paragraphs_by_hash: FxHashMap<blake3::Hash, MaybeVec<ParagraphPointer>>, /* assume that duplicate paragraphs are not very common and optimize to avoid allocation */
     pub paragraphs_ordered: Vec<ParagraphPointer>,
 
-    pub original_adds: i32, /* number of tokens added in this revision */
+    pub original_adds: usize, /* number of tokens added in this revision */
 }
 
 impl RevisionData {
@@ -255,6 +255,10 @@ pub struct WordPointer(usize, Arc<WordData>);
 impl WordPointer {
     fn new(index: usize, word: WordData) -> Self {
         Self(index, Arc::new(word))
+    }
+
+    pub fn unique_id(&self) -> usize {
+        self.0
     }
 
     pub fn data(&self) -> &WordData {
