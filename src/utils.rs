@@ -387,7 +387,7 @@ use crate::{
     dump_parser::Sha1Hash,
 };
 
-pub fn compute_avg_word_freq<S: AsRef<str>>(token_list: &[S]) -> f32 {
+pub fn compute_avg_word_freq<S: AsRef<str>>(token_list: &[S]) -> f64 {
     let mut counter: HashMap<String, u64> = HashMap::new();
 
     for token in token_list.iter().map(AsRef::as_ref) {
@@ -411,7 +411,7 @@ pub fn compute_avg_word_freq<S: AsRef<str>>(token_list: &[S]) -> f32 {
     let count = counter.len();
 
     if count > 0 {
-        sum as f32 / count as f32
+        sum as f64 / count as f64
     } else {
         0.0
     }

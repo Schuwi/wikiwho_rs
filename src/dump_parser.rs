@@ -225,6 +225,16 @@ impl Text {
             Text::Deleted => true,
         }
     }
+
+    /// Returns the text as a string slice.
+    /// 
+    /// If the text is [`Text::Deleted`], an empty string is returned.
+    pub fn as_str(&self) -> &str {
+        match self {
+            Text::Normal(text) => text.as_str(),
+            Text::Deleted => "",
+        }
+    }
 }
 
 impl Debug for Text {

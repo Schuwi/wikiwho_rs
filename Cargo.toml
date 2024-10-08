@@ -16,6 +16,7 @@ default = [ ]
 strict = []
 optimized_str = []
 python-diff = [ "pyo3" ]
+match-reference-impl = [ "python-diff" ]
 
 [dependencies]
 arraydeque = "0.5.1"

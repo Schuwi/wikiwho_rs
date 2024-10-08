@@ -104,7 +104,7 @@ impl Deref for RevisionPointer {
 #[derive(Clone)]
 pub struct RevisionData {
     pub id: i32,
-    pub length: usize,
+    pub length: usize, /* text length when lowercased given in bytes (only for `test` compile target in unicode codepoints to match python implementation) */
     pub text: String,
     pub xml_revision: Revision,
 }
@@ -143,7 +143,13 @@ impl RevisionData {
     pub fn from_revision(revision: &Revision) -> Self {
         Self {
             id: revision.id,
+            #[cfg(not(any(test, feature = "match-reference-impl")))]
+            // for spam detection it should be enough to use the length of the text in bytes
             length: revision.text.len(),
+            #[cfg(any(test, feature = "match-reference-impl"))]
+            // python's `len` function returns the number of unicode codepoints for a string,
+            // so when testing against the python implementation we need to match that behavior to get identical results
+            length: revision.text.as_str().chars().count(),
             text: match revision.text {
                 Text::Normal(ref t) => t.to_lowercase(),
                 Text::Deleted => String::new(),
@@ -385,11 +391,12 @@ impl<P: Pointer> IndexMut<&P> for Analysis {
 }
 
 // Spam detection variables.
-const CHANGE_PERCENTAGE: f32 = -0.40;
+// use f64 instead of f32 to replicate the behavior of the Python script
+const CHANGE_PERCENTAGE: f64 = -0.40;
 const PREVIOUS_LENGTH: usize = 1000;
 const CURR_LENGTH: usize = 1000;
-const UNMATCHED_PARAGRAPH: f32 = 0.0;
-const TOKEN_DENSITY_LIMIT: f32 = 20.0;
+const UNMATCHED_PARAGRAPH: f64 = 0.0;
+const TOKEN_DENSITY_LIMIT: f64 = 20.0;
 
 #[derive(Debug, PartialEq, Eq)]
 pub enum AnalysisError {
@@ -773,8 +780,8 @@ impl Analysis {
             // Spam detection: Deletion
             if !(vandalism || xml_revision.comment.is_some() && xml_revision.minor) {
                 let revision_prev = &analysis.revision_curr; /* !! since we have not yet updated revision_curr, this is the previous revision */
-                let change_percentage = (revision_data.length as f32 - revision_prev.length as f32)
-                    / revision_prev.length as f32;
+                let change_percentage = (revision_data.length as f64 - revision_prev.length as f64)
+                    / revision_prev.length as f64;
 
                 if revision_prev.length > PREVIOUS_LENGTH
                     && revision_data.length < CURR_LENGTH
@@ -926,8 +933,8 @@ impl Analysis {
             matched_sentences_prev = result.2;
 
             // this will always set possible_vandalism to true (because UNMATCHED_PARAGRAPH is 0.0)
-            if unmatched_paragraphs_curr.len() as f32
-                / self[&self.revision_curr].paragraphs_ordered.len() as f32
+            if unmatched_paragraphs_curr.len() as f64
+                / self[&self.revision_curr].paragraphs_ordered.len() as f64
                 > UNMATCHED_PARAGRAPH
             {
                 // will be used to detect copy-paste vandalism - token density
@@ -1155,7 +1162,7 @@ impl Analysis {
             }
         }
 
-        let mut unmatched_words_prev_splitted = Vec::new();
+        let mut unmatched_sentence_curr_splitted = Vec::new();
         let mut text_curr = Vec::new();
         for sentence_curr_pointer in unmatched_sentences_curr {
             // split_into_tokens is already done in analyse_sentences_in_paragraphs
@@ -1166,7 +1173,7 @@ impl Analysis {
                 .map(|s| s.to_string())
                 .collect();
             text_curr.extend_from_slice(words.as_slice());
-            unmatched_words_prev_splitted.push(words); /* index corresponds to index in unmatched_words_prev */
+            unmatched_sentence_curr_splitted.push(words); /* index corresponds to index in unmatched_words_prev */
         }
 
         if text_curr.is_empty() {
@@ -1202,7 +1209,7 @@ impl Analysis {
         // Edit consists of adding new content, not changing/removing content
         if text_prev.is_empty() {
             for (i, sentence_curr_pointer) in unmatched_sentences_curr.iter().enumerate() {
-                for word_text in unmatched_words_prev_splitted[i].iter() {
+                for word_text in unmatched_sentence_curr_splitted[i].iter() {
                     allocate_new_word(self, word_text, sentence_curr_pointer);
                 }
             }
@@ -1229,7 +1236,7 @@ impl Analysis {
         }
 
         for (i, sentence_curr) in unmatched_sentences_curr.iter().enumerate() {
-            for word_text in unmatched_words_prev_splitted[i].iter() {
+            for word_text in unmatched_sentence_curr_splitted[i].iter() {
                 let mut curr_matched = false;
                 for change in diff.iter_mut().filter(|c| c.is_some()) {
                     let (change_tag, change_value) = change.as_ref().unwrap();
@@ -1257,8 +1264,9 @@ impl Analysis {
                                     w.value() == word_text
                                         && !self.words[w.index()].matched_in_current
                                 }) {
-                                    let revision_curr_id = self.revision_curr.id;
                                     self[word_prev].matched_in_current = true;
+
+                                    let revision_curr_id = self.revision_curr.id; /* need to get id first, otherwise borrow-checker complains */
                                     self[word_prev].outbound.push(revision_curr_id);
 
                                     matched_words_prev.push(word_prev.clone());
