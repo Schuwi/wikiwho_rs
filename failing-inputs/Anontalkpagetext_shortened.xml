@@ -1,0 +1,82 @@
+<mediawiki xmlns="http://www.mediawiki.org/xml/export-0.11/"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.mediawiki.org/xml/export-0.11/ http://www.mediawiki.org/xml/export-0.11.xsd"
+  version="0.11" xml:lang="de">
+  <siteinfo>
+    <sitename>Wiktionary</sitename>
+    <dbname>dewiktionary</dbname>
+    <base>https://de.wiktionary.org/wiki/Wiktionary:Hauptseite</base>
+    <generator>MediaWiki 1.43.0-wmf.20</generator>
+    <case>case-sensitive</case>
+    <namespaces>
+      <namespace key="-2" case="case-sensitive">Medium</namespace>
+      <namespace key="-1" case="first-letter">Spezial</namespace>
+      <namespace key="0" case="case-sensitive" />
+      <namespace key="1" case="case-sensitive">Diskussion</namespace>
+      <namespace key="2" case="first-letter">Benutzer</namespace>
+      <namespace key="3" case="first-letter">Benutzer Diskussion</namespace>
+      <namespace key="4" case="case-sensitive">Wiktionary</namespace>
+      <namespace key="5" case="case-sensitive">Wiktionary Diskussion</namespace>
+      <namespace key="6" case="case-sensitive">Datei</namespace>
+      <namespace key="7" case="case-sensitive">Datei Diskussion</namespace>
+      <namespace key="8" case="first-letter">MediaWiki</namespace>
+      <namespace key="9" case="first-letter">MediaWiki Diskussion</namespace>
+      <namespace key="10" case="case-sensitive">Vorlage</namespace>
+      <namespace key="11" case="case-sensitive">Vorlage Diskussion</namespace>
+      <namespace key="12" case="case-sensitive">Hilfe</namespace>
+      <namespace key="13" case="case-sensitive">Hilfe Diskussion</namespace>
+      <namespace key="14" case="case-sensitive">Kategorie</namespace>
+      <namespace key="15" case="case-sensitive">Kategorie Diskussion</namespace>
+      <namespace key="102" case="case-sensitive">Verzeichnis</namespace>
+      <namespace key="103" case="case-sensitive">Verzeichnis Diskussion</namespace>
+      <namespace key="104" case="case-sensitive">Thesaurus</namespace>
+      <namespace key="105" case="case-sensitive">Thesaurus Diskussion</namespace>
+      <namespace key="106" case="case-sensitive">Reim</namespace>
+      <namespace key="107" case="case-sensitive">Reim Diskussion</namespace>
+      <namespace key="108" case="case-sensitive">Flexion</namespace>
+      <namespace key="109" case="case-sensitive">Flexion Diskussion</namespace>
+      <namespace key="110" case="case-sensitive">Rekonstruktion</namespace>
+      <namespace key="111" case="case-sensitive">Rekonstruktion Diskussion</namespace>
+      <namespace key="710" case="case-sensitive">TimedText</namespace>
+      <namespace key="711" case="case-sensitive">TimedText talk</namespace>
+      <namespace key="828" case="case-sensitive">Modul</namespace>
+      <namespace key="829" case="case-sensitive">Modul Diskussion</namespace>
+    </namespaces>
+  </siteinfo>
+  <page>
+    <title>Anontalkpagetext</title>
+    <ns>0</ns>
+    <id>20</id>
+    <revision>
+      <id>401685</id>
+      <origin>401685</origin>
+      <model>wikitext</model>
+      <format>text/x-wiki</format>
+      <timestamp>2006-09-19T20:46:45Z</timestamp>
+      <contributor>
+        <username>Pajz</username>
+        <id>1390</id>
+      </contributor>
+      <text xml:space="preserve" bytes="1057" sha1="rgmjxuqqcwfffxegauvoyhw080d7txm"> verwenden. Eine solche Adresse kann nacheinander von mehreren Benutzern verwendet werden. Wenn du denkst, dass auf dieser Seite für dich irrelevante Kommentare an deine IP-Adresse gerichtet wurden, und du zukünftig solchen Verwirrungen lieber entgehen möchtest, dann &lt;span class=&quot;plainlinks&quot;&gt;[http://de.wiktionary.org/wiki/Spezial:Userlogin?type=signup erstelle ein Benutzerkonto].&lt;/span&gt;&apos;&apos;
+
+&lt;span style=&quot;color:#9AC0CD&quot; class=&quot;plainlinks&quot;&gt;&lt;small&gt;[[w:WHOIS|&lt;span style=&quot;color:#FFA54F&quot;&gt;WHOIS&lt;/span&gt;]]: [http://ws.arin.net/whois/?queryinput={{PAGENAME}} &lt;span style=&quot;color:#9AC0CD&quot;&gt;Amerika&lt;/span&gt;] [http://www.ripe.net/fcgi-bin/whois?searchtext={{PAGENAME}} &lt;span style=&quot;color:#9AC0CD&quot;&gt;Europa&lt;/span&gt;] [http://www.afrinic.net/cgi-bin/whois?query={{PAGENAME}} &lt;span style=&quot;color:#9AC0CD&quot;&gt;Afrika&lt;/span&gt;] [http://www.apnic.net/apnic-bin/whois.pl?searchtext={{PAGENAME}} &lt;span style=&quot;color:#9AC0CD&quot;&gt;Asien-Pazifik&lt;span&gt;] [http://www.lacnic.net/cgi-bin/lacnic/whois?lg=DE&amp;query={{PAGENAME}} &lt;span style=&quot;color:#9AC0CD&quot;&gt;Lateinamerika/Karibik&lt;/span&gt;]&lt;/small&gt;&lt;/span&gt;</text>
+      <sha1>rgmjxuqqcwfffxegauvoyhw080d7txm</sha1>
+    </revision>
+    <revision>
+      <id>552578</id>
+      <origin>552578</origin>
+      <model>wikitext</model>
+      <format>text/x-wiki</format>
+      <timestamp>2007-05-23T15:43:05Z</timestamp>
+      <contributor>
+        <username>Pajz</username>
+        <id>1390</id>
+      </contributor>
+      <text xml:space="preserve" bytes="635" sha1="alhx7nh8t09lxgevm6bjec4uwki82jt">en hier eine numerische [[IP-Adresse]] zur Identifizierung verwenden. Eine solche Adresse kann nacheinander von mehreren Benutzern verwendet werden. Wenn du denkst, dass auf dieser Seite für dich irrelevante Kommentare an deine IP-Adresse gerichtet wurden, und du zukünftig solchen Verwirrungen lieber entgehen möchtest, dann &lt;span class=&quot;plainlinks&quot;&gt;[http://de.wiktionary.org/wiki/Spezial:Userlogin?type=signup erstelle ein Benutzerkonto].&lt;/span&gt;&apos;&apos;
+
+&lt;span class=&quot;plainlinks&quot;&gt;&lt;small&gt;&amp;nbsp;&amp;nbsp;&amp;nbsp;&apos;&apos;[http://www.dnsstuff.com/tools/whois.ch?&amp;ip={{PAGENAME}} WHOIS]&apos;&apos; &lt;small&gt;[[:w:Whois|&amp;nbsp;(Was ist das?)]]&lt;/small&gt;&lt;/small&gt;&lt;/span&gt;</text>
+      <sha1>alhx7nh8t09lxgevm6bjec4uwki82jt</sha1>
+      <minor />
+    </revision>
+  </page>
+</mediawiki>

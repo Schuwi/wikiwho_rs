@@ -1,0 +1,377 @@
+<mediawiki xmlns="http://www.mediawiki.org/xml/export-0.11/"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.mediawiki.org/xml/export-0.11/ http://www.mediawiki.org/xml/export-0.11.xsd"
+  version="0.11" xml:lang="de">
+  <siteinfo>
+    <sitename>Wiktionary</sitename>
+    <dbname>dewiktionary</dbname>
+    <base>https://de.wiktionary.org/wiki/Wiktionary:Hauptseite</base>
+    <generator>MediaWiki 1.43.0-wmf.20</generator>
+    <case>case-sensitive</case>
+    <namespaces>
+      <namespace key="-2" case="case-sensitive">Medium</namespace>
+      <namespace key="-1" case="first-letter">Spezial</namespace>
+      <namespace key="0" case="case-sensitive" />
+      <namespace key="1" case="case-sensitive">Diskussion</namespace>
+      <namespace key="2" case="first-letter">Benutzer</namespace>
+      <namespace key="3" case="first-letter">Benutzer Diskussion</namespace>
+      <namespace key="4" case="case-sensitive">Wiktionary</namespace>
+      <namespace key="5" case="case-sensitive">Wiktionary Diskussion</namespace>
+      <namespace key="6" case="case-sensitive">Datei</namespace>
+      <namespace key="7" case="case-sensitive">Datei Diskussion</namespace>
+      <namespace key="8" case="first-letter">MediaWiki</namespace>
+      <namespace key="9" case="first-letter">MediaWiki Diskussion</namespace>
+      <namespace key="10" case="case-sensitive">Vorlage</namespace>
+      <namespace key="11" case="case-sensitive">Vorlage Diskussion</namespace>
+      <namespace key="12" case="case-sensitive">Hilfe</namespace>
+      <namespace key="13" case="case-sensitive">Hilfe Diskussion</namespace>
+      <namespace key="14" case="case-sensitive">Kategorie</namespace>
+      <namespace key="15" case="case-sensitive">Kategorie Diskussion</namespace>
+      <namespace key="102" case="case-sensitive">Verzeichnis</namespace>
+      <namespace key="103" case="case-sensitive">Verzeichnis Diskussion</namespace>
+      <namespace key="104" case="case-sensitive">Thesaurus</namespace>
+      <namespace key="105" case="case-sensitive">Thesaurus Diskussion</namespace>
+      <namespace key="106" case="case-sensitive">Reim</namespace>
+      <namespace key="107" case="case-sensitive">Reim Diskussion</namespace>
+      <namespace key="108" case="case-sensitive">Flexion</namespace>
+      <namespace key="109" case="case-sensitive">Flexion Diskussion</namespace>
+      <namespace key="110" case="case-sensitive">Rekonstruktion</namespace>
+      <namespace key="111" case="case-sensitive">Rekonstruktion Diskussion</namespace>
+      <namespace key="710" case="case-sensitive">TimedText</namespace>
+      <namespace key="711" case="case-sensitive">TimedText talk</namespace>
+      <namespace key="828" case="case-sensitive">Modul</namespace>
+      <namespace key="829" case="case-sensitive">Modul Diskussion</namespace>
+    </namespaces>
+  </siteinfo>
+  <page>
+    <title>MediaWiki:Anontalkpagetext</title>
+    <ns>8</ns>
+    <id>168</id>
+    <revision>
+      <id>769</id>
+      <timestamp>2003-12-06T17:00:32Z</timestamp>
+      <contributor>
+        <username>Elian</username>
+        <id>11031</id>
+      </contributor>
+      <minor />
+      <comment>formatierung</comment>
+      <origin>769</origin>
+      <model>wikitext</model>
+      <format>text/x-wiki</format>
+      <text bytes="408" sha1="25i3a37r2z6n3m81qeeadzsigquec9l" xml:space="preserve">----
+''Dies ist die Diskussions-Seite eines nicht angemeldeten Benutzers. Wir müssen hier die numerische [[IP-Adresse]] zur Identifizierung verwenden. Eine solche Adresse kann nacheinander von mehreren Benutzern verwendet werden. Wenn Sie denken, dass auf dieser Seite irrelevante Kommentare an Sie gerichtet wurden, [[Spezial:Userlogin|melden Sie sich bitte an]], um zukünftige Verwirrung zu vermeiden.''</text>
+      <sha1>25i3a37r2z6n3m81qeeadzsigquec9l</sha1>
+    </revision>
+    <revision>
+      <id>24372</id>
+      <parentid>769</parentid>
+      <timestamp>2004-05-09T20:43:11Z</timestamp>
+      <contributor>
+        <username>SteffenB</username>
+        <id>12</id>
+      </contributor>
+      <comment>Sonderzeichen nach utf-8-Umstellung wiederhergestellt;</comment>
+      <origin>24372</origin>
+      <model>wikitext</model>
+      <format>text/x-wiki</format>
+      <text bytes="409" sha1="24aequwv8wa06xcicn1ic3ixwddfsg6" xml:space="preserve">----
+''Dies ist die Diskussions-Seite eines nicht angemeldeten Benutzers. Wir müssen hier die numerische [[IP-Adresse]] zur Identifizierung verwenden. Eine solche Adresse kann nacheinander von mehreren Benutzern verwendet werden. Wenn Sie denken, dass auf dieser Seite irrelevante Kommentare an Sie gerichtet wurden, [[Spezial:Userlogin|melden Sie sich bitte an]], um zukünftige  Verwirrung zu vermeiden.''</text>
+      <sha1>24aequwv8wa06xcicn1ic3ixwddfsg6</sha1>
+    </revision>
+    <revision>
+      <id>65767</id>
+      <parentid>24372</parentid>
+      <timestamp>2005-01-05T19:02:53Z</timestamp>
+      <contributor>
+        <username>Melancholie</username>
+        <id>306</id>
+      </contributor>
+      <minor />
+      <origin>65767</origin>
+      <model>wikitext</model>
+      <format>text/x-wiki</format>
+      <text bytes="407" sha1="hkv2d2mkb33wxli06va6p4o6ne1bxmx" xml:space="preserve">----
+''Dies ist die Diskussions-Seite eines nicht angemeldeten Benutzers. Wir müssen hier die numerische [[IP-Adresse]] zur Identifizierung verwenden. Eine solche Adresse kann nacheinander von mehreren Benutzern verwendet werden. Wenn Sie denken, dass auf dieser Seite irrelevante Kommentare an Sie gerichtet wurden, [[Spezial:Userlogin|melden Sie sich bitte an]], um zukünftige Verwirrung zu vermeiden.''</text>
+      <sha1>hkv2d2mkb33wxli06va6p4o6ne1bxmx</sha1>
+    </revision>
+    <revision>
+      <id>156911</id>
+      <parentid>65767</parentid>
+      <timestamp>2005-12-15T17:33:21Z</timestamp>
+      <contributor>
+        <username>Pajz</username>
+        <id>1390</id>
+      </contributor>
+      <origin>156911</origin>
+      <model>wikitext</model>
+      <format>text/x-wiki</format>
+      <text bytes="401" sha1="4kzvisy5o2zvwczopavcfftn2rfibu8" xml:space="preserve">----
+''Dies ist die Diskussions-Seite eines nicht angemeldeten Benutzers. Wir müssen hier eine numerische [[IP-Adresse]] zur Identifizierung verwenden. Eine solche Adresse kann nacheinander von mehreren Benutzern verwendet werden. Wenn du denkst, dass auf dieser Seite irrelevante Kommentare an dich gerichtet sind, [[Spezial:Userlogin|melde dich bitte an]], um zukünftige Verwirrung zu vermeiden.''</text>
+      <sha1>4kzvisy5o2zvwczopavcfftn2rfibu8</sha1>
+    </revision>
+    <revision>
+      <id>170358</id>
+      <parentid>156911</parentid>
+      <timestamp>2006-01-16T20:54:31Z</timestamp>
+      <contributor>
+        <username>Melancholie</username>
+        <id>306</id>
+      </contributor>
+      <minor />
+      <comment>&lt;br&gt;</comment>
+      <origin>170358</origin>
+      <model>wikitext</model>
+      <format>text/x-wiki</format>
+      <text bytes="408" sha1="53ymjcnlcyzbe66a2p66ies255hbrjq" xml:space="preserve">&lt;br /&gt;
+----
+''Dies ist die Diskussions-Seite eines nicht angemeldeten Benutzers. Wir müssen hier eine numerische [[IP-Adresse]] zur Identifizierung verwenden. Eine solche Adresse kann nacheinander von mehreren Benutzern verwendet werden. Wenn du denkst, dass auf dieser Seite irrelevante Kommentare an dich gerichtet sind, [[Spezial:Userlogin|melde dich bitte an]], um zukünftige Verwirrung zu vermeiden.''</text>
+      <sha1>53ymjcnlcyzbe66a2p66ies255hbrjq</sha1>
+    </revision>
+    <revision>
+      <id>170360</id>
+      <parentid>170358</parentid>
+      <timestamp>2006-01-16T20:55:51Z</timestamp>
+      <contributor>
+        <username>Melancholie</username>
+        <id>306</id>
+      </contributor>
+      <minor />
+      <comment>Hmm, noch ein &lt;br&gt;</comment>
+      <origin>170360</origin>
+      <model>wikitext</model>
+      <format>text/x-wiki</format>
+      <text bytes="415" sha1="ctiqr2j1d3uiice822dqe6e9i7sfybg" xml:space="preserve">&lt;br /&gt;
+&lt;br /&gt;
+----
+''Dies ist die Diskussions-Seite eines nicht angemeldeten Benutzers. Wir müssen hier eine numerische [[IP-Adresse]] zur Identifizierung verwenden. Eine solche Adresse kann nacheinander von mehreren Benutzern verwendet werden. Wenn du denkst, dass auf dieser Seite irrelevante Kommentare an dich gerichtet sind, [[Spezial:Userlogin|melde dich bitte an]], um zukünftige Verwirrung zu vermeiden.''</text>
+      <sha1>ctiqr2j1d3uiice822dqe6e9i7sfybg</sha1>
+    </revision>
+    <revision>
+      <id>170361</id>
+      <parentid>170360</parentid>
+      <timestamp>2006-01-16T20:56:32Z</timestamp>
+      <contributor>
+        <username>Melancholie</username>
+        <id>306</id>
+      </contributor>
+      <minor />
+      <comment>K</comment>
+      <origin>170361</origin>
+      <model>wikitext</model>
+      <format>text/x-wiki</format>
+      <text bytes="414" sha1="iqwy87wo8m5mu1ephe9jeqhju5as5d9" xml:space="preserve">&lt;br /&gt;
+&lt;br /&gt;
+----
+''Dies ist die Diskussionsseite eines nicht angemeldeten Benutzers. Wir müssen hier eine numerische [[IP-Adresse]] zur Identifizierung verwenden. Eine solche Adresse kann nacheinander von mehreren Benutzern verwendet werden. Wenn du denkst, dass auf dieser Seite irrelevante Kommentare an dich gerichtet sind, [[Spezial:Userlogin|melde dich bitte an]], um zukünftige Verwirrung zu vermeiden.''</text>
+      <sha1>iqwy87wo8m5mu1ephe9jeqhju5as5d9</sha1>
+    </revision>
+    <revision>
+      <id>185615</id>
+      <parentid>170361</parentid>
+      <timestamp>2006-02-14T01:37:28Z</timestamp>
+      <contributor>
+        <username>Melancholie</username>
+        <id>306</id>
+      </contributor>
+      <minor />
+      <comment>etwas umformuliert</comment>
+      <origin>185615</origin>
+      <model>wikitext</model>
+      <format>text/x-wiki</format>
+      <text bytes="562" sha1="17abups4na3a60bt43524l19le8gra0" xml:space="preserve">&lt;br /&gt;
+&lt;br /&gt;
+----
+''Dies ist die Diskussionsseite eines nicht angemeldeten Benutzers. Wir müssen hier eine numerische [[IP-Adresse]] zur Identifizierung verwenden. Eine solche Adresse kann nacheinander von mehreren Benutzern verwendet werden. Wenn du denkst, dass auf dieser Seite für dich irrelevante Kommentare an deine IP-Adresse gerichtet wurden, und du zukünftig solchen Verwirrungen lieber entgehen möchtest, dann [[Spezial:Userlogin|erstelle am besten ein Benutzerkonto]]; das geht recht schnell und bringt zudem [[Hilfe:Anmeldung|viele Vorteile]].''</text>
+      <sha1>17abups4na3a60bt43524l19le8gra0</sha1>
+    </revision>
+    <revision>
+      <id>185616</id>
+      <parentid>185615</parentid>
+      <timestamp>2006-02-14T01:41:43Z</timestamp>
+      <contributor>
+        <username>Melancholie</username>
+        <id>306</id>
+      </contributor>
+      <minor />
+      <comment>SignUp-Link aktual.</comment>
+      <origin>185616</origin>
+      <model>wikitext</model>
+      <format>text/x-wiki</format>
+      <text bytes="634" sha1="ipzl82jk2l87f3s4va00xd12s11oc7k" xml:space="preserve">&lt;br /&gt;
+&lt;br /&gt;
+----
+''Dies ist die Diskussionsseite eines nicht angemeldeten Benutzers. Wir müssen hier eine numerische [[IP-Adresse]] zur Identifizierung verwenden. Eine solche Adresse kann nacheinander von mehreren Benutzern verwendet werden. Wenn du denkst, dass auf dieser Seite für dich irrelevante Kommentare an deine IP-Adresse gerichtet wurden, und du zukünftig solchen Verwirrungen lieber entgehen möchtest, dann &lt;span class=&quot;plainlinks&quot;&gt;[http://de.wiktionary.org/wiki/Spezial:Userlogin?type=signup erstelle am besten ein Benutzerkonto]&lt;/span&gt;; das geht recht schnell und bringt zudem [[Hilfe:Anmeldung|viele Vorteile]].''</text>
+      <sha1>ipzl82jk2l87f3s4va00xd12s11oc7k</sha1>
+    </revision>
+    <revision>
+      <id>401685</id>
+      <parentid>185616</parentid>
+      <timestamp>2006-09-19T20:46:45Z</timestamp>
+      <contributor>
+        <username>Pajz</username>
+        <id>1390</id>
+      </contributor>
+      <origin>401685</origin>
+      <model>wikitext</model>
+      <format>text/x-wiki</format>
+      <text bytes="1204" sha1="rgmjxuqqcwfffxegauvoyhw080d7txm" xml:space="preserve">&lt;br /&gt;
+----
+''Dies ist die Diskussionsseite eines nicht angemeldeten Benutzers. Wir müssen hier eine numerische [[IP-Adresse]] zur Identifizierung verwenden. Eine solche Adresse kann nacheinander von mehreren Benutzern verwendet werden. Wenn du denkst, dass auf dieser Seite für dich irrelevante Kommentare an deine IP-Adresse gerichtet wurden, und du zukünftig solchen Verwirrungen lieber entgehen möchtest, dann &lt;span class=&quot;plainlinks&quot;&gt;[http://de.wiktionary.org/wiki/Spezial:Userlogin?type=signup erstelle ein Benutzerkonto].&lt;/span&gt;''
+
+&lt;span style=&quot;color:#9AC0CD&quot; class=&quot;plainlinks&quot;&gt;&lt;small&gt;[[w:WHOIS|&lt;span style=&quot;color:#FFA54F&quot;&gt;WHOIS&lt;/span&gt;]]: [http://ws.arin.net/whois/?queryinput={{PAGENAME}} &lt;span style=&quot;color:#9AC0CD&quot;&gt;Amerika&lt;/span&gt;] [http://www.ripe.net/fcgi-bin/whois?searchtext={{PAGENAME}} &lt;span style=&quot;color:#9AC0CD&quot;&gt;Europa&lt;/span&gt;] [http://www.afrinic.net/cgi-bin/whois?query={{PAGENAME}} &lt;span style=&quot;color:#9AC0CD&quot;&gt;Afrika&lt;/span&gt;] [http://www.apnic.net/apnic-bin/whois.pl?searchtext={{PAGENAME}} &lt;span style=&quot;color:#9AC0CD&quot;&gt;Asien-Pazifik&lt;span&gt;] [http://www.lacnic.net/cgi-bin/lacnic/whois?lg=DE&amp;query={{PAGENAME}} &lt;span style=&quot;color:#9AC0CD&quot;&gt;Lateinamerika/Karibik&lt;/span&gt;]&lt;/small&gt;&lt;/span&gt;</text>
+      <sha1>rgmjxuqqcwfffxegauvoyhw080d7txm</sha1>
+    </revision>
+    <revision>
+      <id>552577</id>
+      <parentid>401685</parentid>
+      <timestamp>2007-05-23T15:40:46Z</timestamp>
+      <contributor>
+        <username>Pajz</username>
+        <id>1390</id>
+      </contributor>
+      <minor />
+      <origin>552577</origin>
+      <model>wikitext</model>
+      <format>text/x-wiki</format>
+      <text bytes="700" sha1="9q6qjdlvar7l23y2z7af476kysnyor6" xml:space="preserve">&lt;br /&gt;
+----
+''Dies ist die Diskussionsseite eines nicht angemeldeten Benutzers. Wir müssen hier eine numerische [[IP-Adresse]] zur Identifizierung verwenden. Eine solche Adresse kann nacheinander von mehreren Benutzern verwendet werden. Wenn du denkst, dass auf dieser Seite für dich irrelevante Kommentare an deine IP-Adresse gerichtet wurden, und du zukünftig solchen Verwirrungen lieber entgehen möchtest, dann &lt;span class=&quot;plainlinks&quot;&gt;[http://de.wiktionary.org/wiki/Spezial:Userlogin?type=signup erstelle ein Benutzerkonto].&lt;/span&gt;''
+
+&lt;span class=&quot;plainlinks&quot;&gt;&lt;small&gt;→ [http://www.dnsstuff.com/tools/whois.ch?&amp;ip={{PAGENAME}} WHOIS] &lt;small&gt;[[:w:Whois|(Was ist das?)]]&lt;/small&gt;&lt;/small&gt;&lt;/span&gt;</text>
+      <sha1>9q6qjdlvar7l23y2z7af476kysnyor6</sha1>
+    </revision>
+    <revision>
+      <id>552578</id>
+      <parentid>552577</parentid>
+      <timestamp>2007-05-23T15:43:05Z</timestamp>
+      <contributor>
+        <username>Pajz</username>
+        <id>1390</id>
+      </contributor>
+      <minor />
+      <origin>552578</origin>
+      <model>wikitext</model>
+      <format>text/x-wiki</format>
+      <text bytes="724" sha1="alhx7nh8t09lxgevm6bjec4uwki82jt" xml:space="preserve">&lt;br /&gt;
+----
+''Dies ist die Diskussionsseite eines nicht angemeldeten Benutzers. Wir müssen hier eine numerische [[IP-Adresse]] zur Identifizierung verwenden. Eine solche Adresse kann nacheinander von mehreren Benutzern verwendet werden. Wenn du denkst, dass auf dieser Seite für dich irrelevante Kommentare an deine IP-Adresse gerichtet wurden, und du zukünftig solchen Verwirrungen lieber entgehen möchtest, dann &lt;span class=&quot;plainlinks&quot;&gt;[http://de.wiktionary.org/wiki/Spezial:Userlogin?type=signup erstelle ein Benutzerkonto].&lt;/span&gt;''
+
+&lt;span class=&quot;plainlinks&quot;&gt;&lt;small&gt;&amp;nbsp;&amp;nbsp;&amp;nbsp;''[http://www.dnsstuff.com/tools/whois.ch?&amp;ip={{PAGENAME}} WHOIS]'' &lt;small&gt;[[:w:Whois|&amp;nbsp;(Was ist das?)]]&lt;/small&gt;&lt;/small&gt;&lt;/span&gt;</text>
+      <sha1>alhx7nh8t09lxgevm6bjec4uwki82jt</sha1>
+    </revision>
+    <revision>
+      <id>607030</id>
+      <parentid>552578</parentid>
+      <timestamp>2007-09-13T14:03:44Z</timestamp>
+      <contributor>
+        <username>Spacebirdy</username>
+        <id>1120</id>
+      </contributor>
+      <minor />
+      <origin>607030</origin>
+      <model>wikitext</model>
+      <format>text/x-wiki</format>
+      <text bytes="715" sha1="1u13mucpixwtyhl8yl0sxc22lfci09d" xml:space="preserve">&lt;br /&gt;
+----
+''Dies ist die Diskussionsseite eines nicht angemeldeten Benutzers. Wir müssen hier eine numerische [[IP-Adresse]] zur Identifizierung verwenden. Eine solche Adresse kann nacheinander von mehreren Benutzern verwendet werden. Wenn du denkst, dass auf dieser Seite für dich irrelevante Kommentare an deine IP-Adresse gerichtet wurden, und du zukünftig solchen Verwirrungen lieber entgehen möchtest, dann &lt;span class=&quot;plainlinks&quot;&gt;[http://de.wiktionary.org/wiki/Spezial:Userlogin?type=signup erstelle ein Benutzerkonto].&lt;/span&gt;''
+
+&lt;span class=&quot;plainlinks&quot;&gt;&lt;small&gt;&amp;nbsp;&amp;nbsp;&amp;nbsp;''[http://www.ping.eu/ns_whois/?host={{PAGENAME}} WHOIS]'' &lt;small&gt;[[:w:Whois|&amp;nbsp;(Was ist das?)]]&lt;/small&gt;&lt;/small&gt;&lt;/span&gt;</text>
+      <sha1>1u13mucpixwtyhl8yl0sxc22lfci09d</sha1>
+    </revision>
+    <revision>
+      <id>875197</id>
+      <parentid>607030</parentid>
+      <timestamp>2008-10-29T13:33:27Z</timestamp>
+      <contributor>
+        <username>Pajz</username>
+        <id>1390</id>
+      </contributor>
+      <minor />
+      <origin>875197</origin>
+      <model>wikitext</model>
+      <format>text/x-wiki</format>
+      <text bytes="708" sha1="8h7p8h8xm46iorl7harejrizofmzohk" xml:space="preserve">----
+''Dies ist die Diskussionsseite eines nicht angemeldeten Benutzers. Wir müssen hier eine numerische [[IP-Adresse]] zur Identifizierung verwenden. Eine solche Adresse kann nacheinander von mehreren Benutzern verwendet werden. Wenn du denkst, dass auf dieser Seite für dich irrelevante Kommentare an deine IP-Adresse gerichtet wurden, und du zukünftig solchen Verwirrungen lieber entgehen möchtest, dann &lt;span class=&quot;plainlinks&quot;&gt;[http://de.wiktionary.org/wiki/Spezial:Userlogin?type=signup erstelle ein Benutzerkonto].&lt;/span&gt;''
+
+&lt;span class=&quot;plainlinks&quot;&gt;&lt;small&gt;&amp;nbsp;&amp;nbsp;&amp;nbsp;''[http://www.ping.eu/ns_whois/?host={{PAGENAME}} WHOIS]'' &lt;small&gt;[[:w:Whois|&amp;nbsp;(Was ist das?)]]&lt;/small&gt;&lt;/small&gt;&lt;/span&gt;</text>
+      <sha1>8h7p8h8xm46iorl7harejrizofmzohk</sha1>
+    </revision>
+    <revision>
+      <id>1470589</id>
+      <parentid>875197</parentid>
+      <timestamp>2010-11-17T18:31:00Z</timestamp>
+      <contributor>
+        <username>Pajz</username>
+        <id>1390</id>
+      </contributor>
+      <minor />
+      <comment>eigene seite für ip-abfragen</comment>
+      <origin>1470589</origin>
+      <model>wikitext</model>
+      <format>text/x-wiki</format>
+      <text bytes="714" sha1="fk2tuuj2vjmup7o2rccm7450zcxibjv" xml:space="preserve">----
+''Dies ist die Diskussionsseite eines nicht angemeldeten Benutzers. Wir müssen hier eine numerische [[IP-Adresse]] zur Identifizierung verwenden. Eine solche Adresse kann nacheinander von mehreren Benutzern verwendet werden. Wenn du denkst, dass auf dieser Seite für dich irrelevante Kommentare an deine IP-Adresse gerichtet wurden, und du zukünftig solchen Verwirrungen lieber entgehen möchtest, dann &lt;span class=&quot;plainlinks&quot;&gt;[http://de.wiktionary.org/wiki/Spezial:Userlogin?type=signup erstelle ein Benutzerkonto].&lt;/span&gt;''
+
+&lt;span class=&quot;plainlinks&quot;&gt;&lt;small&gt;&amp;nbsp;&amp;nbsp;&amp;nbsp;''[http://toolserver.org/~chm/whois.php?ip={{PAGENAME}} WHOIS]'' &lt;small&gt;[[:w:Whois|&amp;nbsp;(Was ist das?)]]&lt;/small&gt;&lt;/small&gt;&lt;/span&gt;</text>
+      <sha1>fk2tuuj2vjmup7o2rccm7450zcxibjv</sha1>
+    </revision>
+    <revision>
+      <id>2101503</id>
+      <parentid>1470589</parentid>
+      <timestamp>2012-01-13T18:16:05Z</timestamp>
+      <contributor>
+        <username>Hoo man</username>
+        <id>32718</id>
+      </contributor>
+      <minor />
+      <comment>Bot: Security fix: [[WMFblog:2011/10/03/native-https-support-enabled-for-all-wikimedia-foundation-wikis/|protocol-relative URLs]] per https://meta.wikimedia.org/?oldid=3197161 ([[m:Stewards' noticeboard|questions?]]).</comment>
+      <origin>2101503</origin>
+      <model>wikitext</model>
+      <format>text/x-wiki</format>
+      <text bytes="709" sha1="dwt93qo8db8uj7r25msoy66c4i6rati" xml:space="preserve">----
+''Dies ist die Diskussionsseite eines nicht angemeldeten Benutzers. Wir müssen hier eine numerische [[IP-Adresse]] zur Identifizierung verwenden. Eine solche Adresse kann nacheinander von mehreren Benutzern verwendet werden. Wenn du denkst, dass auf dieser Seite für dich irrelevante Kommentare an deine IP-Adresse gerichtet wurden, und du zukünftig solchen Verwirrungen lieber entgehen möchtest, dann &lt;span class=&quot;plainlinks&quot;&gt;[//de.wiktionary.org/wiki/Spezial:Userlogin?type=signup erstelle ein Benutzerkonto].&lt;/span&gt;''
+
+&lt;span class=&quot;plainlinks&quot;&gt;&lt;small&gt;&amp;nbsp;&amp;nbsp;&amp;nbsp;''[http://toolserver.org/~chm/whois.php?ip={{PAGENAME}} WHOIS]'' &lt;small&gt;[[:w:Whois|&amp;nbsp;(Was ist das?)]]&lt;/small&gt;&lt;/small&gt;&lt;/span&gt;</text>
+      <sha1>dwt93qo8db8uj7r25msoy66c4i6rati</sha1>
+    </revision>
+    <revision>
+      <id>5152810</id>
+      <parentid>2101503</parentid>
+      <timestamp>2016-09-28T10:59:37Z</timestamp>
+      <contributor>
+        <username>Udo T.</username>
+        <id>91150</id>
+      </contributor>
+      <minor />
+      <comment>Link zum whois-Tool aktualisiert</comment>
+      <origin>5152810</origin>
+      <model>wikitext</model>
+      <format>text/x-wiki</format>
+      <text bytes="703" sha1="7ga82568owwfhxlwiq3n0ktpdi26dld" xml:space="preserve">----
+''Dies ist die Diskussionsseite eines nicht angemeldeten Benutzers. Wir müssen hier eine numerische [[IP-Adresse]] zur Identifizierung verwenden. Eine solche Adresse kann nacheinander von mehreren Benutzern verwendet werden. Wenn du denkst, dass auf dieser Seite für dich irrelevante Kommentare an deine IP-Adresse gerichtet wurden, und du zukünftig solchen Verwirrungen lieber entgehen möchtest, dann &lt;span class=&quot;plainlinks&quot;&gt;[//de.wiktionary.org/wiki/Spezial:Userlogin?type=signup erstelle ein Benutzerkonto].&lt;/span&gt;''
+
+&lt;span class=&quot;plainlinks&quot;&gt;&lt;small&gt;&amp;nbsp;&amp;nbsp;&amp;nbsp;''[{{fullurl:toollabs:whois/{{PAGENAME}}/lookup}} Whois]'' &lt;small&gt;[[:w:Whois|&amp;nbsp;(Was ist das?)]]&lt;/small&gt;&lt;/small&gt;&lt;/span&gt;</text>
+      <sha1>7ga82568owwfhxlwiq3n0ktpdi26dld</sha1>
+    </revision>
+    <revision>
+      <id>8018021</id>
+      <parentid>5152810</parentid>
+      <timestamp>2020-07-10T10:26:13Z</timestamp>
+      <contributor>
+        <username>Udo T.</username>
+        <id>91150</id>
+      </contributor>
+      <minor />
+      <comment>Link für Whois aktual.</comment>
+      <origin>8018021</origin>
+      <model>wikitext</model>
+      <format>text/x-wiki</format>
+      <text bytes="717" sha1="44crtguc0fg4qoiidr153ha42v9b65k" xml:space="preserve">----
+''Dies ist die Diskussionsseite eines nicht angemeldeten Benutzers. Wir müssen hier eine numerische [[IP-Adresse]] zur Identifizierung verwenden. Eine solche Adresse kann nacheinander von mehreren Benutzern verwendet werden. Wenn du denkst, dass auf dieser Seite für dich irrelevante Kommentare an deine IP-Adresse gerichtet wurden, und du zukünftig solchen Verwirrungen lieber entgehen möchtest, dann &lt;span class=&quot;plainlinks&quot;&gt;[//de.wiktionary.org/wiki/Spezial:Userlogin?type=signup erstelle ein Benutzerkonto].&lt;/span&gt;''
+
+&lt;span class=&quot;plainlinks&quot;&gt;&lt;small&gt;&amp;nbsp;&amp;nbsp;&amp;nbsp;''[//whois.toolforge.org/gateway.py?lookup=true&amp;ip={{PAGENAME}} Whois]'' &lt;small&gt;[[:w:Whois|&amp;nbsp;(Was ist das?)]]&lt;/small&gt;&lt;/small&gt;&lt;/span&gt;</text>
+      <sha1>44crtguc0fg4qoiidr153ha42v9b65k</sha1>
+    </revision>
+  </page>
+</mediawiki>

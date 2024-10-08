@@ -213,7 +213,7 @@ fn compare_algorithm_python(
                         prop_assert_eq!(word_pointer_rust.unique_id(), word_py.token_id as usize);
                         prop_assert_eq!(&word_rust.inbound, &word_py.inbound);
                         prop_assert_eq!(&word_rust.outbound, &word_py.outbound);
-                        prop_assert_eq!(word_rust.latest_rev_id, word_py.last_rev_id);
+                        prop_assert_eq!(word_rust.latest_rev_id, word_py.last_rev_id, "inconsistency at word: {:?}, revision: {}", &word_pointer_rust.value, revision_id);
                         prop_assert_eq!(word_rust.origin_rev_id, word_py.origin_rev_id);
                     }
                 }
@@ -340,3 +340,55 @@ fn known_bad_example_familia() {
 //     }
 // });
 
+#[test]
+fn known_bad_example_anontalkpagetext() {
+    let reader =
+        BufReader::new(File::open("failing-inputs/Anontalkpagetext_shortened.xml").unwrap());
+    let mut parser = DumpParser::new(reader).unwrap();
+    let page = parser.parse_page().unwrap().unwrap();
+
+    compare_algorithm_python(&page).unwrap();
+}
+
+// delta debugging
+use crate::test_support::delta_debug_texts;
+
+#[test]
+#[ignore] // this test takes very long and is only useful for focus debugging
+fn simplify_bad_example_anontalkpagetext() {
+    let reader =
+        BufReader::new(File::open("failing-inputs/Anontalkpagetext_shortened-manually.xml").unwrap());
+    let mut parser = DumpParser::new(reader).unwrap();
+    let bad_page = parser.parse_page().unwrap().unwrap();
+
+    let test_page = |page: &Page| matches!(compare_algorithm_python(page), Err(TestCaseError::Fail(_)));
+
+    // Ensure the bad_page indeed causes a failure
+    assert!(
+        test_page(&bad_page),
+        "The provided bad_page does not cause a failure."
+    );
+
+    // Perform delta debugging on texts
+    let minimized_page = delta_debug_texts(bad_page, test_page, 300000 /* runs for about an hour or so */);
+
+    // Assert that the minimized_page still causes the failure
+    assert!(
+        test_page(&minimized_page),
+        "The minimized_page does not cause a failure."
+    );
+
+    // Debug some weird inconsistency that pasting the minimized page into the XML file suddenly no longer causes a failure
+    // {
+    //     let reader =
+    //     BufReader::new(File::open("failing-inputs/Anontalkpagetext_shortened.xml").unwrap());
+    //     let mut parser = DumpParser::new(reader).unwrap();
+    //     let compare_page = parser.parse_page().unwrap().unwrap();
+
+    //     assert_eq!(minimized_page, compare_page);
+    // }
+    // Conclusion: Make sure VS Code does NOT add indentations when pasting the minimized page into the XML file!!
+
+    // Output the minimized Page for inspection
+    println!("\n\n\n\nMinimized Page: {}", page_to_xml(&minimized_page));
+}

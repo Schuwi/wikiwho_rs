@@ -14,6 +14,8 @@ pub mod prelude {
     pub(crate) use pyo3::prelude::*;
 }
 
+pub use delta_debugging::delta_debug_texts;
+
 macro_rules! with_gil {
     ($py: ident, $body: expr) => {{
         let result = Python::with_gil(|$py| {
@@ -466,5 +468,213 @@ pub mod proptest {
                 revisions
             }
         }
+    }
+}
+
+pub mod delta_debugging {
+    use std::collections::HashSet;
+
+    use crate::{dump_parser::{Page, Text}, test_support::page_to_xml};
+
+    fn simplify_text(text: &str) -> Vec<String> {
+        let mut candidates = Vec::new();
+
+        // Remove characters one by one
+        let chars = text.chars();
+        let num_chars = chars.clone().count();
+        for i in 0..num_chars {
+            let simplified = chars
+                .clone()
+                .enumerate()
+                .filter_map(|(j, c)| if i == j { None } else { Some(c) })
+                .collect::<String>();
+            candidates.push(simplified);
+        }
+
+        // Remove words one by one
+        for word in text.split_whitespace() {
+            let simplified = text
+                .replacen(word, "", 1)
+                .replace("  ", " ")
+                .trim()
+                .to_string();
+            candidates.push(simplified);
+        }
+
+        // Shorten the string by halves
+        if num_chars > 1 {
+            let half = num_chars / 2;
+            candidates.push(chars.clone().take(half).collect());
+            candidates.push(chars.skip(half).collect());
+        }
+
+        candidates
+    }
+
+    fn simplify_both_texts(text_a: &str, text_b: &str) -> Vec<(String, String)> {
+        let mut candidates = Vec::new();
+
+        // Remove characters from both texts
+        for i in 0..text_a.len().min(text_b.len()) {
+            let simplified_a = format!("{}{}", &text_a[..i], &text_a[i + 1..]);
+            let simplified_b = format!("{}{}", &text_b[..i], &text_b[i + 1..]);
+            candidates.push((simplified_a, simplified_b));
+        }
+
+        // Remove words from both texts
+        let words_a: Vec<&str> = text_a.split_whitespace().collect();
+        let words_b: Vec<&str> = text_b.split_whitespace().collect();
+        for (word_a, word_b) in words_a.iter().zip(words_b.iter()) {
+            let simplified_a = text_a
+                .replacen(word_a, "", 1)
+                .replace("  ", " ")
+                .trim()
+                .to_string();
+            let simplified_b = text_b
+                .replacen(word_b, "", 1)
+                .replace("  ", " ")
+                .trim()
+                .to_string();
+            candidates.push((simplified_a, simplified_b));
+        }
+
+        // Shorten both strings by halves
+        if text_a.len() > 1 && text_b.len() > 1 {
+            let half_a = text_a.len() / 2;
+            let half_b = text_b.len() / 2;
+            candidates.push((text_a[..half_a].to_string(), text_b[..half_b].to_string()));
+            candidates.push((text_a[half_a..].to_string(), text_b[half_b..].to_string()));
+        }
+
+        candidates
+    }
+
+    fn simplify_individually(page: &Page) -> Vec<Page> {
+        let mut reduced_pages = Vec::new();
+
+        for (i, rev) in page.revisions.iter().enumerate() {
+            // Only simplify Normal text
+            if let Text::Normal(text) = &rev.text {
+                let simplifications = simplify_text(text);
+                for simplified_text in simplifications {
+                    let mut new_page = page.clone();
+                    new_page.revisions[i].text = Text::Normal(simplified_text.clone());
+                    reduced_pages.push(new_page);
+                }
+            }
+        }
+
+        reduced_pages
+    }
+
+    fn simplify_jointly(page: &Page) -> Vec<Page> {
+        let mut reduced_pages = Vec::new();
+
+        if page.revisions.len() != 2 {
+            return reduced_pages; // Ensure exactly two revisions
+        }
+
+        let rev1 = &page.revisions[0];
+        let rev2 = &page.revisions[1];
+
+        if let (Text::Normal(text1), Text::Normal(text2)) = (&rev1.text, &rev2.text) {
+            let simplifications = simplify_both_texts(text1, text2);
+            for (simplified_text1, simplified_text2) in simplifications {
+                let mut new_page = page.clone();
+                new_page.revisions[0].text = Text::Normal(simplified_text1.clone());
+                new_page.revisions[1].text = Text::Normal(simplified_text2.clone());
+                reduced_pages.push(new_page);
+            }
+        }
+
+        reduced_pages
+    }
+
+    fn apply_individual_simplifications(
+        current_page: &Page,
+        test_page: impl Fn(&Page) -> bool,
+        iterations: &mut usize,
+    ) -> Option<Page> {
+        let candidates = simplify_individually(current_page);
+        for candidate in candidates {
+            *iterations += 1;
+            if test_page(&candidate) {
+                println!("Simplified individually: {}", page_to_xml(&candidate));
+                return Some(candidate);
+            }
+        }
+        None
+    }
+
+    fn apply_joint_simplifications(
+        current_page: &Page,
+        test_page: impl Fn(&Page) -> bool,
+        iterations: &mut usize,
+    ) -> Option<Page> {
+        let candidates = simplify_jointly(current_page);
+        for candidate in candidates {
+            *iterations += 1;
+            if test_page(&candidate) {
+                println!("Simplified jointly: {}", page_to_xml(&candidate));
+                return Some(candidate);
+            }
+        }
+        None
+    }
+
+    /// Try to simplify a known-failing page by removing characters, words, or splitting the text in half.
+    ///
+    /// The `test_page` function should return `true` if the simplified page is still failing.
+    ///
+    /// # Arguments
+    /// * `current_page` - The page to simplify
+    /// * `test_page` - A function that tests if the simplified page is still failing
+    /// * `max_iterations` - A rough limit on how often to call `test_page` before giving up
+    ///
+    /// # Returns
+    /// The simplified page if a simplification was successful, otherwise the original page
+    pub fn delta_debug_texts(mut current_page: Page, test_page: impl Fn(&Page) -> bool, max_iterations: usize) -> Page {
+        let mut changed = true;
+        let mut visited = HashSet::new();
+        let mut iterations = 0;
+
+        // sanity check
+        iterations += 1;
+        if !test_page(&current_page) {
+            return current_page;
+        }
+
+        while changed && iterations < max_iterations {
+            changed = false;
+
+            // Serialize current_page to check for revisits
+            if visited.contains(&current_page) {
+                println!("Reached an already visited page.");
+                break; // Already visited
+            }
+            visited.insert(current_page.clone());
+
+            // Phase 2: Simplify Individually
+            if let Some(new_page) = apply_individual_simplifications(&current_page, &test_page, &mut iterations) {
+                current_page = new_page;
+                changed = true;
+                continue;
+            }
+
+            // Phase 3: Simplify Jointly
+            if let Some(new_page) = apply_joint_simplifications(&current_page, &test_page, &mut iterations) {
+                current_page = new_page;
+                changed = true;
+                continue;
+            }
+
+            // If no changes were made, terminate
+        }
+
+        if iterations >= max_iterations {
+            println!("Reached maximum iterations.");
+        }
+
+        current_page
     }
 }
