@@ -327,7 +327,8 @@ impl WordAnalysis {
         revision_id_prev: Option<i32>,
         push: bool,
     ) {
-        if !vandalism && self.matched_in_current && self.outbound.last() != Some(&revision_id_curr) {
+        if !vandalism && self.matched_in_current && self.outbound.last() != Some(&revision_id_curr)
+        {
             if push && Some(self.latest_rev_id) != revision_id_prev {
                 self.inbound.push(revision_id_curr);
             }
@@ -1025,8 +1026,8 @@ impl Analysis {
         prev_parasents: &[P],
         matched_parasents_prev: &mut Vec<P>,
     ) -> Option<P> {
-        for paragraph_prev_pointer in prev_parasents {
-            if paragraph_prev_pointer.matched_in_current(self) {
+        for parasent_prev_pointer in prev_parasents {
+            if parasent_prev_pointer.matched_in_current(self) {
                 // skip paragraphs that have already been matched
                 continue;
             }
@@ -1034,7 +1035,7 @@ impl Analysis {
             let mut matched_one = false;
             let mut matched_all = true;
 
-            P::iterate_words(self, &[paragraph_prev_pointer.clone()], |word| {
+            P::iterate_words(self, &[parasent_prev_pointer.clone()], |word| {
                 if word.matched_in_current {
                     matched_one = true;
                 } else {
@@ -1044,15 +1045,15 @@ impl Analysis {
 
             if !matched_one {
                 // no words in this paragraph are matched yet
-                paragraph_prev_pointer.set_matched_in_current(self, true);
-                matched_parasents_prev.push(paragraph_prev_pointer.clone());
+                parasent_prev_pointer.set_matched_in_current(self, true);
+                matched_parasents_prev.push(parasent_prev_pointer.clone());
 
                 // no need to check other paragraphs
-                return Some(paragraph_prev_pointer.clone());
+                return Some(parasent_prev_pointer.clone());
             } else if matched_all {
                 // all words in this paragraph are matched
-                paragraph_prev_pointer.set_matched_in_current(self, true);
-                matched_parasents_prev.push(paragraph_prev_pointer.clone());
+                parasent_prev_pointer.set_matched_in_current(self, true);
+                matched_parasents_prev.push(parasent_prev_pointer.clone());
             }
         }
         None
@@ -1120,12 +1121,12 @@ impl Analysis {
         for parasent_prev_pointer in P::all_parasents_in_parents(self, unmatched_revgraphs_prev) {
             if !parasent_prev_pointer.matched_in_current(self) {
                 unmatched_parasents_prev.push(parasent_prev_pointer.clone());
-            }
 
-            if P::IS_SENTENCE {
-                // to reset 'matched words in analyse_words_in_sentences' of unmatched paragraphs and sentences
-                parasent_prev_pointer.set_matched_in_current(self, true);
-                matched_parasents_prev.push(parasent_prev_pointer);
+                if P::IS_SENTENCE {
+                    // to reset 'matched words in analyse_words_in_sentences' of unmatched paragraphs and sentences
+                    parasent_prev_pointer.set_matched_in_current(self, true);
+                    matched_parasents_prev.push(parasent_prev_pointer);
+                }
             }
         }
 
