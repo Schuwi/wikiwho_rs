@@ -22,6 +22,11 @@ struct CommandLine {
 }
 
 fn main() {
+    // init tracing logging
+    tracing_subscriber::fmt()
+        .with_writer(std::io::stderr)
+        .init();
+
     let args: CommandLine = CommandLine::parse();
 
     let file = File::open(&args.input_file)
