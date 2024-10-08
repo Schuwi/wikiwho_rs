@@ -689,6 +689,11 @@ impl<R: BufRead> DumpParser<R> {
                                 self::Namespace::Named(CompactString::from(text.as_ref())),
                             );
                         }
+                        // quick_xml will output any formatting (e.g. newlines, whitespaces) after the opening tag
+                        // and before the closing tag (i.e. outside the child tags) as text events.
+                        // suppress "known tag in unexpected location" warning for these tags.
+                        [MediaWiki] | [MediaWiki, SiteInfo] | [MediaWiki, SiteInfo, Namespaces] => {
+                        }
                         _ => self.check_known_tags_in_unexpected_location(false),
                     }
                 }
@@ -808,6 +813,7 @@ impl<R: BufRead> DumpParser<R> {
                             }
                             span.record("title", page.title.as_str());
                         }
+                        [MediaWiki, Page, Id] => { /* ignore page id */ }
                         [MediaWiki, Page, Ns] => {
                             let ns = if let Ok(id) = text.parse() {
                                 id
@@ -932,6 +938,13 @@ impl<R: BufRead> DumpParser<R> {
                                 revision_builder.minor = true;
                             }
                         }
+                        // quick_xml will output any formatting (e.g. newlines, whitespaces) after the opening tag
+                        // and before the closing tag (i.e. outside the child tags) as text events.
+                        // suppress "known tag in unexpected location" warning for these tags.
+                        [MediaWiki]
+                        | [MediaWiki, Page]
+                        | [MediaWiki, Page, Revision]
+                        | [MediaWiki, Page, Revision, Contributor] => {}
                         _ => self.check_known_tags_in_unexpected_location(false),
                     }
                 }
