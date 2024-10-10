@@ -1,4 +1,15 @@
-use arraydeque::ArrayDeque;
+use aho_corasick::{AhoCorasick, AhoCorasickBuilder, PatternID};
+
+const fn const_str_equals(a: &str, b: &str) -> bool {
+    let mut i = 0;
+    while i < a.len() && i < b.len() {
+        if a.as_bytes()[i] != b.as_bytes()[i] {
+            return false;
+        }
+        i += 1;
+    }
+    i == a.len() && i == b.len()
+}
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum RevisionHash {
@@ -6,242 +17,9 @@ pub enum RevisionHash {
     Blake3(blake3::Hash),
 }
 
-enum ReplacementItem<T: 'static> {
-    Item(T),
-    Replacement(&'static [T]),
-}
-
-impl<T: 'static + Clone> IntoIterator for ReplacementItem<T> {
-    type Item = T;
-    type IntoIter = ReplacementItemIterator<T>;
-
-    fn into_iter(self) -> Self::IntoIter {
-        ReplacementItemIterator::new(self)
-    }
-}
-
-struct ReplacementItemIterator<T: 'static> {
-    item: Option<ReplacementItem<T>>,
-    index: usize,
-}
-
-impl<T: 'static> ReplacementItemIterator<T> {
-    fn new(item: ReplacementItem<T>) -> Self {
-        Self {
-            item: Some(item),
-            index: 0,
-        }
-    }
-}
-
-impl<T: 'static + Clone> Iterator for ReplacementItemIterator<T> {
-    type Item = T;
-
-    fn next(&mut self) -> Option<Self::Item> {
-        match self.item.take() {
-            Some(ReplacementItem::Item(item)) => Some(item),
-            Some(ReplacementItem::Replacement(replacement)) => {
-                if self.index < replacement.len() {
-                    let yield_item = replacement[self.index].clone();
-                    self.index += 1;
-                    self.item = Some(ReplacementItem::Replacement(replacement));
-                    Some(yield_item)
-                } else {
-                    self.item = None;
-                    None
-                }
-            }
-            None => None,
-        }
-    }
-
-    fn size_hint(&self) -> (usize, Option<usize>) {
-        match self.item {
-            Some(ReplacementItem::Item(_)) => (1, Some(1)),
-            Some(ReplacementItem::Replacement(replacement)) => {
-                let remaining = replacement.len() - self.index;
-                (remaining, Some(remaining))
-            }
-            None => (0, Some(0)),
-        }
-    }
-}
-
-impl<T: 'static + Clone> ExactSizeIterator for ReplacementItemIterator<T> {
-    fn len(&self) -> usize {
-        match self.item {
-            Some(ReplacementItem::Item(_)) => 1,
-            Some(ReplacementItem::Replacement(replacement)) => replacement.len() - self.index,
-            None => 0,
-        }
-    }
-}
-
-impl<T: 'static + Clone> FusedIterator for ReplacementItemIterator<T> {}
-
-struct ReplaceIterator<T: 'static, I, const N: usize> {
-    inner: Fuse<I>,
-    buffer: ArrayDeque<T, N, arraydeque::Wrapping>,
-
-    needle: &'static [T],
-    matched_items: usize,
-    replacement: &'static [T],
-}
-
-impl<
-        T: 'static + Default + Clone + Eq + std::fmt::Debug,
-        I: Iterator<Item = T>,
-        const N: usize,
-    > FusedIterator for ReplaceIterator<T, I, N>
-where
-    I: Iterator<Item = T>,
-{
-}
-
-impl<T: 'static + Default + Clone, I: Iterator<Item = T>, const N: usize> ReplaceIterator<T, I, N> {
-    fn new(inner: I, needle: &'static [T], replacement: &'static [T]) -> Self {
-        assert!(needle.len() == N);
-        assert!(N > 0);
-        Self {
-            inner: inner.fuse(),
-            buffer: ArrayDeque::new(),
-            needle,
-            matched_items: 0,
-            replacement,
-        }
-    }
-
-    fn size_hint_for_input_len(&self, input_len: usize) -> (usize, Option<usize>) {
-        let net_replacement_diff = self.replacement.len() as isize - N as isize; /* minimum value: -N */
-
-        // assume as many replacements as possible
-        let replacements = input_len / N; /* flooring */
-        let lower = isize::min(
-            input_len as isize + net_replacement_diff * replacements as isize,
-            input_len as isize,
-        );
-        let upper = isize::max(
-            input_len as isize + net_replacement_diff * replacements as isize,
-            input_len as isize,
-        );
-
-        // casting to usize is fine because the values are guaranteed to be non-negative
-        // worst case: input_len + (input_len / N) * (-N) = 0
-        (lower as usize, Some(upper as usize))
-    }
-}
-
-impl<
-        T: 'static + Default + Clone + Eq + std::fmt::Debug,
-        I: Iterator<Item = T>,
-        const N: usize,
-    > Iterator for ReplaceIterator<T, I, N>
-{
-    type Item = ReplacementItem<T>;
-
-    fn next(&mut self) -> Option<Self::Item> {
-        if self.matched_items == N {
-            debug_assert_eq!(self.buffer.len(), N);
-
-            // drop items that are being replaced and reset match counter
-            self.matched_items = 0;
-            self.buffer.clear();
-
-            Some(ReplacementItem::Replacement(self.replacement))
-        } else {
-            let mut yield_item = None;
-
-            for next_item in self.inner.by_ref() {
-                if next_item == self.needle[self.matched_items] {
-                    self.matched_items += 1;
-                } else if next_item == self.needle[0] {
-                    self.matched_items = 1;
-                } else {
-                    self.matched_items = 0;
-                }
-
-                debug_assert!(self.matched_items <= N);
-
-                if let Some(got_through) =
-                    self.buffer.push_back(next_item).map(ReplacementItem::Item)
-                {
-                    yield_item = Some(got_through);
-                    break;
-                } else if self.matched_items == N {
-                    debug_assert_eq!(self.buffer.len(), N);
-
-                    // drop items that are being replaced and reset match counter
-                    self.matched_items = 0;
-                    self.buffer.clear();
-
-                    yield_item = Some(ReplacementItem::Replacement(self.replacement));
-                    break;
-                }
-                debug_assert!(self.matched_items <= self.buffer.len());
-            }
-
-            if yield_item.is_none() {
-                // iterator is exhausted, return remaining items
-                self.matched_items = 0;
-                yield_item = self.buffer.pop_front().map(ReplacementItem::Item)
-            }
-
-            debug_assert!(
-                self.matched_items <= self.buffer.len(),
-                "assertion failed: {} (matched_items) <= {} (buffer.len()); buffer: {:?}",
-                self.matched_items,
-                self.buffer.len(),
-                self.buffer
-            );
-
-            yield_item
-        }
-    }
-
-    fn size_hint(&self) -> (usize, Option<usize>) {
-        let (inner_lower, inner_upper) = self.inner.size_hint();
-
-        let lower = self.size_hint_for_input_len(inner_lower);
-        let upper = inner_upper.map(|upper| self.size_hint_for_input_len(upper));
-
-        if let Some(upper) = upper {
-            // min and max can probably be avoided by thinking about the problem more
-            // but I am too mush brained to do that right now
-            let lower_res = usize::min(lower.0, upper.0);
-            let upper_res = usize::max(
-                lower.1.expect("upper bound must be known"),
-                upper.1.expect("upper bound must be known"),
-            );
-            (lower_res, Some(upper_res))
-        } else {
-            (lower.0, None)
-        }
-    }
-}
-
-trait MyIteratorExt<T: 'static> {
-    fn replace_all<const N: usize>(
-        self,
-        needle: &'static [T; N],
-        replacement: &'static [T],
-    ) -> impl Iterator<Item = T>;
-}
-
-impl<T: 'static + Default + Clone + Eq + std::fmt::Debug, I: Iterator<Item = T>> MyIteratorExt<T>
-    for I
-{
-    fn replace_all<const N: usize>(
-        self,
-        needle: &'static [T; N],
-        replacement: &'static [T],
-    ) -> impl Iterator<Item = T> {
-        ReplaceIterator::<T, _, N>::new(self, needle, replacement).flatten()
-    }
-}
-
 pub fn split_into_paragraphs(text: &str) -> Vec<String> {
     if cfg!(feature = "optimized_str") {
-        split_into_paragraphs_iterator(text)
+        split_into_paragraphs_corasick(text)
     } else {
         split_into_paragraphs_naive(text)
     }
@@ -265,43 +43,129 @@ pub fn split_into_paragraphs_naive(text: &str) -> Vec<String> {
     text.split("\n\n").map(|s| s.to_string()).collect()
 }
 
-// almost 5 times worse performance than the naive implementation, whoops
 #[doc(hidden)] /* only public for benchmarking */
-pub fn split_into_paragraphs_iterator(text: &str) -> Vec<String> {
-    let iterator = text
-        .chars()
-        .replace_all(&['\r', '\n'], &['\n'])
-        .replace_all(&['\r'], &['\n'])
-        .replace_all(
-            &['<', 't', 'a', 'b', 'l', 'e', '>'],
-            &['\n', '\n', '<', 't', 'a', 'b', 'l', 'e', '>'],
-        )
-        .replace_all(
-            &['<', '/', 't', 'a', 'b', 'l', 'e', '>'],
-            &['<', '/', 't', 'a', 'b', 'l', 'e', '>', '\n', '\n'],
-        )
-        .replace_all(&['<', 't', 'r', '>'], &['\n', '\n', '<', 't', 'r', '>'])
-        .replace_all(
-            &['<', '/', 't', 'r', '>'],
-            &['<', '/', 't', 'r', '>', '\n', '\n'],
-        )
-        .replace_all(&['{', '|'], &['\n', '\n', '{', '|'])
-        .replace_all(&['|', '}'], &['|', '}', '\n', '\n'])
-        .replace_all(&['|', '-', '\n'], &['\n', '\n', '|', '-', '\n'])
-        .replace_all(&['\n', '\n'], &['\u{0091}']); /* replace double newline with a special character */
+pub fn split_into_paragraphs_corasick(text: &str) -> Vec<String> {
+    const FIRST_SEPARATOR: usize = 0;
+    const FIRST_PARAGRAPH_BEGINNING: usize = 8;
+    const FIRST_PARAGRAPH_ENDING: usize = 14;
+    const FIRST_REPLACEMENT: usize = 17;
+    const PATTERNS_LEN: usize = PATTERNS.len();
+
+    const PATTERNS: &[&str] = &[
+        /* separators (order is important!) --> */
+        "\n\n",
+        "\n\r\n",
+        "\n\r",
+        "\r\r\n",
+        "\r\r",
+        "\r\n\n",
+        "\r\n\r\n",
+        "\r\n\r",
+        /* paragraph beginnings --> */
+        "<table>",
+        "<tr>",
+        "{|",
+        "|-\n",
+        "|-\r\n",
+        "|-\r",
+        /* paragraph endings --> */
+        "</table>",
+        "</tr>",
+        "|}",
+        /* replacements --> */
+        "\r\n",
+        "\r",
+    ];
+
+    const _: () = {
+        assert!(const_str_equals(PATTERNS[FIRST_SEPARATOR], "\n\n"));
+        assert!(const_str_equals(
+            PATTERNS[FIRST_PARAGRAPH_BEGINNING],
+            "<table>"
+        ));
+        assert!(const_str_equals(
+            PATTERNS[FIRST_PARAGRAPH_ENDING],
+            "</table>"
+        ));
+        assert!(const_str_equals(PATTERNS[FIRST_REPLACEMENT], "\r\n"));
+    };
+
+    static AHO_CORASICK: LazyLock<AhoCorasick> = LazyLock::new(|| {
+        let mut builder = AhoCorasickBuilder::new();
+        builder.match_kind(aho_corasick::MatchKind::LeftmostFirst); /* assign priority by order in pattern slice */
+        // builder.kind(Some(aho_corasick::AhoCorasickKind::DFA)); // test if it's faster
+        let aho_corasick = builder.build(PATTERNS).unwrap();
+        tracing::debug!(
+            "built aho-corasick successfully, kind: {:?}",
+            aho_corasick.kind()
+        );
+        aho_corasick
+    });
 
     let mut result = Vec::new();
-    let mut paragraph = String::new();
 
-    for c in iterator {
-        if c == '\u{0091}' {
-            result.push(paragraph.clone());
-            paragraph.clear();
-        } else {
-            paragraph.push(c);
+    let mut current_paragraph = String::new();
+    let mut last_end = 0;
+    for m in AHO_CORASICK.find_iter(text) {
+        let start = m.start();
+        let end = m.end();
+
+        // check if there is text between the last match and the current match
+        if start > last_end {
+            // collect text between separators (i.e. paragraphs)
+            let paragraph_part = &text[last_end..start];
+            current_paragraph.push_str(paragraph_part);
         }
+
+        let pattern_id = m.pattern().as_usize();
+        match pattern_id {
+            FIRST_SEPARATOR..FIRST_PARAGRAPH_BEGINNING => {
+                // separator
+                // - ends the previous paragraph
+                // - starts a new paragraph
+                // - does not contain any text
+                result.push(current_paragraph.clone());
+                current_paragraph.clear();
+            }
+            FIRST_PARAGRAPH_BEGINNING..FIRST_PARAGRAPH_ENDING => {
+                // paragraph beginning marker
+                // - ends the previous paragraph
+                // - starts a new paragraph
+                // - will itself be part of the new paragraph
+                result.push(current_paragraph.clone());
+                current_paragraph.clear();
+
+                current_paragraph.push_str(&text[start..end]);
+            }
+            FIRST_PARAGRAPH_ENDING..FIRST_REPLACEMENT => {
+                // paragraph ending marker
+                // - is itself part of the current paragraph
+                // - ends the current paragraph
+                // - starts a new paragraph
+                current_paragraph.push_str(&text[start..end]);
+
+                result.push(current_paragraph.clone());
+                current_paragraph.clear();
+            }
+            FIRST_REPLACEMENT..PATTERNS_LEN => {
+                // replacement
+                // - replace with '\n'
+                current_paragraph.push_str("\n");
+            }
+            _ => unreachable!(),
+        }
+
+        last_end = end;
     }
-    result.push(paragraph);
+
+    if last_end < text.len() {
+        // collect remaining text
+        let paragraph_part = &text[last_end..];
+        current_paragraph.push_str(&paragraph_part);
+    }
+
+    // collect the last paragraph
+    result.push(current_paragraph);
 
     result
 }
@@ -309,11 +173,22 @@ pub fn split_into_paragraphs_iterator(text: &str) -> Vec<String> {
 use regex::Regex;
 
 pub fn split_into_sentences(text: &str) -> Vec<String> {
-    let regex_dot = Regex::new(r"([^\s\.=][^\s\.=][^\s\.=]\.) ").unwrap();
-    let regex_url = Regex::new(r"(http.*?://.*?[ \|<>\n\r])").unwrap();
+    if cfg!(feature = "optimized_str") {
+        split_into_sentences_full_regex(text)
+    } else {
+        split_into_sentences_naive(text)
+    }
+}
+
+#[doc(hidden)] /* only public for benchmarking */
+pub fn split_into_sentences_naive(text: &str) -> Vec<String> {
+    static REGEX_DOT: LazyLock<Regex> =
+        LazyLock::new(|| Regex::new(r"([^\s\.=][^\s\.=][^\s\.=]\.) ").unwrap());
+    static REGEX_URL: LazyLock<Regex> =
+        LazyLock::new(|| Regex::new(r"(http.*?://.*?[ \|<>\n\r])").unwrap());
 
     let text = text.replace("\n", "\n@@@@");
-    let text = regex_dot.replace_all(&text, "$1@@@@");
+    let text = REGEX_DOT.replace_all(&text, "$1@@@@");
     let text = text.replace("; ", ";@@@@");
     let text = text.replace("? ", "?@@@@");
     let text = text.replace("! ", "!@@@@");
@@ -323,7 +198,7 @@ pub fn split_into_sentences(text: &str) -> Vec<String> {
     let text = text.replace("-->", "-->@@@@");
     let text = text.replace("<ref", "@@@@<ref");
     let text = text.replace("/ref>", "/ref>@@@@");
-    let text = regex_url.replace_all(&text, "@@@@$1@@@@");
+    let text = REGEX_URL.replace_all(&text, "@@@@$1@@@@");
 
     let mut text = text.into_owned();
     while text.contains("@@@@@@@@") {
@@ -333,7 +208,114 @@ pub fn split_into_sentences(text: &str) -> Vec<String> {
     text.split("@@@@").map(|s| s.to_string()).collect()
 }
 
+#[doc(hidden)] /* only public for benchmarking */
+pub fn split_into_sentences_full_regex(text: &str) -> Vec<String> {
+    static REGEX: LazyLock<Regex> = LazyLock::new(|| {
+        Regex::new(r"(?P<newline_dot>\n\.) |(?P<ending>[^\s\.=][^\s\.=][^\s\.=]\.|;|\?|!|:) |(?P<ending_alt>\n|\t|-->|/ref>)|(?P<beginning><!--|<ref)|(?P<url>http.*?://.*?[ \|<>\n\r])").unwrap()
+    });
+
+    fn maybe_push_sentence(
+        last_end: usize,
+        current_sentence: &mut String,
+        result: &mut Vec<String>,
+    ) {
+        let is_first = last_end == 0;
+        if is_first || !current_sentence.is_empty() {
+            result.push(current_sentence.clone());
+            current_sentence.clear();
+        }
+        // else: ignore empty sentences
+    }
+
+    let mut result = Vec::new();
+
+    let mut current_sentence = String::new();
+    let mut last_end = 0;
+    for c in REGEX.captures_iter(text) {
+        let total = c.get(0).unwrap();
+        let start = total.start();
+        let end = total.end();
+
+        // check if there is text between the last match and the current match
+        if start > last_end {
+            // collect text between separators (i.e. sentences)
+            let sentence_part = &text[last_end..start];
+            current_sentence.push_str(sentence_part);
+        }
+
+        // sorted according to expected frequency of occurrence
+        if let Some(m) = c.name("ending") {
+            // sentence ending
+            // - is itself part of the current sentence
+            // - ends the current sentence
+            // - starts a new sentence
+            current_sentence.push_str(m.as_str());
+
+            maybe_push_sentence(last_end, &mut current_sentence, &mut result);
+        } else if let Some(m) = c.name("ending_alt") {
+            // sentence ending alternative
+            // - is itself part of the current sentence
+            // - ends the current sentence
+            // - starts a new sentence
+            current_sentence.push_str(m.as_str());
+
+            maybe_push_sentence(last_end, &mut current_sentence, &mut result);
+        } else if let Some(m) = c.name("beginning") {
+            // sentence beginning
+            // - ends the previous sentence
+            // - starts a new sentence
+            // - will itself be part of the new sentence
+            maybe_push_sentence(last_end, &mut current_sentence, &mut result);
+
+            current_sentence.push_str(m.as_str());
+        } else if let Some(m) = c.name("url") {
+            // url
+            // - ends the previous sentence
+            // - is itself a separate sentence
+            // - starts a new sentence
+            maybe_push_sentence(last_end, &mut current_sentence, &mut result);
+
+            result.push(m.as_str().to_string());
+        } else if let Some(_) = c.name("newline_dot") {
+            // newline dot
+            // - '\n' is part of the current sentence
+            // - ends the current sentence
+            // - '.' is itself a separate sentence
+            // - starts a new sentence
+            current_sentence.push_str("\n");
+            maybe_push_sentence(last_end, &mut current_sentence, &mut result);
+
+            result.push(".".to_string());
+        } else {
+            unreachable!();
+        }
+
+        last_end = end;
+    }
+
+    if last_end < text.len() {
+        // collect remaining text
+        let sentence_part = &text[last_end..];
+        current_sentence.push_str(&sentence_part);
+    }
+    // the last sentence may be empty
+    result.push(current_sentence);
+
+    // --> first and last sentence may be empty
+
+    result
+}
+
 pub fn split_into_tokens(text: &str) -> Vec<String> {
+    if cfg!(feature = "optimized_str") {
+        split_into_tokens_corasick(text)
+    } else {
+        split_into_tokens_naive(text)
+    }
+}
+
+#[doc(hidden)] /* only public for benchmarking */
+pub fn split_into_tokens_naive(text: &str) -> Vec<String> {
     let text = text
         .replace("|", "||ææææ||")
         .replace("\n", "||")
@@ -377,10 +359,71 @@ pub fn split_into_tokens(text: &str) -> Vec<String> {
         .collect()
 }
 
-use std::{
-    collections::HashMap,
-    iter::{Fuse, FusedIterator},
-};
+#[doc(hidden)] /* only public for benchmarking */
+pub fn split_into_tokens_corasick(text: &str) -> Vec<String> {
+    // used to determine whether a match is a separator or a symbol
+    const FIRST_SYMBOL: PatternID = PatternID::new_unchecked(2);
+    const PATTERNS: &[&str] = &[
+        /* separators --> */ " ", "\n", /* match composite symbols first --> */ "<!--",
+        "-->", "[[", "]]", "{{", "}}", /* then match single character symbols --> */ ".", ",",
+        ";", ":", "?", "!", "-", "_", "/", "\\", "(", ")", "[", "]", "{", "}", "*", "#", "@", "&",
+        "=", "+", "%", "~", "$", "^", "<", ">", "\"", "'", "´", "`", "¸", "˛", "’", "¤", "₳", "฿",
+        "₵", "¢", "₡", "₢", "₫", "₯", "֏", "₠", "€", "ƒ", "₣", "₲", "₴", "₭", "₺", "₾", "ℳ", "₥",
+        "₦", "₧", "₱", "₰", "£", "៛", "₽", "₹", "₨", "₪", "৳", "₸", "₮", "₩", "¥", "§", "‖", "¦",
+        "⟨", "⟩", "–", "—", "¯", "»", "«", "”", "÷", "×", "′", "″", "‴", "¡", "¿", "©", "℗", "®",
+        "℠", "™",
+    ];
+    const _: () = {
+        let first_symbol = PATTERNS[FIRST_SYMBOL.as_usize()];
+        assert!(const_str_equals(first_symbol, "<!--"));
+    };
+
+    static AHO_CORASICK: LazyLock<AhoCorasick> = LazyLock::new(|| {
+        let mut builder = AhoCorasickBuilder::new();
+        builder.match_kind(aho_corasick::MatchKind::LeftmostFirst); /* assign priority by order in pattern slice */
+        // builder.kind(Some(aho_corasick::AhoCorasickKind::DFA)); // test if it's faster
+        let aho_corasick = builder.build(PATTERNS).unwrap();
+        tracing::debug!(
+            "built aho-corasick successfully, kind: {:?}",
+            aho_corasick.kind()
+        );
+        aho_corasick
+    });
+
+    let mut result = Vec::new();
+
+    let mut last_end = 0;
+    for m in AHO_CORASICK.find_iter(text) {
+        let start = m.start();
+        let end = m.end();
+
+        // check if there is text between the last match and the current match
+        if start > last_end {
+            // collect text between symbols/separators (i.e. words)
+            let token = text[last_end..start].to_string();
+            result.push(token);
+        }
+
+        let token = &text[start..end];
+        // ignore separators
+        if m.pattern() >= FIRST_SYMBOL {
+            // collect symbols
+            result.push(token.to_string());
+        }
+
+        last_end = end;
+    }
+
+    if last_end < text.len() {
+        // collect remaining text (last word)
+        let token = text[last_end..].to_string();
+        result.push(token);
+    }
+
+    result
+}
+
+use std::{collections::HashMap, ops::Range, sync::LazyLock};
 
 use crate::{
     algorithm::{Analysis, RevisionPointer, WordPointer},
@@ -532,69 +575,6 @@ mod tests {
     }
 
     #[test]
-    fn test_replacement_item_iterator() {
-        let item = ReplacementItem::Item(1);
-        let mut iterator = item.into_iter();
-        assert_eq!(iterator.next(), Some(1));
-        assert_eq!(iterator.next(), None);
-
-        let item = ReplacementItem::Replacement(&[1, 2, 3]);
-        let mut iterator = item.into_iter();
-        assert_eq!(iterator.next(), Some(1));
-        assert_eq!(iterator.next(), Some(2));
-        assert_eq!(iterator.next(), Some(3));
-        assert_eq!(iterator.next(), None);
-    }
-
-    #[test]
-    fn test_replace_iterator() {
-        let data = vec!["a", "b", "c", "d", "e"];
-        let needle = &["b", "c"];
-        let replacement = &["x", "y", "z"];
-
-        let mut result = Vec::new();
-        let mut iterator = data.into_iter().replace_all(needle, replacement);
-        while let Some(item) = iterator.next() {
-            result.push(item);
-        }
-
-        assert_eq!(result, vec!["a", "x", "y", "z", "d", "e"]);
-    }
-
-    #[test]
-    fn test_replace_iterator_complex() {
-        let data = vec!["a", "a", "a", "b", "b", "b", "a", "a"];
-        let needle = &["b", "b"];
-        let replacement = &["x", "y", "z"];
-
-        let mut result = Vec::new();
-        let mut iterator = data.into_iter().replace_all(needle, replacement);
-        while let Some(item) = iterator.next() {
-            result.push(item);
-        }
-
-        assert_eq!(result, vec!["a", "a", "a", "x", "y", "z", "b", "a", "a"]);
-    }
-
-    #[test]
-    fn test_replace_iterator_no_match() {
-        let data = vec!["a", "b", "c", "d", "e"];
-        let needle = &["x", "y"];
-        let replacement = &["1", "2"];
-        let result: Vec<_> = data.into_iter().replace_all(needle, replacement).collect();
-        assert_eq!(result, vec!["a", "b", "c", "d", "e"]);
-    }
-
-    #[test]
-    fn test_replace_iterator_partial_match() {
-        let data = vec!["a", "b", "c", "d", "e"];
-        let needle = &["c", "d", "e"];
-        let replacement = &["1", "2"];
-        let result: Vec<_> = data.into_iter().replace_all(needle, replacement).collect();
-        assert_eq!(result, vec!["a", "b", "1", "2"]);
-    }
-
-    #[test]
     fn test_split_into_paragraphs_naive() {
         let text = "Hello\n\nWorld!";
         let result = split_into_paragraphs_naive(text);
@@ -602,14 +582,14 @@ mod tests {
     }
 
     #[test]
-    fn test_split_into_paragraphs_iterator() {
+    fn test_split_into_paragraphs_corasick() {
         let text = "Hello\n\nWorld!";
-        let result = split_into_paragraphs_iterator(text);
+        let result = split_into_paragraphs_corasick(text);
         assert_eq!(result, vec!["Hello", "World!"]);
     }
 
     #[test]
-    fn test_split_into_paragraphs_iterator_long() {
+    fn test_split_into_paragraphs_corasick_long() {
         let text = "
             Hello
             World!
@@ -619,28 +599,32 @@ mod tests {
             </tr>
             </table>
         ";
-        let result = split_into_paragraphs_iterator(text);
-        assert_eq!(
-            result,
-            vec![
-                "Hello",
-                "World!",
-                "<table>",
-                "<tr>",
-                "<td>Test</td>",
-                "</tr>",
-                "</table>"
-            ]
-        );
+        let result_naive = split_into_paragraphs_naive(text);
+        let result_corasick = split_into_paragraphs_corasick(text);
+        assert_eq!(result_naive, result_corasick,);
     }
 
     #[test]
-    fn test_split_into_paragraphs_iterator_random() {
+    fn test_split_into_paragraphs_corasick_random() {
         for seed in 0..5 {
             let text = generate_input_split_into_paragraphs(seed);
-            let result = split_into_paragraphs_iterator(&text);
+            let result = split_into_paragraphs_corasick(&text);
             let expected = split_into_paragraphs_naive(&text);
             assert_eq!(result, expected);
+        }
+    }
+
+    proptest! {
+        #![proptest_config(ProptestConfig {
+            cases: 10000,
+            ..ProptestConfig::default()
+        })]
+        #[test]
+        fn compare_split_into_paragraphs_optimized(input in "(<tr>|</tr>|<table>|</table>|\r|\n|\\{|\\||-|.|.|.|.|.)*") {
+            let expected = split_into_paragraphs_naive(&input);
+            let result_corasick = split_into_paragraphs_corasick(&input);
+
+            prop_assert_eq!(expected, result_corasick);
         }
     }
 
@@ -674,7 +658,7 @@ mod tests {
         #[test]
         fn compare_split_into_paragraphs_python(input in ".*") {
             with_gil!(py, {
-                let result_rust = crate::utils::split_into_paragraphs(&input);
+                let result_rust = crate::utils::split_into_paragraphs_naive(&input);
                 let result_py = call_split_fn_py(py, &input, "split_into_paragraphs");
 
                 prop_assert_eq!(result_rust, result_py);
@@ -690,7 +674,7 @@ mod tests {
         #[test]
         fn compare_split_into_sentences_python(input in ".*") {
             with_gil!(py, {
-                let result_rust = crate::utils::split_into_sentences(&input);
+                let result_rust = crate::utils::split_into_sentences_naive(&input);
                 let result_py = call_split_fn_py(py, &input, "split_into_sentences");
 
                 prop_assert_eq!(result_rust, result_py);
@@ -706,7 +690,7 @@ mod tests {
         #[test]
         fn compare_split_into_tokens_python(input in ".*") {
             with_gil!(py, {
-                let result_rust = crate::utils::split_into_tokens(&input);
+                let result_rust = crate::utils::split_into_tokens_naive(&input);
                 let result_py = call_split_fn_py(py, &input, "split_into_tokens");
 
                 prop_assert_eq!(result_rust, result_py);

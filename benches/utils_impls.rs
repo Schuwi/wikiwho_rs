@@ -30,8 +30,8 @@ fn bench_split_into_paragraphs(c: &mut Criterion) {
         group.bench_with_input(BenchmarkId::new("Naive", length), &input, |b, i| {
             b.iter(|| utils::split_into_paragraphs_naive(i));
         });
-        group.bench_with_input(BenchmarkId::new("Iterator", length), &input, |b, i| {
-            b.iter(|| utils::split_into_paragraphs_iterator(i));
+        group.bench_with_input(BenchmarkId::new("Corasick", length), &input, |b, i| {
+            b.iter(|| utils::split_into_paragraphs_corasick(i));
         });
     }
 }

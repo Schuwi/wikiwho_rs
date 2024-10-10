@@ -1297,6 +1297,7 @@ dependencies = [
 name = "wikiwho_rs"
 version = "0.1.0"
 dependencies = [
+ "aho-corasick",
  "arraydeque",
  "blake3",
  "chrono",

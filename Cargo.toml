@@ -19,6 +19,7 @@ python-diff = [ "pyo3" ]
 match-reference-impl = [ "python-diff" ]
 
 [dependencies]
+aho-corasick = "1.1.3"
 arraydeque = "0.5.1"
 blake3 = "1.5.4"
 chrono = "0.4.38"
