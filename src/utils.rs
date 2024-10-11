@@ -45,12 +45,21 @@ pub fn split_into_paragraphs_naive(text: &str) -> Vec<String> {
 
 #[doc(hidden)] /* only public for benchmarking */
 pub fn split_into_paragraphs_corasick(text: &str) -> Vec<String> {
+    // since the tokenization of wikiwho is not documented, I have to make assumptions about
+    // the intended behaviour of the algorithm. this optimized implementation will not match
+    // the exact semantics of the original implementation in edge cases
+
     const FIRST_SEPARATOR: usize = 0;
     const FIRST_PARAGRAPH_BEGINNING: usize = 8;
     const FIRST_PARAGRAPH_ENDING: usize = 14;
     const FIRST_REPLACEMENT: usize = 17;
     const PATTERNS_LEN: usize = PATTERNS.len();
 
+    // semantics: aho-corasick in this configuration will iterate each character of the input string
+    // and try to find a match starting from that character. if multiple matches are possible
+    // (some patterns equal the prefix of another), it will choose the one that is defined first.
+    // after a match is found it will continue the search at the first character after the match
+    // (only looks for non-overlapping matches).
     const PATTERNS: &[&str] = &[
         /* separators (order is important!) --> */
         "\n\n",
@@ -74,7 +83,7 @@ pub fn split_into_paragraphs_corasick(text: &str) -> Vec<String> {
         "|}",
         /* replacements --> */
         "\r\n",
-        "\r",
+        "\r", /* example: "\r\n" must be defined before "\r", otherwise "\r\n" would never be matched */
     ];
 
     const _: () = {
