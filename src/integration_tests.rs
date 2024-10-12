@@ -69,11 +69,11 @@ fn test_case_1() {
             ],
         };
 
-        let (analysis, analysis_result) = Analysis::analyse_page(&page.revisions).unwrap();
+        let analysis = Analysis::analyse_page(&page.revisions).unwrap();
         let wikiwho_py = run_analysis_python(py, &page);
 
         let sentence_rust = {
-            let paragraph = &analysis[&analysis_result.revisions[&2]].paragraphs_ordered[0];
+            let paragraph = &analysis[&analysis.revisions_by_id[&2]].paragraphs_ordered[0];
             let sentence_pointer = &analysis[paragraph].sentences_ordered[0];
             &analysis[sentence_pointer]
         };
@@ -126,7 +126,7 @@ fn compare_algorithm_python(page: &Page) -> Result<(), TestCaseError> {
         let result = Analysis::analyse_page(&page.revisions);
         // reject test case if there are no valid revisions
         prop_assume!(!matches!(result, Err(AnalysisError::NoValidRevisions)));
-        let (analysis, analysis_result) = result.unwrap();
+        let analysis = result.unwrap();
 
         // run Python implementation
         let wikiwho_py = run_analysis_python(py, &page);
@@ -136,14 +136,14 @@ fn compare_algorithm_python(page: &Page) -> Result<(), TestCaseError> {
         );
 
         prop_assert_eq!(
-            analysis_result.ordered_revisions,
-            wikiwho_py.ordered_revisions
+            &analysis.ordered_revisions,
+            &wikiwho_py.ordered_revisions
         );
 
         // iterate and compare result graph
         for revision_id in page.revisions.iter().map(|r| r.id) {
             // check spam
-            let is_spam_rust = analysis_result.spam_ids.contains(&revision_id);
+            let is_spam_rust = analysis.spam_ids.contains(&revision_id);
             let is_spam_py = wikiwho_py.spam_ids.contains(&revision_id);
             prop_assert_eq!(is_spam_rust, is_spam_py);
 
@@ -159,7 +159,7 @@ fn compare_algorithm_python(page: &Page) -> Result<(), TestCaseError> {
 
             // compare revisions
 
-            let revision_pointer_rust = &analysis_result.revisions[&revision_id];
+            let revision_pointer_rust = &analysis.revisions_by_id[&revision_id];
             let revision_py = wikiwho_py.revisions.get(&revision_id).unwrap();
 
             prop_assert_eq!(revision_pointer_rust.id, revision_py.id);

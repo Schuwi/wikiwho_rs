@@ -44,15 +44,15 @@ fn main() {
         //     continue;
         // }
 
-        let (analysis, analysis_result) =
+        let analysis =
             Analysis::analyse_page(&page.revisions).expect("Failed to analyse page");
-        let latest_rev_id = *analysis_result.ordered_revisions.last().unwrap();
-        let latest_rev_pointer = analysis_result.revisions[&latest_rev_id].clone();
+        let latest_rev_id = *analysis.ordered_revisions.last().unwrap();
+        let latest_rev_pointer = analysis.revisions_by_id[&latest_rev_id].clone();
 
         let mut author_contributions = HashMap::new();
         for word_pointer in utils::iterate_revision_tokens(&analysis, &latest_rev_pointer) {
             let origin_rev_id = analysis[word_pointer].origin_rev_id;
-            let origin_rev = &analysis_result.revisions[&origin_rev_id];
+            let origin_rev = &analysis.revisions_by_id[&origin_rev_id];
 
             let author = origin_rev.xml_revision.contributor.clone();
             let author_contribution = author_contributions.entry(author).or_insert(0);
