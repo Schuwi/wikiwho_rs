@@ -133,10 +133,41 @@ fn bench_split_into_tokens(c: &mut Criterion) {
     }
 }
 
+fn generate_input_to_lowercase(ascii_ratio: f32) -> String {
+    const LENGTH: usize = 10000;
+
+    // generate inputs from fixed seeds
+    let mut rng = rand_xoshiro::Xoshiro256PlusPlus::seed_from_u64(ascii_ratio.to_bits().into()); /* define specific algorithm to ensure reproducibility */
+    let mut input = String::new();
+    for _ in 0..LENGTH {
+        if rng.gen::<f32>() < ascii_ratio {
+            input.push(rng.gen_range(0u8..0x80u8) as char);
+        } else {
+            input.push(rng.gen());
+        }
+    }
+
+    input
+}
+
+fn bench_to_lowercase(c: &mut Criterion) {
+    let mut group = c.benchmark_group("split_into_tokens");
+    for ratio in [1.0, 0.99, 0.9, 0.5, 0.1].into_iter() {
+        let input = generate_input_to_lowercase(ratio);
+        group.bench_with_input(BenchmarkId::new("Naive", ratio), &input, |b, i| {
+            b.iter(|| i.to_lowercase());
+        });
+        group.bench_with_input(BenchmarkId::new("case-mapping", ratio), &input, |b, i| {
+            b.iter(|| utils::to_lowercase_opt(i));
+        });
+    }
+}
+
 criterion_group!(
     benches,
-    bench_split_into_paragraphs,
-    bench_split_into_sentences,
-    bench_split_into_tokens
+    // bench_split_into_paragraphs,
+    // bench_split_into_sentences,
+    // bench_split_into_tokens,
+    bench_to_lowercase,
 );
 criterion_main!(benches);

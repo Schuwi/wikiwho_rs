@@ -495,6 +495,31 @@ pub fn iterate_revision_tokens<'a>(
         })
 }
 
+pub fn to_lowercase(input: &str) -> String {
+    if cfg!(feature = "optimized-str") {
+        to_lowercase_opt(input)
+    } else {
+        // for languages that have very little unicode (so basically: english), this is probably faster
+        input.to_lowercase()
+    }
+}
+
+#[doc(hidden)] /* only public for benchmarking */
+pub fn to_lowercase_opt(input: &str) -> String {
+    let mut result = String::with_capacity(input.len());
+    for c in input.chars() {
+        match unicode_case_mapping::to_lowercase(c) {
+            [0, 0] => result.push(c),
+            [l, 0] => result.push(char::from_u32(l).unwrap()),
+            [l, l2] => {
+                result.push(char::from_u32(l).unwrap());
+                result.push(char::from_u32(l2).unwrap());
+            }
+        }
+    }
+    result
+}
+
 use similar::ChangeTag;
 
 #[cfg(feature = "python-diff")]

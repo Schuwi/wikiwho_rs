@@ -143,7 +143,7 @@ impl RevisionImmutables {
             // so when testing against the python implementation we need to match that behavior to get identical results
             length: revision.text.as_str().chars().count(),
             text: match revision.text {
-                Text::Normal(ref t) => t.to_lowercase(),
+                Text::Normal(ref t) => utils::to_lowercase(t),
                 Text::Deleted => String::new(),
             },
             xml_revision: revision.clone(),

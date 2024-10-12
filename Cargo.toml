@@ -39,6 +39,7 @@ string-interner = "0.17.0"
 thiserror = "1.0.63"
 tracing = "0.1.40"
 tracing-subscriber = "0.3.18"
+unicode-case-mapping = "1.0.0"
 zstd = "0.13.2"
 
 [dev-dependencies]
