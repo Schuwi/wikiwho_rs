@@ -11,15 +11,132 @@ const fn const_str_equals(a: &str, b: &str) -> bool {
     i == a.len() && i == b.len()
 }
 
+/// Replace all occurrences of `from` with `to` in `input`.
+///
+/// This function is optimized for the case where no replacements are made.
+///
+/// # Arguments
+///
+/// * `input` - The input string to search for replacements.
+/// * `from` - The string to search for.
+/// * `to` - The string to replace `from` with.
+/// * `scratch_buffer` - A buffer to store the result in. Is expected to be empty.
+///
+/// # Returns
+///
+/// A tuple containing the modified `input` and the `clear`ed `scratch_buffer`.
+fn str_replace_opt(
+    input: String,
+    from: &str,
+    to: &str,
+    scratch_buffer: String,
+) -> (String, String) {
+    let mut _ignored = false;
+    str_replace_opt_ext(input, from, to, scratch_buffer, &mut _ignored)
+}
+
+fn str_replace_opt_ext(
+    mut input: String,
+    from: &str,
+    to: &str,
+    scratch_buffer: String,
+    did_replace: &mut bool,
+) -> (String, String) {
+    let mut result = scratch_buffer;
+    let mut last_end = 0;
+    for m in input.match_indices(from) {
+        let start = m.0;
+        let end = start + from.len();
+
+        result.push_str(&input[last_end..start]);
+        result.push_str(to);
+
+        last_end = end;
+    }
+
+    if last_end == 0 {
+        // no replacements were made
+        *did_replace = false;
+        // no need to clear the scratch buffer, since it's already empty
+        (input, result)
+    } else {
+        *did_replace = true;
+
+        // copy the remaining text
+        result.push_str(&input[last_end..]);
+
+        input.clear();
+        (result, input)
+    }
+}
+
+/// Find all `regex` matches in `input` and replace them with the result of `replacement`.
+///
+/// This function is optimized for the case where no replacements are made and intended for `replacement`s
+/// that have capture groups. For `replacement`s that don't have capture groups, further optimization is possible.
+///
+/// # Arguments
+///
+/// * `input` - The input string to search for replacements.
+/// * `regex` - The regex to search for.
+/// * `replacement` - The replacer to use for replacements.
+/// * `scratch_buffer` - A buffer to store the result in. Is expected to be empty.
+///
+/// # Returns
+///
+/// A tuple containing the modified `input` and the `clear`ed `scratch_buffer`.
+fn regex_replace_opt<R: regex::Replacer>(
+    mut input: String,
+    regex: &Regex,
+    mut replacement: R,
+    scratch_buffer: String,
+) -> (String, String) {
+    let mut capt_iter = regex.captures_iter(&input).peekable();
+
+    if capt_iter.peek().is_none() {
+        // no matches found, return early
+
+        // no need to clear the scratch buffer, since it's already empty
+        (input, scratch_buffer)
+    } else {
+        let mut result = scratch_buffer;
+        let mut last_end = 0;
+        for cap in capt_iter {
+            let m = cap.get(0).unwrap();
+            let start = m.start();
+            let end = m.end();
+
+            result.push_str(&input[last_end..start]);
+            replacement.replace_append(&cap, &mut result);
+
+            last_end = end;
+        }
+
+        // copy the remaining text
+        result.push_str(&input[last_end..]);
+
+        input.clear();
+        (result, input)
+    }
+}
+
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum RevisionHash {
     Sha1(Sha1Hash),
     Blake3(blake3::Hash),
 }
 
-pub fn split_into_paragraphs(text: &str) -> Vec<String> {
-    if cfg!(feature = "optimized_str") {
-        split_into_paragraphs_corasick(text)
+/// Split the input text into paragraphs.
+///
+/// # Arguments
+///
+/// * `text` - The input text to split.
+/// * `scratch_buffers` - A tuple containing two scratch buffers to use for temporary storage.
+///                       They must be empty and will again be empty after the function returns.
+///                       They should be reused across multiple calls to this function.
+pub fn split_into_paragraphs(text: &str, scratch_buffers: (&mut String, &mut String)) -> Vec<String> {
+    if cfg!(feature = "optimized-str") {
+        split_into_paragraphs_optimized(text, scratch_buffers)
     } else {
         split_into_paragraphs_naive(text)
     }
@@ -44,146 +161,48 @@ pub fn split_into_paragraphs_naive(text: &str) -> Vec<String> {
 }
 
 #[doc(hidden)] /* only public for benchmarking */
-pub fn split_into_paragraphs_corasick(text: &str) -> Vec<String> {
-    // since the tokenization of wikiwho is not documented, I have to make assumptions about
-    // the intended behaviour of the algorithm. this optimized implementation will not match
-    // the exact semantics of the original implementation in edge cases
+pub fn split_into_paragraphs_optimized(
+    text: &str,
+    scratch_buffers: (&mut String, &mut String),
+) -> Vec<String> {
+    scratch_buffers.0.push_str(text);
 
-    const FIRST_SEPARATOR: usize = 0;
-    const FIRST_PARAGRAPH_BEGINNING: usize = 8;
-    const FIRST_PARAGRAPH_ENDING: usize = 14;
-    const FIRST_REPLACEMENT: usize = 17;
-    const PATTERNS_LEN: usize = PATTERNS.len();
+    let (text, scratch_buffer) = (
+        std::mem::take(scratch_buffers.0),
+        std::mem::take(scratch_buffers.1),
+    );
 
-    // semantics: aho-corasick in this configuration will iterate each character of the input string
-    // and try to find a match starting from that character. if multiple matches are possible
-    // (some patterns equal the prefix of another), it will choose the one that is defined first.
-    // after a match is found it will continue the search at the first character after the match
-    // (only looks for non-overlapping matches).
-    const PATTERNS: &[&str] = &[
-        /* separators (order is important!) --> */
-        "\n\n",
-        "\n\r\n",
-        "\n\r",
-        "\r\r\n",
-        "\r\r",
-        "\r\n\n",
-        "\r\n\r\n",
-        "\r\n\r",
-        /* paragraph beginnings --> */
-        "<table>",
-        "<tr>",
-        "{|",
-        "|-\n",
-        "|-\r\n",
-        "|-\r",
-        /* paragraph endings --> */
-        "</table>",
-        "</tr>",
-        "|}",
-        /* replacements --> */
-        "\r\n",
-        "\r", /* example: "\r\n" must be defined before "\r", otherwise "\r\n" would never be matched */
-    ];
+    let (text, scratch_buffer) = str_replace_opt(text, "\r\n", "\n", scratch_buffer);
+    let (text, scratch_buffer) = str_replace_opt(text, "\r", "\n", scratch_buffer);
 
-    const _: () = {
-        assert!(const_str_equals(PATTERNS[FIRST_SEPARATOR], "\n\n"));
-        assert!(const_str_equals(
-            PATTERNS[FIRST_PARAGRAPH_BEGINNING],
-            "<table>"
-        ));
-        assert!(const_str_equals(
-            PATTERNS[FIRST_PARAGRAPH_ENDING],
-            "</table>"
-        ));
-        assert!(const_str_equals(PATTERNS[FIRST_REPLACEMENT], "\r\n"));
-    };
+    let (text, scratch_buffer) = str_replace_opt(text, "<table>", "\n\n<table>", scratch_buffer);
+    let (text, scratch_buffer) = str_replace_opt(text, "</table>", "</table>\n\n", scratch_buffer);
 
-    static AHO_CORASICK: LazyLock<AhoCorasick> = LazyLock::new(|| {
-        let mut builder = AhoCorasickBuilder::new();
-        builder.match_kind(aho_corasick::MatchKind::LeftmostFirst); /* assign priority by order in pattern slice */
-        // builder.kind(Some(aho_corasick::AhoCorasickKind::DFA)); // test if it's faster
-        let aho_corasick = builder.build(PATTERNS).unwrap();
-        tracing::debug!(
-            "built aho-corasick successfully, kind: {:?}",
-            aho_corasick.kind()
-        );
-        aho_corasick
-    });
+    let (text, scratch_buffer) = str_replace_opt(text, "<tr>", "\n\n<tr>", scratch_buffer);
+    let (text, scratch_buffer) = str_replace_opt(text, "</tr>", "</tr>\n\n", scratch_buffer);
 
-    let mut result = Vec::new();
+    let (text, scratch_buffer) = str_replace_opt(text, "{|", "\n\n{|", scratch_buffer);
+    let (text, scratch_buffer) = str_replace_opt(text, "|}", "|}\n\n", scratch_buffer);
 
-    let mut current_paragraph = String::new();
-    let mut last_end = 0;
-    for m in AHO_CORASICK.find_iter(text) {
-        let start = m.start();
-        let end = m.end();
+    let (text, scratch_buffer) = str_replace_opt(text, "|-\n", "\n\n|-\n", scratch_buffer);
 
-        // check if there is text between the last match and the current match
-        if start > last_end {
-            // collect text between separators (i.e. paragraphs)
-            let paragraph_part = &text[last_end..start];
-            current_paragraph.push_str(paragraph_part);
-        }
+    let result = text.split("\n\n").map(|s| s.to_string()).collect();
 
-        let pattern_id = m.pattern().as_usize();
-        match pattern_id {
-            FIRST_SEPARATOR..FIRST_PARAGRAPH_BEGINNING => {
-                // separator
-                // - ends the previous paragraph
-                // - starts a new paragraph
-                // - does not contain any text
-                result.push(current_paragraph.clone());
-                current_paragraph.clear();
-            }
-            FIRST_PARAGRAPH_BEGINNING..FIRST_PARAGRAPH_ENDING => {
-                // paragraph beginning marker
-                // - ends the previous paragraph
-                // - starts a new paragraph
-                // - will itself be part of the new paragraph
-                result.push(current_paragraph.clone());
-                current_paragraph.clear();
+    let mut text = text;
+    text.clear();
+    // scratch_buffer is already empty
 
-                current_paragraph.push_str(&text[start..end]);
-            }
-            FIRST_PARAGRAPH_ENDING..FIRST_REPLACEMENT => {
-                // paragraph ending marker
-                // - is itself part of the current paragraph
-                // - ends the current paragraph
-                // - starts a new paragraph
-                current_paragraph.push_str(&text[start..end]);
-
-                result.push(current_paragraph.clone());
-                current_paragraph.clear();
-            }
-            FIRST_REPLACEMENT..PATTERNS_LEN => {
-                // replacement
-                // - replace with '\n'
-                current_paragraph.push_str("\n");
-            }
-            _ => unreachable!(),
-        }
-
-        last_end = end;
-    }
-
-    if last_end < text.len() {
-        // collect remaining text
-        let paragraph_part = &text[last_end..];
-        current_paragraph.push_str(&paragraph_part);
-    }
-
-    // collect the last paragraph
-    result.push(current_paragraph);
+    *scratch_buffers.0 = text;
+    *scratch_buffers.1 = scratch_buffer;
 
     result
 }
 
 use regex::Regex;
 
-pub fn split_into_sentences(text: &str) -> Vec<String> {
-    if cfg!(feature = "optimized_str") {
-        split_into_sentences_full_regex(text)
+pub fn split_into_sentences(text: &str, scratch_buffers: (&mut String, &mut String)) -> Vec<String> {
+    if cfg!(feature = "optimized-str") {
+        split_into_sentences_optimized(text, scratch_buffers)
     } else {
         split_into_sentences_naive(text)
     }
@@ -217,106 +236,65 @@ pub fn split_into_sentences_naive(text: &str) -> Vec<String> {
     text.split("@@@@").map(|s| s.to_string()).collect()
 }
 
-#[doc(hidden)] /* only public for benchmarking */
-pub fn split_into_sentences_full_regex(text: &str) -> Vec<String> {
-    static REGEX: LazyLock<Regex> = LazyLock::new(|| {
-        Regex::new(r"(?P<newline_dot>\n\.) |(?P<ending>[^\s\.=][^\s\.=][^\s\.=]\.|;|\?|!|:) |(?P<ending_alt>\n|\t|-->|/ref>)|(?P<beginning><!--|<ref)|(?P<url>http.*?://.*?[ \|<>\n\r])").unwrap()
-    });
+pub fn split_into_sentences_optimized(
+    text: &str,
+    scratch_buffers: (&mut String, &mut String),
+) -> Vec<String> {
+    static REGEX_DOT: LazyLock<Regex> =
+        LazyLock::new(|| Regex::new(r"([^\s\.=][^\s\.=][^\s\.=]\.) ").unwrap());
+    static REGEX_URL: LazyLock<Regex> =
+        LazyLock::new(|| Regex::new(r"(http.*?://.*?[ \|<>\n\r])").unwrap());
 
-    fn maybe_push_sentence(
-        last_end: usize,
-        current_sentence: &mut String,
-        result: &mut Vec<String>,
-    ) {
-        let is_first = last_end == 0;
-        if is_first || !current_sentence.is_empty() {
-            result.push(current_sentence.clone());
-            current_sentence.clear();
-        }
-        // else: ignore empty sentences
+    scratch_buffers.0.push_str(text);
+
+    let (text, scratch_buffer) = (
+        std::mem::take(scratch_buffers.0),
+        std::mem::take(scratch_buffers.1),
+    );
+
+    let (text, scratch_buffer) = str_replace_opt(text, "\n", "\n@@@@", scratch_buffer);
+
+    let (text, scratch_buffer) = regex_replace_opt(text, &REGEX_DOT, "$1@@@@", scratch_buffer);
+
+    let (text, scratch_buffer) = str_replace_opt(text, "; ", ";@@@@", scratch_buffer);
+    let (text, scratch_buffer) = str_replace_opt(text, "? ", "?@@@@", scratch_buffer);
+    let (text, scratch_buffer) = str_replace_opt(text, "! ", "!@@@@", scratch_buffer);
+    let (text, scratch_buffer) = str_replace_opt(text, ": ", ":@@@@", scratch_buffer);
+    let (text, scratch_buffer) = str_replace_opt(text, "\t", "\t@@@@", scratch_buffer);
+
+    let (text, scratch_buffer) = str_replace_opt(text, "<!--", "@@@@<!--", scratch_buffer);
+    let (text, scratch_buffer) = str_replace_opt(text, "-->", "-->@@@@", scratch_buffer);
+    let (text, scratch_buffer) = str_replace_opt(text, "<ref", "@@@@<ref", scratch_buffer);
+    let (text, scratch_buffer) = str_replace_opt(text, "/ref>", "/ref>@@@@", scratch_buffer);
+
+    let (text, scratch_buffer) = regex_replace_opt(text, &REGEX_URL, "@@@@$1@@@@", scratch_buffer);
+
+    let (mut text, mut scratch_buffer) = (text, scratch_buffer);
+
+    let mut did_replace = true;
+    while did_replace {
+        (text, scratch_buffer) = str_replace_opt_ext(
+            text,
+            "@@@@@@@@",
+            "@@@@",
+            scratch_buffer,
+            &mut did_replace,
+        );
     }
 
-    let mut result = Vec::new();
+    let result = text.split("@@@@").map(|s| s.to_string()).collect();
 
-    let mut current_sentence = String::new();
-    let mut last_end = 0;
-    for c in REGEX.captures_iter(text) {
-        let total = c.get(0).unwrap();
-        let start = total.start();
-        let end = total.end();
+    text.clear();
+    // scratch_buffer is already empty
 
-        // check if there is text between the last match and the current match
-        if start > last_end {
-            // collect text between separators (i.e. sentences)
-            let sentence_part = &text[last_end..start];
-            current_sentence.push_str(sentence_part);
-        }
-
-        // sorted according to expected frequency of occurrence
-        if let Some(m) = c.name("ending") {
-            // sentence ending
-            // - is itself part of the current sentence
-            // - ends the current sentence
-            // - starts a new sentence
-            current_sentence.push_str(m.as_str());
-
-            maybe_push_sentence(last_end, &mut current_sentence, &mut result);
-        } else if let Some(m) = c.name("ending_alt") {
-            // sentence ending alternative
-            // - is itself part of the current sentence
-            // - ends the current sentence
-            // - starts a new sentence
-            current_sentence.push_str(m.as_str());
-
-            maybe_push_sentence(last_end, &mut current_sentence, &mut result);
-        } else if let Some(m) = c.name("beginning") {
-            // sentence beginning
-            // - ends the previous sentence
-            // - starts a new sentence
-            // - will itself be part of the new sentence
-            maybe_push_sentence(last_end, &mut current_sentence, &mut result);
-
-            current_sentence.push_str(m.as_str());
-        } else if let Some(m) = c.name("url") {
-            // url
-            // - ends the previous sentence
-            // - is itself a separate sentence
-            // - starts a new sentence
-            maybe_push_sentence(last_end, &mut current_sentence, &mut result);
-
-            result.push(m.as_str().to_string());
-        } else if let Some(_) = c.name("newline_dot") {
-            // newline dot
-            // - '\n' is part of the current sentence
-            // - ends the current sentence
-            // - '.' is itself a separate sentence
-            // - starts a new sentence
-            current_sentence.push_str("\n");
-            maybe_push_sentence(last_end, &mut current_sentence, &mut result);
-
-            result.push(".".to_string());
-        } else {
-            unreachable!();
-        }
-
-        last_end = end;
-    }
-
-    if last_end < text.len() {
-        // collect remaining text
-        let sentence_part = &text[last_end..];
-        current_sentence.push_str(&sentence_part);
-    }
-    // the last sentence may be empty
-    result.push(current_sentence);
-
-    // --> first and last sentence may be empty
+    *scratch_buffers.0 = text;
+    *scratch_buffers.1 = scratch_buffer;
 
     result
 }
 
 pub fn split_into_tokens(text: &str) -> Vec<String> {
-    if cfg!(feature = "optimized_str") {
+    if cfg!(feature = "optimized-str") {
         split_into_tokens_corasick(text)
     } else {
         split_into_tokens_naive(text)
@@ -374,13 +352,13 @@ pub fn split_into_tokens_corasick(text: &str) -> Vec<String> {
     const FIRST_SYMBOL: PatternID = PatternID::new_unchecked(2);
     const PATTERNS: &[&str] = &[
         /* separators --> */ " ", "\n", /* match composite symbols first --> */ "<!--",
-        "-->", "[[", "]]", "{{", "}}", /* then match single character symbols --> */ ".", ",",
-        ";", ":", "?", "!", "-", "_", "/", "\\", "(", ")", "[", "]", "{", "}", "*", "#", "@", "&",
-        "=", "+", "%", "~", "$", "^", "<", ">", "\"", "'", "´", "`", "¸", "˛", "’", "¤", "₳", "฿",
-        "₵", "¢", "₡", "₢", "₫", "₯", "֏", "₠", "€", "ƒ", "₣", "₲", "₴", "₭", "₺", "₾", "ℳ", "₥",
-        "₦", "₧", "₱", "₰", "£", "៛", "₽", "₹", "₨", "₪", "৳", "₸", "₮", "₩", "¥", "§", "‖", "¦",
-        "⟨", "⟩", "–", "—", "¯", "»", "«", "”", "÷", "×", "′", "″", "‴", "¡", "¿", "©", "℗", "®",
-        "℠", "™",
+        "-->", "[[", "]]", "{{", "}}", /* then match single character symbols --> */ "|", ".",
+        ",", ";", ":", "?", "!", "-", "_", "/", "\\", "(", ")", "[", "]", "{", "}", "*", "#", "@",
+        "&", "=", "+", "%", "~", "$", "^", "<", ">", "\"", "'", "´", "`", "¸", "˛", "’", "¤", "₳",
+        "฿", "₵", "¢", "₡", "₢", "₫", "₯", "֏", "₠", "€", "ƒ", "₣", "₲", "₴", "₭", "₺", "₾", "ℳ",
+        "₥", "₦", "₧", "₱", "₰", "£", "៛", "₽", "₹", "₨", "₪", "৳", "₸", "₮", "₩", "¥", "§", "‖",
+        "¦", "⟨", "⟩", "–", "—", "¯", "»", "«", "”", "÷", "×", "′", "″", "‴", "¡", "¿", "©", "℗",
+        "®", "℠", "™",
     ];
     const _: () = {
         let first_symbol = PATTERNS[FIRST_SYMBOL.as_usize()];
@@ -432,7 +410,7 @@ pub fn split_into_tokens_corasick(text: &str) -> Vec<String> {
     result
 }
 
-use std::{collections::HashMap, ops::Range, sync::LazyLock};
+use std::{collections::HashMap, sync::LazyLock};
 
 use crate::{
     algorithm::{Analysis, RevisionPointer, WordPointer},
@@ -556,82 +534,26 @@ pub fn python_diff<S: AsRef<str>>(_old: &[S], _new: &[S]) -> Vec<Option<(ChangeT
 
 #[cfg(test)]
 mod tests {
-    use rand::{Rng, SeedableRng};
-
     use super::*;
 
     // standard unit tests
 
-    fn generate_input_split_into_paragraphs(seed: u64) -> String {
-        // generate inputs from fixed seeds
-        let mut rng = rand_xoshiro::Xoshiro256PlusPlus::seed_from_u64(seed); /* define specific algorithm to ensure reproducibility */
-        let mut input = String::new();
-        for _ in 0..5000 {
-            input.push(rng.gen_range(0..128) as u8 as char);
-        }
-
-        // add some expected values at random places
-        const VALUES: [&str; 17] = [
-            "\n", "\n\n", "\n\n\n", "\r\n", "\r", "\r\r", "\r\r\r", "\r\n\r\n", "\n\r\n", "\n\n\r",
-            "<table>", "</table>", "<tr>", "</tr>", "{|", "|}", "|-\n",
-        ];
-        for _ in 0..400 {
-            let pos = rng.gen_range(0..input.len());
-            input.insert_str(pos, VALUES[rng.gen_range(0..VALUES.len())]);
-        }
-
-        input
-    }
-
     #[test]
-    fn test_split_into_paragraphs_naive() {
+    fn test_split_into_paragraphs() {
         let text = "Hello\n\nWorld!";
         let result = split_into_paragraphs_naive(text);
         assert_eq!(result, vec!["Hello", "World!"]);
     }
 
-    #[test]
-    fn test_split_into_paragraphs_corasick() {
-        let text = "Hello\n\nWorld!";
-        let result = split_into_paragraphs_corasick(text);
-        assert_eq!(result, vec!["Hello", "World!"]);
-    }
-
-    #[test]
-    fn test_split_into_paragraphs_corasick_long() {
-        let text = "
-            Hello
-            World!
-            <table>\r
-            <tr>
-            <td>\r\rTest</td>
-            </tr>
-            </table>
-        ";
-        let result_naive = split_into_paragraphs_naive(text);
-        let result_corasick = split_into_paragraphs_corasick(text);
-        assert_eq!(result_naive, result_corasick,);
-    }
-
-    #[test]
-    fn test_split_into_paragraphs_corasick_random() {
-        for seed in 0..5 {
-            let text = generate_input_split_into_paragraphs(seed);
-            let result = split_into_paragraphs_corasick(&text);
-            let expected = split_into_paragraphs_naive(&text);
-            assert_eq!(result, expected);
-        }
-    }
-
     proptest! {
         #![proptest_config(ProptestConfig {
-            cases: 10000,
+            cases: 100000,
             ..ProptestConfig::default()
         })]
         #[test]
-        fn compare_split_into_paragraphs_optimized(input in "(<tr>|</tr>|<table>|</table>|\r|\n|\\{|\\||-|.|.|.|.|.)*") {
-            let expected = split_into_paragraphs_naive(&input);
-            let result_corasick = split_into_paragraphs_corasick(&input);
+        fn compare_split_into_tokens_optimized(input in "(\n| |!|<|>|-|\\[|\\]|\\{|\\}|\\?|:|ℳ|֏|™|.|.|.|.|.)*") {
+            let expected = split_into_tokens_naive(&input);
+            let result_corasick = split_into_tokens_corasick(&input);
 
             prop_assert_eq!(expected, result_corasick);
         }

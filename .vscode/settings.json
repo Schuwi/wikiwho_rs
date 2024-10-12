@@ -1,5 +1,5 @@
 {
     "rust-analyzer.cargo.features": [
-        "match-reference-impl"
+        "python-diff"
     ],
 }

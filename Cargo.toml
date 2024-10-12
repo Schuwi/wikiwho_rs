@@ -14,9 +14,9 @@ codegen-units = 1
 [features]
 default = [ ]
 strict = []
-optimized_str = []
+optimized-str = []
 python-diff = [ "pyo3" ]
-match-reference-impl = [ "python-diff" ]
+# match-reference-impl = [ "python-diff" ]
 
 [dependencies]
 aho-corasick = "1.1.3"
