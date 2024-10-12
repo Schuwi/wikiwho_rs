@@ -1,4 +1,5 @@
 use aho_corasick::{AhoCorasick, AhoCorasickBuilder, PatternID};
+use memchr::memmem;
 
 const fn const_str_equals(a: &str, b: &str) -> bool {
     let mut i = 0;
@@ -18,16 +19,20 @@ const fn const_str_equals(a: &str, b: &str) -> bool {
 /// # Arguments
 ///
 /// * `input` - The input string to search for replacements.
-/// * `from` - The string to search for.
+/// * `from` - The `Finder` to search for. Must be created from valid UTF-8.
 /// * `to` - The string to replace `from` with.
 /// * `scratch_buffer` - A buffer to store the result in. Is expected to be empty.
 ///
 /// # Returns
 ///
 /// A tuple containing the modified `input` and the `clear`ed `scratch_buffer`.
+///
+/// # Panics
+///
+/// Might panic if `from` is not valid UTF-8.
 fn str_replace_opt(
     input: String,
-    from: &str,
+    from: &memmem::Finder,
     to: &str,
     scratch_buffer: String,
 ) -> (String, String) {
@@ -37,17 +42,18 @@ fn str_replace_opt(
 
 fn str_replace_opt_ext(
     mut input: String,
-    from: &str,
+    from: &memmem::Finder,
     to: &str,
     scratch_buffer: String,
     did_replace: &mut bool,
 ) -> (String, String) {
     let mut result = scratch_buffer;
     let mut last_end = 0;
-    for m in input.match_indices(from) {
-        let start = m.0;
-        let end = start + from.len();
+    for m in from.find_iter(input.as_bytes()) {
+        let start = m;
+        let end = start + from.needle().len();
 
+        // string indexing could panic if the Finder is not valid UTF-8
         result.push_str(&input[last_end..start]);
         result.push_str(to);
 
@@ -68,6 +74,14 @@ fn str_replace_opt_ext(
         input.clear();
         (result, input)
     }
+}
+
+macro_rules! finder {
+    ($needle:expr) => {{
+        static FINDER: LazyLock<memmem::Finder> =
+            LazyLock::new(|| memmem::Finder::new($needle.as_bytes()));
+        &FINDER
+    }};
 }
 
 /// Find all `regex` matches in `input` and replace them with the result of `replacement`.
@@ -134,7 +148,10 @@ pub enum RevisionHash {
 /// * `scratch_buffers` - A tuple containing two scratch buffers to use for temporary storage.
 ///                       They must be empty and will again be empty after the function returns.
 ///                       They should be reused across multiple calls to this function.
-pub fn split_into_paragraphs(text: &str, scratch_buffers: (&mut String, &mut String)) -> Vec<String> {
+pub fn split_into_paragraphs(
+    text: &str,
+    scratch_buffers: (&mut String, &mut String),
+) -> Vec<String> {
     if cfg!(feature = "optimized-str") {
         split_into_paragraphs_optimized(text, scratch_buffers)
     } else {
@@ -172,19 +189,19 @@ pub fn split_into_paragraphs_optimized(
         std::mem::take(scratch_buffers.1),
     );
 
-    let (text, scratch_buffer) = str_replace_opt(text, "\r\n", "\n", scratch_buffer);
-    let (text, scratch_buffer) = str_replace_opt(text, "\r", "\n", scratch_buffer);
+    let (text, scratch_buffer) = str_replace_opt(text, finder!("\r\n"), "\n", scratch_buffer);
+    let (text, scratch_buffer) = str_replace_opt(text, finder!("\r"), "\n", scratch_buffer);
 
-    let (text, scratch_buffer) = str_replace_opt(text, "<table>", "\n\n<table>", scratch_buffer);
-    let (text, scratch_buffer) = str_replace_opt(text, "</table>", "</table>\n\n", scratch_buffer);
+    let (text, scratch_buffer) = str_replace_opt(text, finder!("<table>"), "\n\n<table>", scratch_buffer);
+    let (text, scratch_buffer) = str_replace_opt(text, finder!("</table>"), "</table>\n\n", scratch_buffer);
 
-    let (text, scratch_buffer) = str_replace_opt(text, "<tr>", "\n\n<tr>", scratch_buffer);
-    let (text, scratch_buffer) = str_replace_opt(text, "</tr>", "</tr>\n\n", scratch_buffer);
+    let (text, scratch_buffer) = str_replace_opt(text, finder!("<tr>"), "\n\n<tr>", scratch_buffer);
+    let (text, scratch_buffer) = str_replace_opt(text, finder!("</tr>"), "</tr>\n\n", scratch_buffer);
 
-    let (text, scratch_buffer) = str_replace_opt(text, "{|", "\n\n{|", scratch_buffer);
-    let (text, scratch_buffer) = str_replace_opt(text, "|}", "|}\n\n", scratch_buffer);
+    let (text, scratch_buffer) = str_replace_opt(text, finder!("{|"), "\n\n{|", scratch_buffer);
+    let (text, scratch_buffer) = str_replace_opt(text, finder!("|}"), "|}\n\n", scratch_buffer);
 
-    let (text, scratch_buffer) = str_replace_opt(text, "|-\n", "\n\n|-\n", scratch_buffer);
+    let (text, scratch_buffer) = str_replace_opt(text, finder!("|-\n"), "\n\n|-\n", scratch_buffer);
 
     let result = text.split("\n\n").map(|s| s.to_string()).collect();
 
@@ -200,7 +217,10 @@ pub fn split_into_paragraphs_optimized(
 
 use regex::Regex;
 
-pub fn split_into_sentences(text: &str, scratch_buffers: (&mut String, &mut String)) -> Vec<String> {
+pub fn split_into_sentences(
+    text: &str,
+    scratch_buffers: (&mut String, &mut String),
+) -> Vec<String> {
     if cfg!(feature = "optimized-str") {
         split_into_sentences_optimized(text, scratch_buffers)
     } else {
@@ -252,20 +272,20 @@ pub fn split_into_sentences_optimized(
         std::mem::take(scratch_buffers.1),
     );
 
-    let (text, scratch_buffer) = str_replace_opt(text, "\n", "\n@@@@", scratch_buffer);
+    let (text, scratch_buffer) = str_replace_opt(text, finder!("\n"), "\n@@@@", scratch_buffer);
 
     let (text, scratch_buffer) = regex_replace_opt(text, &REGEX_DOT, "$1@@@@", scratch_buffer);
 
-    let (text, scratch_buffer) = str_replace_opt(text, "; ", ";@@@@", scratch_buffer);
-    let (text, scratch_buffer) = str_replace_opt(text, "? ", "?@@@@", scratch_buffer);
-    let (text, scratch_buffer) = str_replace_opt(text, "! ", "!@@@@", scratch_buffer);
-    let (text, scratch_buffer) = str_replace_opt(text, ": ", ":@@@@", scratch_buffer);
-    let (text, scratch_buffer) = str_replace_opt(text, "\t", "\t@@@@", scratch_buffer);
+    let (text, scratch_buffer) = str_replace_opt(text, finder!("; "), ";@@@@", scratch_buffer);
+    let (text, scratch_buffer) = str_replace_opt(text, finder!("? "), "?@@@@", scratch_buffer);
+    let (text, scratch_buffer) = str_replace_opt(text, finder!("! "), "!@@@@", scratch_buffer);
+    let (text, scratch_buffer) = str_replace_opt(text, finder!(": "), ":@@@@", scratch_buffer);
+    let (text, scratch_buffer) = str_replace_opt(text, finder!("\t"), "\t@@@@", scratch_buffer);
 
-    let (text, scratch_buffer) = str_replace_opt(text, "<!--", "@@@@<!--", scratch_buffer);
-    let (text, scratch_buffer) = str_replace_opt(text, "-->", "-->@@@@", scratch_buffer);
-    let (text, scratch_buffer) = str_replace_opt(text, "<ref", "@@@@<ref", scratch_buffer);
-    let (text, scratch_buffer) = str_replace_opt(text, "/ref>", "/ref>@@@@", scratch_buffer);
+    let (text, scratch_buffer) = str_replace_opt(text, finder!("<!--"), "@@@@<!--", scratch_buffer);
+    let (text, scratch_buffer) = str_replace_opt(text, finder!("-->"), "-->@@@@", scratch_buffer);
+    let (text, scratch_buffer) = str_replace_opt(text, finder!("<ref"), "@@@@<ref", scratch_buffer);
+    let (text, scratch_buffer) = str_replace_opt(text, finder!("/ref>"), "/ref>@@@@", scratch_buffer);
 
     let (text, scratch_buffer) = regex_replace_opt(text, &REGEX_URL, "@@@@$1@@@@", scratch_buffer);
 
@@ -273,13 +293,8 @@ pub fn split_into_sentences_optimized(
 
     let mut did_replace = true;
     while did_replace {
-        (text, scratch_buffer) = str_replace_opt_ext(
-            text,
-            "@@@@@@@@",
-            "@@@@",
-            scratch_buffer,
-            &mut did_replace,
-        );
+        (text, scratch_buffer) =
+            str_replace_opt_ext(text, finder!("@@@@@@@@"), "@@@@", scratch_buffer, &mut did_replace);
     }
 
     let result = text.split("@@@@").map(|s| s.to_string()).collect();

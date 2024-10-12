@@ -1308,6 +1308,7 @@ dependencies = [
  "itertools 0.13.0",
  "json-writer",
  "md5",
+ "memchr",
  "proptest",
  "pyo3",
  "quick-xml",

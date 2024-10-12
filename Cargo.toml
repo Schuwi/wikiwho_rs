@@ -28,6 +28,7 @@ compact_str = "0.8.0"
 itertools = "0.13.0"
 json-writer = "0.4.0"
 md5 = "0.7.0"
+memchr = "2.7.4"
 pyo3 = { version = "0.22.3", optional = true, features = ["auto-initialize"] }
 quick-xml = "0.36.2"
 rand = "0.8.5"
