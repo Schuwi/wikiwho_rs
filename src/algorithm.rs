@@ -1223,7 +1223,7 @@ impl Analysis {
         // do the diffing!
         let mut diff: Vec<_>;
         if cfg!(feature = "python-diff") {
-            diff = utils::python_diff(&text_prev, &text_curr);
+            diff = utils::python_diff(&text_prev, &text_curr, &mut interner);
         } else {
             diff = utils::imara_diff(&text_prev, &text_curr, interner.num_tokens());
         }

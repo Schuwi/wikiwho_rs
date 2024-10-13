@@ -582,7 +582,7 @@ pub fn imara_diff(
 }
 
 #[cfg(feature = "python-diff")]
-pub fn python_diff(old: &[Token], new: &[Token]) -> Vec<Option<(ChangeTag, Token)>> {
+pub fn python_diff(old: &[Token], new: &[Token], interner: &mut Interner<String>) -> Vec<Option<(ChangeTag, Token)>> {
     use pyo3::{
         prelude::*,
         types::{PyList, PyString},
@@ -593,8 +593,8 @@ pub fn python_diff(old: &[Token], new: &[Token]) -> Vec<Option<(ChangeTag, Token
         let difflib = py.import_bound("difflib").unwrap();
         let differ = difflib.getattr("Differ").unwrap().call0().unwrap();
 
-        let old = PyList::new_bound(py, old.iter().map(|&token| format!("{:X}", token.0)));
-        let new = PyList::new_bound(py, new.iter().map(|&token| format!("{:X}", token.0)));
+        let old = PyList::new_bound(py, old.iter().map(|&token| &interner[token]));
+        let new = PyList::new_bound(py, new.iter().map(|&token| &interner[token]));
 
         let diff = differ.call_method1("compare", (old, new)).unwrap();
         let diff = builtins
@@ -616,8 +616,8 @@ pub fn python_diff(old: &[Token], new: &[Token]) -> Vec<Option<(ChangeTag, Token
             };
 
             if let Some(tag) = tag {
-                let value = u32::from_str_radix(&diff_item[2..], 16).unwrap();
-                result.push(Some((tag, Token(value))));
+                let value = interner.intern(diff_item[2..].to_string());
+                result.push(Some((tag, value)));
             }
         }
 
@@ -626,7 +626,7 @@ pub fn python_diff(old: &[Token], new: &[Token]) -> Vec<Option<(ChangeTag, Token
 }
 
 #[cfg(not(feature = "python-diff"))]
-pub fn python_diff(old: &[Token], new: &[Token]) -> Vec<Option<(ChangeTag, Token)>> {
+pub fn python_diff(_old: &[Token], _new: &[Token], _interner: &mut Interner<String>) -> Vec<Option<(ChangeTag, Token)>> {
     panic!("python-diff feature is not enabled");
 }
 
