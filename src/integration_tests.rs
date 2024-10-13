@@ -135,10 +135,7 @@ fn compare_algorithm_python(page: &Page) -> Result<(), TestCaseError> {
             Some(&wikiwho_py.revision_curr.id)
         );
 
-        prop_assert_eq!(
-            &analysis.ordered_revisions,
-            &wikiwho_py.ordered_revisions
-        );
+        prop_assert_eq!(&analysis.ordered_revisions, &wikiwho_py.ordered_revisions);
 
         // iterate and compare result graph
         for revision_id in page.revisions.iter().map(|r| r.id) {

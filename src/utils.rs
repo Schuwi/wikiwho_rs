@@ -1,4 +1,8 @@
 use aho_corasick::{AhoCorasick, AhoCorasickBuilder, PatternID};
+use imara_diff::{
+    intern::{Interner, Token},
+    Algorithm,
+};
 use memchr::memmem;
 
 const fn const_str_equals(a: &str, b: &str) -> bool {
@@ -192,11 +196,14 @@ pub fn split_into_paragraphs_optimized(
     let (text, scratch_buffer) = str_replace_opt(text, finder!("\r\n"), "\n", scratch_buffer);
     let (text, scratch_buffer) = str_replace_opt(text, finder!("\r"), "\n", scratch_buffer);
 
-    let (text, scratch_buffer) = str_replace_opt(text, finder!("<table>"), "\n\n<table>", scratch_buffer);
-    let (text, scratch_buffer) = str_replace_opt(text, finder!("</table>"), "</table>\n\n", scratch_buffer);
+    let (text, scratch_buffer) =
+        str_replace_opt(text, finder!("<table>"), "\n\n<table>", scratch_buffer);
+    let (text, scratch_buffer) =
+        str_replace_opt(text, finder!("</table>"), "</table>\n\n", scratch_buffer);
 
     let (text, scratch_buffer) = str_replace_opt(text, finder!("<tr>"), "\n\n<tr>", scratch_buffer);
-    let (text, scratch_buffer) = str_replace_opt(text, finder!("</tr>"), "</tr>\n\n", scratch_buffer);
+    let (text, scratch_buffer) =
+        str_replace_opt(text, finder!("</tr>"), "</tr>\n\n", scratch_buffer);
 
     let (text, scratch_buffer) = str_replace_opt(text, finder!("{|"), "\n\n{|", scratch_buffer);
     let (text, scratch_buffer) = str_replace_opt(text, finder!("|}"), "|}\n\n", scratch_buffer);
@@ -285,7 +292,8 @@ pub fn split_into_sentences_optimized(
     let (text, scratch_buffer) = str_replace_opt(text, finder!("<!--"), "@@@@<!--", scratch_buffer);
     let (text, scratch_buffer) = str_replace_opt(text, finder!("-->"), "-->@@@@", scratch_buffer);
     let (text, scratch_buffer) = str_replace_opt(text, finder!("<ref"), "@@@@<ref", scratch_buffer);
-    let (text, scratch_buffer) = str_replace_opt(text, finder!("/ref>"), "/ref>@@@@", scratch_buffer);
+    let (text, scratch_buffer) =
+        str_replace_opt(text, finder!("/ref>"), "/ref>@@@@", scratch_buffer);
 
     let (text, scratch_buffer) = regex_replace_opt(text, &REGEX_URL, "@@@@$1@@@@", scratch_buffer);
 
@@ -293,8 +301,13 @@ pub fn split_into_sentences_optimized(
 
     let mut did_replace = true;
     while did_replace {
-        (text, scratch_buffer) =
-            str_replace_opt_ext(text, finder!("@@@@@@@@"), "@@@@", scratch_buffer, &mut did_replace);
+        (text, scratch_buffer) = str_replace_opt_ext(
+            text,
+            finder!("@@@@@@@@"),
+            "@@@@",
+            scratch_buffer,
+            &mut did_replace,
+        );
     }
 
     let result = text.split("@@@@").map(|s| s.to_string()).collect();
@@ -425,22 +438,22 @@ pub fn split_into_tokens_corasick(text: &str) -> Vec<String> {
     result
 }
 
-use std::{collections::HashMap, sync::LazyLock};
+use std::{collections::HashMap, hash::Hash, ops::Range, sync::LazyLock};
 
 use crate::{
     algorithm::{Analysis, RevisionPointer, WordPointer},
     dump_parser::Sha1Hash,
 };
 
-pub fn compute_avg_word_freq<S: AsRef<str>>(token_list: &[S]) -> f64 {
-    let mut counter: HashMap<String, u64> = HashMap::new();
+pub fn compute_avg_word_freq(token_list: &[Token], interner: &mut Interner<String>) -> f64 {
+    let mut counter: HashMap<Token, u64> = HashMap::new();
 
-    for token in token_list.iter().map(AsRef::as_ref) {
+    for token in token_list.iter() {
         let count = counter.get_mut(token);
         if let Some(count) = count {
             *count += 1;
         } else {
-            counter.insert(token.to_string(), 1);
+            counter.insert(*token, 1);
         }
     }
 
@@ -449,7 +462,8 @@ pub fn compute_avg_word_freq<S: AsRef<str>>(token_list: &[S]) -> f64 {
     ];
 
     for token in remove_list {
-        counter.remove(token);
+        let token = interner.intern(token.to_string());
+        counter.remove(&token);
     }
 
     let sum: u64 = counter.values().sum();
@@ -520,13 +534,54 @@ pub fn to_lowercase_opt(input: &str) -> String {
     result
 }
 
-use similar::ChangeTag;
+pub enum ChangeTag {
+    Equal,
+    Insert,
+    Delete,
+}
+
+pub fn imara_diff(
+    old: &[Token],
+    new: &[Token],
+    total_interned_tokens: u32,
+) -> Vec<Option<(ChangeTag, Token)>> {
+    let mut result = Vec::new();
+
+    let mut last_old_pos = 0;
+    imara_diff::diff_with_tokens(
+        Algorithm::Histogram,
+        old,
+        new,
+        total_interned_tokens,
+        |before: Range<u32>, after: Range<u32>| {
+            if before.start > last_old_pos {
+                for token in &old[last_old_pos as usize..before.start as usize] {
+                    result.push(Some((ChangeTag::Equal, *token)));
+                }
+            }
+            last_old_pos = before.end;
+
+            for token in &new[after.start as usize..after.end as usize] {
+                result.push(Some((ChangeTag::Insert, *token)));
+            }
+
+            for token in &old[before.start as usize..before.end as usize] {
+                result.push(Some((ChangeTag::Delete, *token)));
+            }
+        },
+    );
+
+    if last_old_pos < old.len() as u32 {
+        for token in &old[last_old_pos as usize..] {
+            result.push(Some((ChangeTag::Equal, *token)));
+        }
+    }
+
+    result
+}
 
 #[cfg(feature = "python-diff")]
-pub fn python_diff<S: AsRef<str> + pyo3::ToPyObject>(
-    old: &[S],
-    new: &[S],
-) -> Vec<Option<(ChangeTag, String)>> {
+pub fn python_diff(old: &[Token], new: &[Token]) -> Vec<Option<(ChangeTag, Token)>> {
     use pyo3::{
         prelude::*,
         types::{PyList, PyString},
@@ -537,8 +592,8 @@ pub fn python_diff<S: AsRef<str> + pyo3::ToPyObject>(
         let difflib = py.import_bound("difflib").unwrap();
         let differ = difflib.getattr("Differ").unwrap().call0().unwrap();
 
-        let old = PyList::new_bound(py, old);
-        let new = PyList::new_bound(py, new);
+        let old = PyList::new_bound(py, old.iter().map(|&token| format!("{:X}", token.0)));
+        let new = PyList::new_bound(py, new.iter().map(|&token| format!("{:X}", token.0)));
 
         let diff = differ.call_method1("compare", (old, new)).unwrap();
         let diff = builtins
@@ -558,9 +613,11 @@ pub fn python_diff<S: AsRef<str> + pyo3::ToPyObject>(
                 '-' => Some(ChangeTag::Delete),
                 _ => None, /* apparently it can be '?' for example; I have no idea how diff algorithms work */
             };
-            let value = diff_item[2..].to_string();
 
-            result.push(tag.map(|tag| (tag, value)));
+            if let Some(tag) = tag {
+                let value = u32::from_str_radix(&diff_item[2..], 16).unwrap();
+                result.push(Some((tag, Token(value))));
+            }
         }
 
         result
@@ -568,7 +625,7 @@ pub fn python_diff<S: AsRef<str> + pyo3::ToPyObject>(
 }
 
 #[cfg(not(feature = "python-diff"))]
-pub fn python_diff<S: AsRef<str>>(_old: &[S], _new: &[S]) -> Vec<Option<(ChangeTag, String)>> {
+pub fn python_diff(old: &[Token], new: &[Token]) -> Vec<Option<(ChangeTag, Token)>> {
     panic!("python-diff feature is not enabled");
 }
 

@@ -1,5 +1,6 @@
 use chrono::prelude::*;
 use compact_str::CompactString;
+use imara_diff::intern::Interner;
 use rustc_hash::{FxHashMap, FxHashSet};
 use std::{
     collections::HashMap,
@@ -11,7 +12,7 @@ use crate::{
     dump_parser::{Contributor, Revision, Text},
     utils::{
         self, compute_avg_word_freq, split_into_paragraphs, split_into_sentences,
-        split_into_tokens, trim_in_place, RevisionHash,
+        split_into_tokens, trim_in_place, ChangeTag, RevisionHash,
     },
 };
 
@@ -1141,6 +1142,14 @@ impl Analysis {
         unmatched_sentences_prev: &[SentencePointer],
         possible_vandalism: bool,
     ) -> (Vec<WordPointer>, bool) {
+        // estimate the number of unique unmatched words in all unmatched sentences (prev and curr)
+        let upper_bound_tokens = unmatched_sentences_curr
+            .iter()
+            .chain(unmatched_sentences_prev.iter())
+            .map(|sentence_pointer| self.sentences[sentence_pointer.0].words_ordered.len())
+            .sum::<usize>();
+
+        let mut interner = Interner::new(upper_bound_tokens);
         let mut matched_words_prev = Vec::new();
         let mut unmatched_words_prev = Vec::new();
 
@@ -1150,8 +1159,9 @@ impl Analysis {
             let sentence_prev = &self.sentences[sentence_prev_pointer.0];
             for word_prev_pointer in &sentence_prev.words_ordered {
                 if !self.words[word_prev_pointer.0].matched_in_current {
-                    text_prev.push(word_prev_pointer.value().to_string());
-                    unmatched_words_prev.push(word_prev_pointer.clone());
+                    let interned = interner.intern(word_prev_pointer.value().to_string());
+                    text_prev.push(interned);
+                    unmatched_words_prev.push((interned, word_prev_pointer.clone()));
                 }
             }
         }
@@ -1164,7 +1174,7 @@ impl Analysis {
                 .value()
                 //.split_whitespace() // DU SCHLINGEL!!! :D
                 .split(' ')
-                .map(|s| s.to_string())
+                .map(|s| interner.intern(s.to_string()))
                 .collect();
             text_curr.extend_from_slice(words.as_slice());
             unmatched_sentence_curr_splitted.push(words); /* index corresponds to index in unmatched_words_prev */
@@ -1177,7 +1187,7 @@ impl Analysis {
 
         // spam detection. Check if the token density is too high.
         if possible_vandalism {
-            let token_density = compute_avg_word_freq(&text_curr);
+            let token_density = compute_avg_word_freq(&text_curr, &mut interner);
             if token_density > TOKEN_DENSITY_LIMIT {
                 return (matched_words_prev, true);
             }
@@ -1203,8 +1213,8 @@ impl Analysis {
         // Edit consists of adding new content, not changing/removing content
         if text_prev.is_empty() {
             for (i, sentence_curr_pointer) in unmatched_sentences_curr.iter().enumerate() {
-                for word_text in unmatched_sentence_curr_splitted[i].iter() {
-                    allocate_new_word(self, word_text, sentence_curr_pointer);
+                for word_interned in unmatched_sentence_curr_splitted[i].iter() {
+                    allocate_new_word(self, &interner[*word_interned], sentence_curr_pointer);
                 }
             }
             return (matched_words_prev, false);
@@ -1215,34 +1225,25 @@ impl Analysis {
         if cfg!(feature = "python-diff") {
             diff = utils::python_diff(&text_prev, &text_curr);
         } else {
-            diff = similar::capture_diff_slices_deadline(
-                similar::Algorithm::Myers,
-                // similar::Algorithm::Lcs,
-                // similar::Algorithm::Patience, /* seems to be waaaay faster than the other o.o */
-                &text_prev,
-                &text_curr,
-                None,
-            )
-            .iter()
-            .flat_map(|op| op.iter_changes(&text_prev, &text_curr))
-            .map(|c| Some((c.tag(), c.value())))
-            .collect();
+            diff = utils::imara_diff(&text_prev, &text_curr, interner.num_tokens());
         }
 
         for (i, sentence_curr) in unmatched_sentences_curr.iter().enumerate() {
-            for word_text in unmatched_sentence_curr_splitted[i].iter() {
+            for word_interned in unmatched_sentence_curr_splitted[i].iter() {
                 let mut curr_matched = false;
                 for change in diff.iter_mut().filter(|c| c.is_some()) {
                     let (change_tag, change_value) = change.as_ref().unwrap();
 
-                    if change_value == word_text {
+                    if change_value == word_interned {
                         match change_tag {
-                            similar::ChangeTag::Equal => {
+                            ChangeTag::Equal => {
                                 // match
-                                if let Some(word_prev) = unmatched_words_prev.iter().find(|w| {
-                                    w.value() == word_text
-                                        && !self.words[w.index()].matched_in_current
-                                }) {
+                                if let Some((_, word_prev)) =
+                                    unmatched_words_prev.iter().find(|(w_interned, w_pointer)| {
+                                        w_interned == word_interned
+                                            && !self.words[w_pointer.0].matched_in_current
+                                    })
+                                {
                                     curr_matched = true;
 
                                     self[word_prev].matched_in_current = true;
@@ -1252,12 +1253,14 @@ impl Analysis {
                                     *change = None;
                                 }
                             }
-                            similar::ChangeTag::Delete => {
+                            ChangeTag::Delete => {
                                 // word was deleted
-                                if let Some(word_prev) = unmatched_words_prev.iter().find(|w| {
-                                    w.value() == word_text
-                                        && !self.words[w.index()].matched_in_current
-                                }) {
+                                if let Some((_, word_prev)) =
+                                    unmatched_words_prev.iter().find(|(w_interned, w_pointer)| {
+                                        w_interned == word_interned
+                                            && !self.words[w_pointer.0].matched_in_current
+                                    })
+                                {
                                     self[word_prev].matched_in_current = true;
 
                                     let revision_curr_id = self.revision_curr.id; /* need to get id first, otherwise borrow-checker complains */
@@ -1267,11 +1270,11 @@ impl Analysis {
                                     *change = None;
                                 }
                             }
-                            similar::ChangeTag::Insert => {
+                            ChangeTag::Insert => {
                                 // a new added word
                                 curr_matched = true;
 
-                                allocate_new_word(self, word_text, sentence_curr);
+                                allocate_new_word(self, &interner[*word_interned], sentence_curr);
 
                                 *change = None;
                             }
@@ -1285,7 +1288,7 @@ impl Analysis {
                 if !curr_matched {
                     // word was not found in the diff
                     // apparently we are adding it as a new one
-                    allocate_new_word(self, word_text, sentence_curr);
+                    allocate_new_word(self, &interner[*word_interned], sentence_curr);
                 }
             }
         }
