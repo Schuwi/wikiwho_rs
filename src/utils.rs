@@ -5,6 +5,7 @@ use imara_diff::{
 };
 use memchr::memmem;
 
+#[allow(dead_code)] // it IS used in `split_into_tokens_corasick`
 const fn const_str_equals(a: &str, b: &str) -> bool {
     let mut i = 0;
     while i < a.len() && i < b.len() {
