@@ -1,5 +1,5 @@
 [package]
-name = "wikiwho_rs"
+name = "wikiwho"
 version = "0.1.0"
 edition = "2021"
 

@@ -1,6 +1,6 @@
 use criterion::{criterion_group, criterion_main, BenchmarkId, Criterion};
 use rand::{Rng, SeedableRng};
-use wikiwho_rs::utils;
+use wikiwho::utils;
 
 fn generate_input_split_into_paragraphs(length: u64) -> String {
     // generate inputs from fixed seeds
