@@ -591,6 +591,42 @@ mod tests {
             ..ProptestConfig::default()
         })]
         #[test]
+        fn compare_split_into_paragraphs_optimized(input in "(\n|\r|\\||-|table|tr|<|>|\\}|\\{|.|.|.|.|.)*") {
+            let mut scratch_buffers = (String::new(), String::new());
+
+            let expected = split_into_paragraphs_naive(&input);
+            let result_optimized = split_into_paragraphs_optimized(&input, (&mut scratch_buffers.0, &mut scratch_buffers.1));
+
+            prop_assert!(scratch_buffers.0.is_empty());
+            prop_assert!(scratch_buffers.1.is_empty());
+            prop_assert_eq!(expected, result_optimized);
+        }
+    }
+
+    proptest! {
+        #![proptest_config(ProptestConfig {
+            cases: 100000,
+            ..ProptestConfig::default()
+        })]
+        #[test]
+        fn compare_split_into_sentences_optimized(input in "(http|\\.|=|\\s|ref|-|!|/|:|\n|\r|\\?|;|\t|\\||.|.|.|.|.)*") {
+            let mut scratch_buffers = (String::new(), String::new());
+
+            let expected = split_into_sentences_naive(&input);
+            let result_optimized = split_into_sentences_optimized(&input, (&mut scratch_buffers.0, &mut scratch_buffers.1));
+
+            prop_assert!(scratch_buffers.0.is_empty());
+            prop_assert!(scratch_buffers.1.is_empty());
+            prop_assert_eq!(expected, result_optimized);
+        }
+    }
+
+    proptest! {
+        #![proptest_config(ProptestConfig {
+            cases: 100000,
+            ..ProptestConfig::default()
+        })]
+        #[test]
         fn compare_split_into_tokens_optimized(input in "(\n| |!|<|>|-|\\[|\\]|\\{|\\}|\\?|:|ℳ|֏|™|.|.|.|.|.)*") {
             let expected = split_into_tokens_naive(&input);
             let result_corasick = split_into_tokens_corasick(&input);
@@ -607,8 +643,6 @@ mod tests {
         let builtins = py.import_bound("builtins").unwrap();
         let split_fn = py
             .import_bound("WikiWho.utils")
-            // .unwrap()
-            // .getattr("utils")
             .unwrap()
             .getattr(fn_name)
             .unwrap();
