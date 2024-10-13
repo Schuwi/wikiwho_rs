@@ -481,7 +481,7 @@ impl<R: BufRead> DumpParser<R> {
         self.xml_parser.buffer_position()
     }
 
-    #[instrument]
+    #[instrument(level = "debug")]
     fn parse_start_bytes(
         e: &BytesStart,
         expecting_namespace: bool,
@@ -614,7 +614,7 @@ impl<R: BufRead> DumpParser<R> {
         Ok(Some(tag))
     }
 
-    #[instrument]
+    #[instrument(level = "debug")]
     fn parse_site_info(&mut self) -> Result<(), ParsingError> {
         let mut site_info = SiteInfo {
             dbname: CompactString::default(),
@@ -730,7 +730,7 @@ impl<R: BufRead> DumpParser<R> {
     }
 
     pub fn parse_page(&mut self) -> Result<Option<Page>, ParsingError> {
-        let span = tracing::span!(tracing::Level::INFO, "parse_page", self=?self, title=tracing::field::Empty);
+        let span = tracing::span!(tracing::Level::DEBUG, "parse_page", self=?self, title=tracing::field::Empty);
 
         let mut page = Page {
             title: CompactString::default(),

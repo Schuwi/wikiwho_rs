@@ -371,8 +371,10 @@ const CURR_LENGTH: usize = 1000;
 const UNMATCHED_PARAGRAPH: f64 = 0.0;
 const TOKEN_DENSITY_LIMIT: f64 = 20.0;
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq, thiserror::Error)]
+#[non_exhaustive]
 pub enum AnalysisError {
+    #[error("No valid revisions found")]
     NoValidRevisions,
 }
 
