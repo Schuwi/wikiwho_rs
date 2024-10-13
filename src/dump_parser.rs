@@ -789,6 +789,8 @@ impl<R: BufRead> DumpParser<R> {
                                 revision_builder.minor = true;
                             }
                         }
+                        [MediaWiki, Page, Revision, Sha1] => {} /* sometimes there is a sha1 tag but it's empty */
+                        [MediaWiki, Page, Revision, Comment] => {} /* same for comment tag, just handle it as if it's not there */
                         _ => self.check_known_tags_in_unexpected_location(true),
                     }
                     self.current_path.pop();
@@ -965,17 +967,20 @@ impl<R: BufRead> DumpParser<R> {
                             let revision = match revision_builder.try_build() {
                                 Ok(revision) => revision,
                                 Err(BuildRevisionError(field, revision_builder)) => {
-                                    tracing::error!(
-                                        message = "Missing mandatory field in revision",
-                                        field,
-                                        partial_revision = ?revision_builder,
-                                        revision_end_position = self.xml_parser.buffer_position()
-                                    );
                                     if cfg!(feature = "strict") {
+                                        tracing::error!(
+                                            message = "Missing mandatory field in revision",
+                                            field,
+                                            partial_revision = ?revision_builder,
+                                            revision_end_position = self.xml_parser.buffer_position()
+                                        );
                                         return Self::abort_parsing(&mut self.xml_parser);
                                     } else {
                                         tracing::warn!(
-                                            "Ignoring revision with missing mandatory field"
+                                            message = "Ignoring revision with missing mandatory field",
+                                            field,
+                                            partial_revision = ?revision_builder,
+                                            revision_end_position = self.xml_parser.buffer_position()
                                         );
                                         continue;
                                     }
