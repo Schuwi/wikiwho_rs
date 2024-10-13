@@ -477,6 +477,10 @@ impl<R: BufRead> DumpParser<R> {
         &self.site_info
     }
 
+    pub fn bytes_consumed(&self) -> u64 {
+        self.xml_parser.buffer_position()
+    }
+
     #[instrument]
     fn parse_start_bytes(
         e: &BytesStart,
