@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MPL-2.0
 //! All tests need to be run in a Python venv that has installed the `requirements.txt`!
 
 use chrono::DateTime;

@@ -2,6 +2,7 @@
 name = "wikiwho"
 version = "0.1.0"
 edition = "2021"
+license = "MPL-2.0 AND MIT"
 
 [[bench]]
 name = "utils_impls"

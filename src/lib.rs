@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MPL-2.0
 pub mod algorithm;
 pub mod dump_parser;
 // it only makes sense to compare the algorithm to python if the same diff algorithm is used

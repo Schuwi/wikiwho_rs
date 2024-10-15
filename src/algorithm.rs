@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MIT AND MPL-2.0
 use chrono::prelude::*;
 use compact_str::CompactString;
 use imara_diff::intern::Interner;

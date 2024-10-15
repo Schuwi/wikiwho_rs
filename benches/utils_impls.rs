@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MPL-2.0
 use criterion::{criterion_group, criterion_main, BenchmarkId, Criterion};
 use rand::{Rng, SeedableRng};
 use wikiwho::utils;

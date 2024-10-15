@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MPL-2.0
 use std::{
     any::type_name_of_val,
     borrow::Cow,

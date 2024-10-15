@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MPL-2.0
 use aho_corasick::{AhoCorasick, AhoCorasickBuilder, PatternID};
 use imara_diff::{
     intern::{Interner, Token},
