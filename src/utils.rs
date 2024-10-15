@@ -583,7 +583,11 @@ pub fn imara_diff(
 }
 
 #[cfg(feature = "python-diff")]
-pub fn python_diff(old: &[Token], new: &[Token], interner: &mut Interner<String>) -> Vec<Option<(ChangeTag, Token)>> {
+pub fn python_diff(
+    old: &[Token],
+    new: &[Token],
+    interner: &mut Interner<String>,
+) -> Vec<Option<(ChangeTag, Token)>> {
     use pyo3::{
         prelude::*,
         types::{PyList, PyString},
@@ -627,7 +631,11 @@ pub fn python_diff(old: &[Token], new: &[Token], interner: &mut Interner<String>
 }
 
 #[cfg(not(feature = "python-diff"))]
-pub fn python_diff(_old: &[Token], _new: &[Token], _interner: &mut Interner<String>) -> Vec<Option<(ChangeTag, Token)>> {
+pub fn python_diff(
+    _old: &[Token],
+    _new: &[Token],
+    _interner: &mut Interner<String>,
+) -> Vec<Option<(ChangeTag, Token)>> {
     panic!("python-diff feature is not enabled");
 }
 

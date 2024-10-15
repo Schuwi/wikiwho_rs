@@ -1,9 +1,5 @@
 // SPDX-License-Identifier: MPL-2.0
-use std::{
-    collections::HashMap,
-    fs::File,
-    io::{BufReader, Cursor},
-};
+use std::{collections::HashMap, fs::File, io::BufReader};
 
 use pyo3::types::PyDict;
 

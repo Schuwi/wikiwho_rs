@@ -166,9 +166,9 @@ fn bench_to_lowercase(c: &mut Criterion) {
 
 criterion_group!(
     benches,
-    // bench_split_into_paragraphs,
-    // bench_split_into_sentences,
-    // bench_split_into_tokens,
+    bench_split_into_paragraphs,
+    bench_split_into_sentences,
+    bench_split_into_tokens,
     bench_to_lowercase,
 );
 criterion_main!(benches);
