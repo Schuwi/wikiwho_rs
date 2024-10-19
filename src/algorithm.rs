@@ -105,16 +105,16 @@ impl Eq for RevisionPointer {}
 
 #[derive(Clone)]
 pub struct RevisionImmutables {
-    pub length: usize, /* text length when lowercased, in bytes (for `test` compile target this is the number of unicode codepoints, to match the python implementation) */
-    pub text: String,  /* lowercased text of revision */
+    pub length_lowercase: usize, /* text length when lowercased, in bytes (for `test` compile target this is the number of unicode codepoints, to match the python implementation) */
+    pub text_lowercase: String,  /* lowercased text of revision */
     pub xml_revision: Revision,
 }
 
 impl RevisionImmutables {
     fn dummy() -> Self {
         Self {
-            length: 0,
-            text: String::new(),
+            length_lowercase: 0,
+            text_lowercase: String::new(),
             xml_revision: Revision {
                 id: 0,
                 timestamp: Utc::now(),
@@ -148,8 +148,8 @@ impl RevisionImmutables {
             // #[cfg(any(test, feature = "match-reference-impl"))]
             // python's `len` function returns the number of unicode codepoints for a string,
             // so when testing against the python implementation we need to match that behavior to get identical results
-            length: revision.text.as_str().chars().count(),
-            text: match revision.text {
+            length_lowercase: revision.text.as_str().chars().count(),
+            text_lowercase: match revision.text {
                 Text::Normal(ref t) => utils::to_lowercase(t),
                 Text::Deleted => String::new(),
             },
@@ -205,7 +205,8 @@ impl ParagraphImmutables {
         Self { hash_value, value }
     }
 
-    pub fn hash(&self) -> &[u8] { /* return a slice of bytes as not to commit our API to any hash algorithm */
+    pub fn hash(&self) -> &[u8] {
+        /* return a slice of bytes as not to commit our API to any hash algorithm */
         self.hash_value.as_bytes()
     }
 }
@@ -282,8 +283,8 @@ pub struct WordImmutables {
 
 #[derive(Clone)]
 pub struct WordAnalysis {
-    pub origin_rev: RevisionPointer,
-    pub latest_rev: RevisionPointer,
+    pub origin_revision: RevisionPointer,
+    pub latest_revision: RevisionPointer,
     /// whether this word was found in the current revision
     pub(crate) matched_in_current: bool,
 
@@ -301,8 +302,8 @@ impl WordImmutables {
 impl WordAnalysis {
     pub fn new(_pointer: WordPointer, origin_rev: &RevisionPointer) -> Self {
         Self {
-            origin_rev: origin_rev.clone(),
-            latest_rev: origin_rev.clone(),
+            origin_revision: origin_rev.clone(),
+            latest_revision: origin_rev.clone(),
             matched_in_current: false,
             inbound: Vec::new(),
             outbound: Vec::new(),
@@ -316,12 +317,11 @@ impl WordAnalysis {
         revision_prev: Option<&RevisionPointer>,
         push: bool,
     ) {
-        if !vandalism && self.matched_in_current && self.outbound.last() != Some(&revision_curr)
-        {
-            if push && Some(&self.latest_rev) != revision_prev {
+        if !vandalism && self.matched_in_current && self.outbound.last() != Some(&revision_curr) {
+            if push && Some(&self.latest_revision) != revision_prev {
                 self.inbound.push(revision_curr.clone());
             }
-            self.latest_rev = revision_curr.clone();
+            self.latest_revision = revision_curr.clone();
         }
     }
 
@@ -353,7 +353,7 @@ pub struct Analysis {
     pub words: Vec<WordAnalysis>, // Ordered, unique list of tokens in the page
 
     /// Collection of revision IDs that were detected as spam.
-    /// 
+    ///
     /// These revisions were not analysed and are not included in the `revisions`,
     /// `revisions_by_id` and `ordered_revisions` fields.
     pub spam_ids: Vec<i32>,
@@ -369,7 +369,7 @@ pub struct Analysis {
     /// The current revision being analysed.
     ///
     /// After analysis finished this will be the latest revision that was not marked as spam.
-    pub revision_curr: RevisionPointer,
+    pub current_revision: RevisionPointer,
 
     internals: AnalysisInternals,
 }
@@ -420,7 +420,7 @@ impl Pointer for RevisionPointer {
     }
 
     fn value(&self) -> &str {
-        &self.text
+        &self.text_lowercase
     }
 
     fn data<'a>(&self, analysis: &'a Analysis) -> &'a Self::Data {
@@ -753,7 +753,7 @@ impl Analysis {
             revisions_by_id: HashMap::new(),
             ordered_revisions: Vec::new(),
 
-            revision_curr: RevisionPointer::new(0, RevisionImmutables::dummy()), /* will be overwritten before being read */
+            current_revision: RevisionPointer::new(0, RevisionImmutables::dummy()), /* will be overwritten before being read */
 
             internals: AnalysisInternals {
                 paragraphs_ht: FxHashMap::default(),
@@ -795,12 +795,13 @@ impl Analysis {
 
             // Spam detection: Deletion
             if !(vandalism || xml_revision.comment.is_some() && xml_revision.minor) {
-                let revision_prev = &analysis.revision_curr; /* !! since we have not yet updated revision_curr, this is the previous revision */
-                let change_percentage = (revision_data.length as f64 - revision_prev.length as f64)
-                    / revision_prev.length as f64;
+                let revision_prev = &analysis.current_revision; /* !! since we have not yet updated revision_curr, this is the previous revision */
+                let change_percentage = (revision_data.length_lowercase as f64
+                    - revision_prev.length_lowercase as f64)
+                    / revision_prev.length_lowercase as f64;
 
-                if revision_prev.length > PREVIOUS_LENGTH
-                    && revision_data.length < CURR_LENGTH
+                if revision_prev.length_lowercase > PREVIOUS_LENGTH
+                    && revision_data.length_lowercase < CURR_LENGTH
                     && change_percentage <= CHANGE_PERCENTAGE
                 {
                     // Vandalism detected due to significant deletion
@@ -821,7 +822,7 @@ impl Analysis {
             analysis.revisions.push(RevisionAnalysis::default());
 
             // Update the information about the previous revision.
-            std::mem::swap(&mut analysis.revision_curr, &mut revision_pointer);
+            std::mem::swap(&mut analysis.current_revision, &mut revision_pointer);
             if at_least_one {
                 analysis.internals.revision_prev = Some(revision_pointer);
             } /* if !at_least_one we do not yet have a valid revision (revision_pointer contains a dummy value) to refer to as previous */
@@ -833,7 +834,7 @@ impl Analysis {
                 // Skip this revision due to vandalism
                 if at_least_one {
                     // Revert the state of `revision_curr` to the beginning of the loop iteration
-                    analysis.revision_curr =
+                    analysis.current_revision =
                         analysis.internals.revision_prev.take().expect(
                             "should not have been deleted in the call to determine_authorship",
                         );
@@ -844,10 +845,13 @@ impl Analysis {
                 analysis.internals.spam_hashes.insert(rev_hash);
             } else {
                 // Store the current revision in the result
-                analysis.ordered_revisions.push(analysis.revision_curr.clone());
                 analysis
-                    .revisions_by_id
-                    .insert(analysis.revision_curr.id, analysis.revision_curr.clone());
+                    .ordered_revisions
+                    .push(analysis.current_revision.clone());
+                analysis.revisions_by_id.insert(
+                    analysis.current_revision.id,
+                    analysis.current_revision.clone(),
+                );
 
                 // and note that we have processed at least one valid revision
                 at_least_one = true;
@@ -916,7 +920,7 @@ impl Analysis {
 
         matched_{paragraphs, words, sentences}_prev
          */
-        let revision_curr = self.revision_curr.clone(); /* short-hand */
+        let revision_curr = self.current_revision.clone(); /* short-hand */
         let revision_prev = self.internals.revision_prev.clone(); /* short-hand */
 
         let mut unmatched_sentences_curr = Vec::new();
@@ -931,7 +935,7 @@ impl Analysis {
         // Analysis of the paragraphs in the current revision
         let (unmatched_paragraphs_curr, unmatched_paragraphs_prev, matched_paragraphs_prev, _) =
             self.analyse_parasents_in_revgraph(
-                &[self.revision_curr.clone()],
+                &[self.current_revision.clone()],
                 self.internals.revision_prev.as_ref().cloned().as_slice(),
             );
 
@@ -948,7 +952,7 @@ impl Analysis {
 
             // this will always set possible_vandalism to true (because UNMATCHED_PARAGRAPH is 0.0)
             if unmatched_paragraphs_curr.len() as f64
-                / self[&self.revision_curr].paragraphs_ordered.len() as f64
+                / self[&self.current_revision].paragraphs_ordered.len() as f64
                 > UNMATCHED_PARAGRAPH
             {
                 // will be used to detect copy-paste vandalism - token density
@@ -1005,7 +1009,12 @@ impl Analysis {
         // Reset the matches that we modified in old revisions
         let handle_word = |word: &mut WordAnalysis, push_inbound: bool| {
             // first update inbound and last used info of matched words of all previous revisions
-            word.maybe_push_inbound(vandalism, &revision_curr, revision_prev.as_ref(), push_inbound);
+            word.maybe_push_inbound(
+                vandalism,
+                &revision_curr,
+                revision_prev.as_ref(),
+                push_inbound,
+            );
             // then reset the matched status
             word.matched_in_current = false;
         };
@@ -1229,12 +1238,12 @@ impl Analysis {
             let word_pointer = WordPointer::new(analysis.words.len(), word_data);
             analysis.words.push(WordAnalysis::new(
                 word_pointer.clone(),
-                &analysis.revision_curr,
+                &analysis.current_revision,
             ));
             analysis.sentences[sentence_pointer.0]
                 .words_ordered
                 .push(word_pointer);
-            analysis.revisions[analysis.revision_curr.0].original_adds += 1;
+            analysis.revisions[analysis.current_revision.0].original_adds += 1;
         }
 
         // Edit consists of adding new content, not changing/removing content
@@ -1290,7 +1299,7 @@ impl Analysis {
                                 {
                                     self[word_prev].matched_in_current = true;
 
-                                    let revision_curr = self.revision_curr.clone(); /* need to clone first, otherwise borrow-checker complains */
+                                    let revision_curr = self.current_revision.clone(); /* need to clone first, otherwise borrow-checker complains */
                                     self[word_prev].outbound.push(revision_curr);
 
                                     matched_words_prev.push(word_prev.clone());

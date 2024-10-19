@@ -232,13 +232,13 @@ fn compare_algorithm_python(page: &Page) -> Result<(), TestCaseError> {
                             &word_py.outbound
                         );
                         prop_assert_eq!(
-                            word_rust.latest_rev.id,
+                            word_rust.latest_revision.id,
                             word_py.last_rev_id,
                             "inconsistency at word: {:?}, revision: {}",
                             &word_pointer_rust.value,
                             revision_id
                         );
-                        prop_assert_eq!(word_rust.origin_rev.id, word_py.origin_rev_id);
+                        prop_assert_eq!(word_rust.origin_revision.id, word_py.origin_rev_id);
                     }
                 }
             }
