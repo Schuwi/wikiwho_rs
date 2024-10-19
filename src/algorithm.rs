@@ -95,9 +95,16 @@ impl Deref for RevisionPointer {
     }
 }
 
+impl PartialEq for RevisionPointer {
+    fn eq(&self, other: &Self) -> bool {
+        self.0 == other.0
+    }
+}
+
+impl Eq for RevisionPointer {}
+
 #[derive(Clone)]
 pub struct RevisionImmutables {
-    pub id: i32,
     pub length: usize, /* text length when lowercased, in bytes (for `test` compile target this is the number of unicode codepoints, to match the python implementation) */
     pub text: String,  /* lowercased text of revision */
     pub xml_revision: Revision,
@@ -106,7 +113,6 @@ pub struct RevisionImmutables {
 impl RevisionImmutables {
     fn dummy() -> Self {
         Self {
-            id: 0,
             length: 0,
             text: String::new(),
             xml_revision: Revision {
@@ -130,13 +136,12 @@ pub struct RevisionAnalysis {
     paragraphs_by_hash: FxHashMap<blake3::Hash, MaybeVec<ParagraphPointer>>, /* assume that duplicate paragraphs are not very common and optimize to avoid allocation */
     pub paragraphs_ordered: Vec<ParagraphPointer>,
 
-    pub original_adds: usize, /* number of tokens added in this revision */
+    pub original_adds: usize, /* number of tokens added in this revision for the first time */
 }
 
 impl RevisionImmutables {
     pub fn from_revision(revision: &Revision) -> Self {
         Self {
-            id: revision.id,
             // #[cfg(not(any(test, feature = "match-reference-impl")))]
             // // for spam detection it should be enough to use the length of the text in bytes
             // length: revision.text.len(),
@@ -150,6 +155,14 @@ impl RevisionImmutables {
             },
             xml_revision: revision.clone(),
         }
+    }
+}
+
+impl Deref for RevisionImmutables {
+    type Target = Revision;
+
+    fn deref(&self) -> &Self::Target {
+        &self.xml_revision
     }
 }
 
@@ -183,13 +196,17 @@ pub struct ParagraphAnalysis {
     pub sentences_ordered: Vec<SentencePointer>,
 
     /// whether this paragraph was found in the current revision
-    pub matched_in_current: bool,
+    pub(crate) matched_in_current: bool,
 }
 
 impl ParagraphImmutables {
     pub fn new(value: String) -> Self {
         let hash_value = blake3::hash(value.as_bytes());
         Self { hash_value, value }
+    }
+
+    pub fn hash(&self) -> &[u8] { /* return a slice of bytes as not to commit our API to any hash algorithm */
+        self.hash_value.as_bytes()
     }
 }
 
@@ -222,13 +239,17 @@ pub struct SentenceAnalysis {
     pub words_ordered: Vec<WordPointer>,
 
     /// whether this sentence was found in the current revision
-    pub matched_in_current: bool,
+    pub(crate) matched_in_current: bool,
 }
 
 impl SentenceImmutables {
     pub fn new(value: String) -> Self {
         let hash_value = blake3::hash(value.as_bytes());
         Self { hash_value, value }
+    }
+
+    pub fn hash(&self) -> &[u8] {
+        self.hash_value.as_bytes()
     }
 }
 
@@ -261,14 +282,14 @@ pub struct WordImmutables {
 
 #[derive(Clone)]
 pub struct WordAnalysis {
-    pub origin_rev_id: i32,
-    pub latest_rev_id: i32,
+    pub origin_rev: RevisionPointer,
+    pub latest_rev: RevisionPointer,
     /// whether this word was found in the current revision
-    pub matched_in_current: bool,
+    pub(crate) matched_in_current: bool,
 
     // words may be re-added after being removed
-    pub inbound: Vec<i32>,
-    pub outbound: Vec<i32>, // the revision ids where this word was removed (i.e. not present in the revision but present in the previous revision)
+    pub inbound: Vec<RevisionPointer>, // the revisions where this word was added (i.e. present in the revision but not present in the previous revision)
+    pub outbound: Vec<RevisionPointer>, // the revisions where this word was removed (i.e. not present in the revision but present in the previous revision)
 }
 
 impl WordImmutables {
@@ -278,10 +299,10 @@ impl WordImmutables {
 }
 
 impl WordAnalysis {
-    pub fn new(_pointer: WordPointer, origin_rev_id: i32) -> Self {
+    pub fn new(_pointer: WordPointer, origin_rev: &RevisionPointer) -> Self {
         Self {
-            origin_rev_id,
-            latest_rev_id: origin_rev_id,
+            origin_rev: origin_rev.clone(),
+            latest_rev: origin_rev.clone(),
             matched_in_current: false,
             inbound: Vec::new(),
             outbound: Vec::new(),
@@ -291,22 +312,22 @@ impl WordAnalysis {
     fn maybe_push_inbound(
         &mut self,
         vandalism: bool,
-        revision_id_curr: i32,
-        revision_id_prev: Option<i32>,
+        revision_curr: &RevisionPointer,
+        revision_prev: Option<&RevisionPointer>,
         push: bool,
     ) {
-        if !vandalism && self.matched_in_current && self.outbound.last() != Some(&revision_id_curr)
+        if !vandalism && self.matched_in_current && self.outbound.last() != Some(&revision_curr)
         {
-            if push && Some(self.latest_rev_id) != revision_id_prev {
-                self.inbound.push(revision_id_curr);
+            if push && Some(&self.latest_rev) != revision_prev {
+                self.inbound.push(revision_curr.clone());
             }
-            self.latest_rev_id = revision_id_curr;
+            self.latest_rev = revision_curr.clone();
         }
     }
 
-    fn maybe_push_outbound(&mut self, revision_id_curr: i32) {
+    fn maybe_push_outbound(&mut self, revision_curr: &RevisionPointer) {
         if !self.matched_in_current {
-            self.outbound.push(revision_id_curr);
+            self.outbound.push(revision_curr.clone());
         }
     }
 }
@@ -332,15 +353,18 @@ pub struct Analysis {
     pub words: Vec<WordAnalysis>, // Ordered, unique list of tokens in the page
 
     /// Collection of revision IDs that were detected as spam.
+    /// 
+    /// These revisions were not analysed and are not included in the `revisions`,
+    /// `revisions_by_id` and `ordered_revisions` fields.
     pub spam_ids: Vec<i32>,
     /// Map of revision ID to RevisionData.
     ///
     /// Does not contain revisions that were detected as spam.
     pub revisions_by_id: HashMap<i32, RevisionPointer>,
-    /// List of revision IDs in order from oldest to newest.
+    /// List of revisions in order from oldest to newest.
     ///
     /// Does not contain revisions that were detected as spam.
-    pub ordered_revisions: Vec<i32>,
+    pub ordered_revisions: Vec<RevisionPointer>,
 
     /// The current revision being analysed.
     ///
@@ -820,7 +844,7 @@ impl Analysis {
                 analysis.internals.spam_hashes.insert(rev_hash);
             } else {
                 // Store the current revision in the result
-                analysis.ordered_revisions.push(analysis.revision_curr.id);
+                analysis.ordered_revisions.push(analysis.revision_curr.clone());
                 analysis
                     .revisions_by_id
                     .insert(analysis.revision_curr.id, analysis.revision_curr.clone());
@@ -892,8 +916,8 @@ impl Analysis {
 
         matched_{paragraphs, words, sentences}_prev
          */
-        let revision_id_curr = self.revision_curr.id; /* short-hand */
-        let revision_id_prev = self.internals.revision_prev.as_ref().map(|r| r.id); /* short-hand */
+        let revision_curr = self.revision_curr.clone(); /* short-hand */
+        let revision_prev = self.internals.revision_prev.clone(); /* short-hand */
 
         let mut unmatched_sentences_curr = Vec::new();
         let mut unmatched_sentences_prev = Vec::new();
@@ -947,13 +971,13 @@ impl Analysis {
         if !vandalism {
             // tag all words that are deleted in the current revision (i.e. present in the previous revision but not in the current revision)
             self.iterate_words_in_sentences(&unmatched_sentences_prev, |word| {
-                word.maybe_push_outbound(revision_id_curr)
+                word.maybe_push_outbound(&revision_curr)
             });
 
             // ???
             if unmatched_sentences_prev.is_empty() {
                 self.iterate_words_in_paragraphs(&unmatched_paragraphs_prev, |word| {
-                    word.maybe_push_outbound(revision_id_curr)
+                    word.maybe_push_outbound(&revision_curr)
                 });
             }
 
@@ -981,7 +1005,7 @@ impl Analysis {
         // Reset the matches that we modified in old revisions
         let handle_word = |word: &mut WordAnalysis, push_inbound: bool| {
             // first update inbound and last used info of matched words of all previous revisions
-            word.maybe_push_inbound(vandalism, revision_id_curr, revision_id_prev, push_inbound);
+            word.maybe_push_inbound(vandalism, &revision_curr, revision_prev.as_ref(), push_inbound);
             // then reset the matched status
             word.matched_in_current = false;
         };
@@ -1205,7 +1229,7 @@ impl Analysis {
             let word_pointer = WordPointer::new(analysis.words.len(), word_data);
             analysis.words.push(WordAnalysis::new(
                 word_pointer.clone(),
-                analysis.revision_curr.id,
+                &analysis.revision_curr,
             ));
             analysis.sentences[sentence_pointer.0]
                 .words_ordered
@@ -1266,8 +1290,8 @@ impl Analysis {
                                 {
                                     self[word_prev].matched_in_current = true;
 
-                                    let revision_curr_id = self.revision_curr.id; /* need to get id first, otherwise borrow-checker complains */
-                                    self[word_prev].outbound.push(revision_curr_id);
+                                    let revision_curr = self.revision_curr.clone(); /* need to clone first, otherwise borrow-checker complains */
+                                    self[word_prev].outbound.push(revision_curr);
 
                                     matched_words_prev.push(word_prev.clone());
                                     *change = None;

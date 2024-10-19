@@ -434,6 +434,7 @@ impl NonUtf8Reporter {
 }
 
 #[derive(Debug, thiserror::Error)]
+#[non_exhaustive]
 pub enum ParsingError {
     #[error("XML error")]
     XmlError(#[from] quick_xml::Error),

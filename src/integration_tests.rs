@@ -132,7 +132,14 @@ fn compare_algorithm_python(page: &Page) -> Result<(), TestCaseError> {
             Some(&wikiwho_py.revision_curr.id)
         );
 
-        prop_assert_eq!(&analysis.ordered_revisions, &wikiwho_py.ordered_revisions);
+        prop_assert_eq!(
+            &analysis
+                .ordered_revisions
+                .iter()
+                .map(|i| i.id)
+                .collect::<Vec<_>>(),
+            &wikiwho_py.ordered_revisions
+        );
 
         // iterate and compare result graph
         for revision_id in page.revisions.iter().map(|r| r.id) {
@@ -216,16 +223,22 @@ fn compare_algorithm_python(page: &Page) -> Result<(), TestCaseError> {
 
                         let word_rust = &analysis[word_pointer_rust];
                         prop_assert_eq!(word_pointer_rust.unique_id(), word_py.token_id as usize);
-                        prop_assert_eq!(&word_rust.inbound, &word_py.inbound);
-                        prop_assert_eq!(&word_rust.outbound, &word_py.outbound);
                         prop_assert_eq!(
-                            word_rust.latest_rev_id,
+                            &word_rust.inbound.iter().map(|i| i.id).collect::<Vec<_>>(),
+                            &word_py.inbound
+                        );
+                        prop_assert_eq!(
+                            &word_rust.outbound.iter().map(|i| i.id).collect::<Vec<_>>(),
+                            &word_py.outbound
+                        );
+                        prop_assert_eq!(
+                            word_rust.latest_rev.id,
                             word_py.last_rev_id,
                             "inconsistency at word: {:?}, revision: {}",
                             &word_pointer_rust.value,
                             revision_id
                         );
-                        prop_assert_eq!(word_rust.origin_rev_id, word_py.origin_rev_id);
+                        prop_assert_eq!(word_rust.origin_rev.id, word_py.origin_rev_id);
                     }
                 }
             }

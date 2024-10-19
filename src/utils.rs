@@ -141,7 +141,7 @@ fn regex_replace_opt<R: regex::Replacer>(
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub enum RevisionHash {
+pub(crate) enum RevisionHash {
     Sha1(Sha1Hash),
     Blake3(blake3::Hash),
 }
@@ -536,13 +536,13 @@ pub fn to_lowercase_opt(input: &str) -> String {
     result
 }
 
-pub enum ChangeTag {
+pub(crate) enum ChangeTag {
     Equal,
     Insert,
     Delete,
 }
 
-pub fn imara_diff(
+pub(crate) fn imara_diff(
     old: &[Token],
     new: &[Token],
     total_interned_tokens: u32,
@@ -583,7 +583,7 @@ pub fn imara_diff(
 }
 
 #[cfg(feature = "python-diff")]
-pub fn python_diff(
+pub(crate) fn python_diff(
     old: &[Token],
     new: &[Token],
     interner: &mut Interner<String>,
