@@ -3,6 +3,8 @@ name = "wikiwho"
 version = "0.1.0"
 edition = "2021"
 license = "MPL-2.0 AND MIT"
+repository = "https://github.com/Schuwi/wikiwho_rs"
+description = "Fast Rust reimplementation of the WikiWho algorithm for fine-grained authorship attribution on large datasets. Optimized for easy integration in multi-threaded applications."
 
 [[bench]]
 name = "bench_utils"
