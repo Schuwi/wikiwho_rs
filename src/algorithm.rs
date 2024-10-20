@@ -317,7 +317,7 @@ impl WordAnalysis {
         revision_prev: Option<&RevisionPointer>,
         push: bool,
     ) {
-        if !vandalism && self.matched_in_current && self.outbound.last() != Some(&revision_curr) {
+        if !vandalism && self.matched_in_current && self.outbound.last() != Some(revision_curr) {
             if push && Some(&self.latest_revision) != revision_prev {
                 self.inbound.push(revision_curr.clone());
             }

@@ -192,7 +192,7 @@
 //! for token_pointer in wikiwho::utils::iterate_revision_tokens(&analysis, &analysis.current_revision) {
 //!     // Use the token pointer to access token data
 //!     let token = &analysis[token_pointer];
-//! 
+//!
 //!     // Use the token
 //! }
 //! ```
@@ -212,9 +212,9 @@
 //! ```rust
 //! let origin_revision = &analysis[word_pointer].origin_revision;
 //! ```
-//! 
+//!
 //! - Alternatively you may index into the corresponding `Vec` in the `Analysis` struct directly:
-//! 
+//!
 //! ```rust
 //! let origin_revision = &analysis.words[word_pointer.0].origin_revision;
 //! ```

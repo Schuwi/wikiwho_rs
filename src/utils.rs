@@ -631,7 +631,7 @@ pub(crate) fn python_diff(
 }
 
 #[cfg(not(feature = "python-diff"))]
-pub fn python_diff(
+pub(crate) fn python_diff(
     _old: &[Token],
     _new: &[Token],
     _interner: &mut Interner<String>,
