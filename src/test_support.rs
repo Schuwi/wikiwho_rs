@@ -86,302 +86,159 @@ pub struct PyWord {
 }
 
 pub fn page_to_xml(page: &Page) -> String {
-    //     const HEADER: &str = r#"<mediawiki xmlns="http://www.mediawiki.org/xml/export-0.11/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mediawiki.org/xml/export-0.11/ http://www.mediawiki.org/xml/export-0.11.xsd" version="0.11" xml:lang="de">
-    //   <siteinfo>
-    //     <sitename>Wiktionary</sitename>
-    //     <dbname>dewiktionary</dbname>
-    //     <base>https://de.wiktionary.org/wiki/Wiktionary:Hauptseite</base>
-    //     <generator>MediaWiki 1.43.0-wmf.20</generator>
-    //     <case>case-sensitive</case>
-    //     <namespaces>
-    //       <namespace key="-2" case="case-sensitive">Medium</namespace>
-    //       <namespace key="-1" case="first-letter">Spezial</namespace>
-    //       <namespace key="0" case="case-sensitive" />
-    //       <namespace key="1" case="case-sensitive">Diskussion</namespace>
-    //       <namespace key="2" case="first-letter">Benutzer</namespace>
-    //       <namespace key="3" case="first-letter">Benutzer Diskussion</namespace>
-    //       <namespace key="4" case="case-sensitive">Wiktionary</namespace>
-    //       <namespace key="5" case="case-sensitive">Wiktionary Diskussion</namespace>
-    //       <namespace key="6" case="case-sensitive">Datei</namespace>
-    //       <namespace key="7" case="case-sensitive">Datei Diskussion</namespace>
-    //       <namespace key="8" case="first-letter">MediaWiki</namespace>
-    //       <namespace key="9" case="first-letter">MediaWiki Diskussion</namespace>
-    //       <namespace key="10" case="case-sensitive">Vorlage</namespace>
-    //       <namespace key="11" case="case-sensitive">Vorlage Diskussion</namespace>
-    //       <namespace key="12" case="case-sensitive">Hilfe</namespace>
-    //       <namespace key="13" case="case-sensitive">Hilfe Diskussion</namespace>
-    //       <namespace key="14" case="case-sensitive">Kategorie</namespace>
-    //       <namespace key="15" case="case-sensitive">Kategorie Diskussion</namespace>
-    //       <namespace key="102" case="case-sensitive">Verzeichnis</namespace>
-    //       <namespace key="103" case="case-sensitive">Verzeichnis Diskussion</namespace>
-    //       <namespace key="104" case="case-sensitive">Thesaurus</namespace>
-    //       <namespace key="105" case="case-sensitive">Thesaurus Diskussion</namespace>
-    //       <namespace key="106" case="case-sensitive">Reim</namespace>
-    //       <namespace key="107" case="case-sensitive">Reim Diskussion</namespace>
-    //       <namespace key="108" case="case-sensitive">Flexion</namespace>
-    //       <namespace key="109" case="case-sensitive">Flexion Diskussion</namespace>
-    //       <namespace key="110" case="case-sensitive">Rekonstruktion</namespace>
-    //       <namespace key="111" case="case-sensitive">Rekonstruktion Diskussion</namespace>
-    //       <namespace key="710" case="case-sensitive">TimedText</namespace>
-    //       <namespace key="711" case="case-sensitive">TimedText talk</namespace>
-    //       <namespace key="828" case="case-sensitive">Modul</namespace>
-    //       <namespace key="829" case="case-sensitive">Modul Diskussion</namespace>
-    //     </namespaces>
-    //   </siteinfo>
-    //   "#;
+    let mut xml = Vec::new();
+    let mut writer = quick_xml::Writer::new(Cursor::new(&mut xml));
 
-    // const FOOTER: &str = r#"</mediawiki>"#;
+    write_page(&mut writer, page).expect("writing to Vec should not fail");
 
+    String::from_utf8(xml).unwrap()
+}
+
+trait WriterExt {
+    fn write_str_tag(&mut self, tag: &str, content: &str) -> Result<(), quick_xml::Error>;
+    fn write_tag_with_attributes(
+        &mut self,
+        tag: &str,
+        content: &str,
+        attributes: &[(&str, &str)],
+    ) -> Result<(), quick_xml::Error>;
+    fn write_start_tag(&mut self, tag: &str) -> Result<(), quick_xml::Error>;
+    fn write_end_tag(&mut self, tag: &str) -> Result<(), quick_xml::Error>;
+}
+
+impl<W: std::io::Write> WriterExt for quick_xml::Writer<W> {
+    fn write_str_tag(&mut self, tag: &str, content: &str) -> Result<(), quick_xml::Error> {
+        if content.is_empty() {
+            self.write_event(Event::Empty(BytesStart::new(tag)))?;
+        } else {
+            self.write_event(Event::Start(BytesStart::new(tag)))?;
+            self.write_event(Event::Text(BytesText::new(content)))?;
+            self.write_event(Event::End(BytesEnd::new(tag)))?;
+        }
+        Ok(())
+    }
+
+    fn write_tag_with_attributes(
+        &mut self,
+        tag: &str,
+        content: &str,
+        attributes: &[(&str, &str)],
+    ) -> Result<(), quick_xml::Error> {
+        let start = BytesStart::new(tag).with_attributes(attributes.iter().copied());
+        if content.is_empty() {
+            self.write_event(Event::Empty(start))?;
+        } else {
+            self.write_event(Event::Start(start))?;
+            self.write_event(Event::Text(BytesText::new(content)))?;
+            self.write_event(Event::End(BytesEnd::new(tag)))?;
+        }
+        Ok(())
+    }
+
+    fn write_start_tag(&mut self, tag: &str) -> Result<(), quick_xml::Error> {
+        self.write_event(Event::Start(BytesStart::new(tag)))?;
+        Ok(())
+    }
+
+    fn write_end_tag(&mut self, tag: &str) -> Result<(), quick_xml::Error> {
+        self.write_event(Event::End(BytesEnd::new(tag)))?;
+        Ok(())
+    }
+}
+
+fn write_page<W: std::io::Write>(
+    writer: &mut quick_xml::Writer<W>,
+    page: &Page,
+) -> Result<(), quick_xml::Error> {
     // Source: https://github.com/mediawiki-utilities/python-mwtypes/blob/523a93f98fe1372938fc15872b5abb1f267cc643/mwtypes/timestamp.py#L12
     const TIMESTAMP_FORMAT_LONG: &str = "%Y-%m-%dT%H:%M:%SZ";
 
-    // let mut xml = HEADER.to_string();
-    let mut xml = Vec::new();
-    let mut writer = quick_xml::Writer::new(Cursor::new(&mut xml));
-    writer
-        .write_event(Event::Start(BytesStart::new("page")))
-        .unwrap();
+    writer.write_start_tag("page")?;
 
-    writer
-        .write_event(Event::Start(BytesStart::new("title")))
-        .unwrap();
-    // if let Some(site_info) = site_info {
-    //     let namespace = site_info.namespaces.get(&page.namespace);
-    //     if let Some(Namespace::Named(namespace)) = namespace {
-    //         writer
-    //             .write_event(Event::Text(BytesText::new(&format!(
-    //                 "{}:{}",
-    //                 namespace, page.title
-    //             ))))
-    //             .unwrap();
-    //     } else {
-    //         writer
-    //             .write_event(Event::Text(BytesText::new(&page.title)))
-    //             .unwrap();
-    //     }
-    // } else {
-    //     writer
-    //         .write_event(Event::Text(BytesText::new(&page.title)))
-    //         .unwrap();
-    // }
-    writer
-        .write_event(Event::Text(BytesText::new(&page.title)))
-        .unwrap();
-    writer
-        .write_event(Event::End(BytesEnd::new("title")))
-        .unwrap();
-
-    writer
-        .write_event(Event::Start(BytesStart::new("ns")))
-        .unwrap();
-    // writer
-    //     .write_event(Event::Text(BytesText::new(&page.namespace.to_string())))
-    //     .unwrap();
+    writer.write_str_tag("title", &page.title)?;
     // namespaces are not supported by python if using `Dump.from_page_xml` (i.e. the `siteinfo` is not present)
-    writer
-        .write_event(Event::Text(BytesText::new("0")))
-        .unwrap();
-    writer.write_event(Event::End(BytesEnd::new("ns"))).unwrap();
-
-    writer
-        .write_event(Event::Start(BytesStart::new("id")))
-        .unwrap();
-    writer
-        .write_event(Event::Text(BytesText::new(&"20".to_string())))
-        .unwrap(); /* ignored in algorithm */
-    writer.write_event(Event::End(BytesEnd::new("id"))).unwrap();
+    writer.write_str_tag("ns", "0")?;
+    // ignored in algorithm
+    writer.write_str_tag("id", &"20".to_string())?;
 
     for revision in &page.revisions {
-        writer
-            .write_event(Event::Start(BytesStart::new("revision")))
-            .unwrap();
+        writer.write_start_tag("revision")?;
 
-        writer
-            .write_event(Event::Start(BytesStart::new("id")))
-            .unwrap();
-        writer
-            .write_event(Event::Text(BytesText::new(&revision.id.to_string())))
-            .unwrap();
-        writer.write_event(Event::End(BytesEnd::new("id"))).unwrap();
+        writer.write_str_tag("id", &revision.id.to_string())?;
+        writer.write_str_tag(
+            "timestamp",
+            &revision.timestamp.format(TIMESTAMP_FORMAT_LONG).to_string(),
+        )?;
 
-        writer
-            .write_event(Event::Start(BytesStart::new("origin")))
-            .unwrap();
-        writer
-            .write_event(Event::Text(BytesText::new(&revision.id.to_string())))
-            .unwrap();
-        writer
-            .write_event(Event::End(BytesEnd::new("origin")))
-            .unwrap();
-
-        writer
-            .write_event(Event::Start(BytesStart::new("model")))
-            .unwrap();
-        writer
-            .write_event(Event::Text(BytesText::new("wikitext")))
-            .unwrap();
-        writer
-            .write_event(Event::End(BytesEnd::new("model")))
-            .unwrap();
-
-        writer
-            .write_event(Event::Start(BytesStart::new("format")))
-            .unwrap();
-        writer
-            .write_event(Event::Text(BytesText::new("text/x-wiki")))
-            .unwrap();
-        writer
-            .write_event(Event::End(BytesEnd::new("format")))
-            .unwrap();
-
-        writer
-            .write_event(Event::Start(BytesStart::new("timestamp")))
-            .unwrap();
-        writer
-            .write_event(Event::Text(BytesText::new(
-                &revision.timestamp.format(TIMESTAMP_FORMAT_LONG).to_string(),
-            )))
-            .unwrap();
-        writer
-            .write_event(Event::End(BytesEnd::new("timestamp")))
-            .unwrap();
-
-        writer
-            .write_event(Event::Start(BytesStart::new("contributor")))
-            .unwrap();
-        writer
-            .write_event(Event::Start(BytesStart::new("username")))
-            .unwrap();
-        writer
-            .write_event(Event::Text(BytesText::new(&revision.contributor.username)))
-            .unwrap();
-        writer
-            .write_event(Event::End(BytesEnd::new("username")))
-            .unwrap();
+        writer.write_start_tag("contributor")?;
+        writer.write_str_tag("username", &revision.contributor.username)?;
         if let Some(id) = revision.contributor.id {
-            writer
-                .write_event(Event::Start(BytesStart::new("id")))
-                .unwrap();
-            writer
-                .write_event(Event::Text(BytesText::new(&id.to_string())))
-                .unwrap();
-            writer.write_event(Event::End(BytesEnd::new("id"))).unwrap();
+            writer.write_str_tag("id", &id.to_string())?;
         }
-        writer
-            .write_event(Event::End(BytesEnd::new("contributor")))
-            .unwrap();
+        writer.write_end_tag("contributor")?;
+
+        if revision.minor {
+            writer.write_str_tag("minor", "")?;
+        }
+
+        if let Some(comment) = &revision.comment {
+            writer.write_str_tag("comment", comment)?;
+        }
+
+        writer.write_str_tag("origin", &revision.id.to_string())?;
+        writer.write_str_tag("model", "wikitext")?;
+        writer.write_str_tag("format", "text/x-wiki")?;
 
         match (&revision.text, &revision.sha1) {
             (Text::Normal(text), Some(sha1)) => {
                 let bytes_str = text.len().to_string();
-                let attributes = vec![
+                let attributes = &[
                     ("xml:space", "preserve"),
                     ("bytes", &bytes_str),
-                    ("sha1", std::str::from_utf8(&sha1.0).unwrap()),
+                    ("sha1", std::str::from_utf8(&sha1.0)?),
                 ];
 
-                writer
-                    .write_event(Event::Start(
-                        BytesStart::new("text").with_attributes(attributes.into_iter()),
-                    ))
-                    .unwrap();
-                writer
-                    .write_event(Event::Text(BytesText::new(text)))
-                    .unwrap();
-                writer
-                    .write_event(Event::End(BytesEnd::new("text")))
-                    .unwrap();
+                writer.write_tag_with_attributes("text", text, attributes)?;
             }
             (Text::Normal(text), None) => {
                 let bytes_str = text.len().to_string();
-                let attributes = vec![("xml:space", "preserve"), ("bytes", &bytes_str)];
+                let attributes = &[("xml:space", "preserve"), ("bytes", &bytes_str)];
 
-                writer
-                    .write_event(Event::Start(
-                        BytesStart::new("text").with_attributes(attributes.into_iter()),
-                    ))
-                    .unwrap();
-                writer
-                    .write_event(Event::Text(BytesText::new(text)))
-                    .unwrap();
-                writer
-                    .write_event(Event::End(BytesEnd::new("text")))
-                    .unwrap();
+                writer.write_tag_with_attributes("text", text, attributes)?;
             }
             (Text::Deleted, Some(sha1)) => {
-                let attributes = vec![
+                let attributes = &[
                     ("xml:space", "preserve"),
                     ("bytes", "0"),
-                    ("sha1", std::str::from_utf8(&sha1.0).unwrap()),
+                    ("sha1", std::str::from_utf8(&sha1.0)?),
                     ("deleted", "deleted"),
                 ];
 
-                writer
-                    .write_event(Event::Start(
-                        BytesStart::new("text").with_attributes(attributes.into_iter()),
-                    ))
-                    .unwrap();
-                writer
-                    .write_event(Event::End(BytesEnd::new("text")))
-                    .unwrap();
+                writer.write_tag_with_attributes("text", "", attributes)?;
             }
             (Text::Deleted, None) => {
-                let attributes = vec![
+                let attributes = &[
                     ("xml:space", "preserve"),
                     ("bytes", "0"),
                     ("deleted", "deleted"),
                 ];
 
-                writer
-                    .write_event(Event::Empty(
-                        BytesStart::new("text").with_attributes(attributes.into_iter()),
-                    ))
-                    .unwrap();
+                writer.write_tag_with_attributes("text", "", attributes)?;
             }
         }
+
         if let Some(sha1) = &revision.sha1 {
-            writer
-                .write_event(Event::Start(BytesStart::new("sha1")))
-                .unwrap();
-            writer
-                .write_event(Event::Text(BytesText::new(
-                    std::str::from_utf8(&sha1.0).unwrap(),
-                )))
-                .unwrap();
-            writer
-                .write_event(Event::End(BytesEnd::new("sha1")))
-                .unwrap();
+            writer.write_str_tag(
+                "sha1",
+                std::str::from_utf8(&sha1.0).expect("sha1 not base36 encoded"),
+            )?;
         }
-        if let Some(comment) = &revision.comment {
-            writer
-                .write_event(Event::Start(BytesStart::new("comment")))
-                .unwrap();
-            writer
-                .write_event(Event::Text(BytesText::new(comment)))
-                .unwrap();
-            writer
-                .write_event(Event::End(BytesEnd::new("comment")))
-                .unwrap();
-        }
-        if revision.minor {
-            writer
-                .write_event(Event::Empty(BytesStart::new("minor")))
-                .unwrap();
-        }
-        writer
-            .write_event(Event::End(BytesEnd::new("revision")))
-            .unwrap();
+
+        writer.write_end_tag("revision")?;
     }
-    writer
-        .write_event(Event::End(BytesEnd::new("page")))
-        .unwrap();
-    writer.write_event(Event::Eof).unwrap();
+    writer.write_end_tag("page")?;
 
-    // xml.push_str(FOOTER);
-
-    // println!("{}", xml);
-
-    String::from_utf8(xml).unwrap()
+    Ok(())
 }
 
 pub mod proptest {
