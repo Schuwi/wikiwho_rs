@@ -5,8 +5,7 @@ use std::{
     collections::HashMap,
     convert::Infallible,
     fmt::Debug,
-    io::{BufRead, Read},
-    sync::Arc,
+    io::BufRead,
 };
 
 use compact_str::CompactString;
@@ -440,6 +439,18 @@ pub enum ParsingError {
     XmlError(#[from] quick_xml::Error),
     #[error("unexpected end of file")]
     Eof,
+    #[cfg(feature = "strict")]
+    #[error("missing field: {0}")]
+    MissingField,
+    #[cfg(feature = "strict")]
+    #[error("mismatched tags")]
+    MismatchedTags,
+}
+
+impl From<std::io::Error> for ParsingError {
+    fn from(e: std::io::Error) -> Self {
+        Self::XmlError(e.into())
+    }
 }
 
 // impl ParsingError {
@@ -452,23 +463,33 @@ pub enum ParsingError {
 // }
 
 impl<R: BufRead> DumpParser<R> {
-    pub fn new(reader: R) -> Result<Self, ParsingError> {
+    fn new_impl(reader: R, preallocate: bool) -> Self {
         let xml_parser = quick_xml::Reader::from_reader(reader);
         //let config = xml_parser.config_mut();
         // expand_empty_elements not set, take care to handle empty elements!
 
-        let mut new = Self {
+        let buf = if preallocate {
+            // preallocate 1 MiB for the buffer
+            Vec::with_capacity(1024 * 1024)
+        } else {
+            Vec::new()
+        };
+
+        Self {
             tag_interner: TagStringInterner::new(),
             xml_parser,
-            // preallocate 1 MiB for the buffer
-            buf: Vec::with_capacity(1024 * 1024),
+            buf,
             current_path: Vec::new(),
             site_info: SiteInfo {
                 dbname: CompactString::default(),
                 namespaces: HashMap::new(),
             },
             non_utf8_reporter: NonUtf8Reporter::new(),
-        };
+        }
+    }
+
+    pub fn new(reader: R) -> Result<Self, ParsingError> {
+        let mut new = Self::new_impl(reader, true);
 
         new.parse_site_info()?;
 
@@ -550,17 +571,6 @@ impl<R: BufRead> DumpParser<R> {
         }
     }
 
-    fn abort_parsing<T>(xml_parser: &mut quick_xml::Reader<R>) -> Result<T, ParsingError> {
-        tracing::error!("Aborting parsing due to error");
-        let mut useless_buf = [0];
-        xml_parser
-            .stream()
-            .take(u64::MAX)
-            .read(&mut useless_buf)
-            .map_err(|e| quick_xml::Error::Io(Arc::new(e)))?;
-        Err(ParsingError::Eof)
-    }
-
     fn check_end_tag(
         e: &BytesEnd,
         current_path: &mut Vec<Tag>,
@@ -574,9 +584,12 @@ impl<R: BufRead> DumpParser<R> {
             let tag = String::from_utf8_lossy(e.name().into_inner());
             tracing::error!(message = "Unexpected end tag", tag = tag.as_ref(), current_path = ?current_path, position = xml_parser.buffer_position());
 
-            if cfg!(feature = "strict") {
-                return Self::abort_parsing(xml_parser);
-            } else {
+            #[cfg(feature = "strict")]
+            {
+                return Err(ParsingError::MismatchedTags);
+            }
+            #[cfg(not(feature = "strict"))]
+            {
                 tracing::warn!("Ignoring unexpected end tag. This may lead to incorrect results.");
                 return Ok(None);
             }
@@ -596,9 +609,12 @@ impl<R: BufRead> DumpParser<R> {
                 position = xml_parser.buffer_position()
             );
 
-            if cfg!(feature = "strict") {
-                return Self::abort_parsing(xml_parser);
-            } else {
+            #[cfg(feature = "strict")]
+            {
+                return Err(ParsingError::MismatchedTags);
+            }
+            #[cfg(not(feature = "strict"))]
+            {
                 tracing::warn!("Ignoring mismatched tag. This may lead to incorrect results.");
 
                 // (1) either this closing tag does not have a corresponding opening tag,
@@ -969,7 +985,8 @@ impl<R: BufRead> DumpParser<R> {
                             let revision = match revision_builder.try_build() {
                                 Ok(revision) => revision,
                                 Err(BuildRevisionError(field, revision_builder)) => {
-                                    if cfg!(feature = "strict") {
+                                    #[cfg(feature = "strict")]
+                                    {
                                         tracing::error!(
                                             message = "Missing mandatory field in revision",
                                             field,
@@ -977,7 +994,9 @@ impl<R: BufRead> DumpParser<R> {
                                             revision_end_position = self.xml_parser.buffer_position()
                                         );
                                         return Self::abort_parsing(&mut self.xml_parser);
-                                    } else {
+                                    }
+                                    #[cfg(not(feature = "strict"))]
+                                    {
                                         tracing::warn!(
                                             message = "Ignoring revision with missing mandatory field",
                                             field,
@@ -998,9 +1017,17 @@ impl<R: BufRead> DumpParser<R> {
                 }
                 quick_xml::events::Event::Eof => {
                     if started_page {
-                        tracing::error!(partial_page = ?page, current_path = ?self.current_path);
+                        tracing::error!(message = "Unexpected end of file", partial_page = ?page, current_path = ?self.current_path);
                         return Err(ParsingError::Eof);
                     } else {
+                        #[cfg(feature = "strict")]
+                        if !self.current_path.is_empty() {
+                            tracing::error!(
+                                message = "Unexpected end of file",
+                                current_path = ?self.current_path
+                            );
+                            return Err(ParsingError::Eof);
+                        }
                         return Ok(None);
                     }
                 }
@@ -1010,5 +1037,16 @@ impl<R: BufRead> DumpParser<R> {
         }
 
         Ok(Some(page))
+    }
+
+    pub fn parse_single_page(reader: R, read_bytes: &mut usize) -> Result<Page, ParsingError> {
+        let mut parser = Self::new_impl(reader, false);
+        parser.current_path.push(Tag::MediaWiki);
+
+        let page = parser.parse_page()?.ok_or(ParsingError::Eof)?;
+
+        *read_bytes = parser.bytes_consumed() as usize;
+
+        Ok(page)
     }
 }
