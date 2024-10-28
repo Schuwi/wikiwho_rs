@@ -514,6 +514,11 @@ impl<R: BufRead> DumpParser<R> {
         self.xml_parser.buffer_position()
     }
 
+    #[doc(hidden)] // for testing
+    pub fn xml_parser(&mut self) -> &mut quick_xml::Reader<R> {
+        &mut self.xml_parser
+    }
+
     #[instrument(level = "debug")]
     fn parse_start_bytes(
         e: &BytesStart,

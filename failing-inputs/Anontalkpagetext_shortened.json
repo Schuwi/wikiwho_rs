@@ -1,0 +1,98 @@
+{
+    "title": "Anontalkpagetext",
+    "namespace": 0,
+    "revisions": [
+      {
+        "id": 401685,
+        "timestamp": "2006-09-19T20:46:45Z",
+        "contributor": {
+          "username": "Pajz",
+          "id": 1390
+        },
+        "text": {
+          "Normal": " verwenden. Eine solche Adresse kann nacheinander von mehreren Benutzern verwendet werden. Wenn du denkst, dass auf dieser Seite für dich irrelevante Kommentare an deine IP-Adresse gerichtet wurden, und du zukünftig solchen Verwirrungen lieber entgehen möchtest, dann <span class=\"plainlinks\">[http://de.wiktionary.org/wiki/Spezial:Userlogin?type=signup erstelle ein Benutzerkonto].</span>''\n\n<span style=\"color:#9AC0CD\" class=\"plainlinks\"><small>[[w:WHOIS|<span style=\"color:#FFA54F\">WHOIS</span>]]: [http://ws.arin.net/whois/?queryinput={{PAGENAME}} <span style=\"color:#9AC0CD\">Amerika</span>] [http://www.ripe.net/fcgi-bin/whois?searchtext={{PAGENAME}} <span style=\"color:#9AC0CD\">Europa</span>] [http://www.afrinic.net/cgi-bin/whois?query={{PAGENAME}} <span style=\"color:#9AC0CD\">Afrika</span>] [http://www.apnic.net/apnic-bin/whois.pl?searchtext={{PAGENAME}} <span style=\"color:#9AC0CD\">Asien-Pazifik<span>] [http://www.lacnic.net/cgi-bin/lacnic/whois?lg=DE&query={{PAGENAME}} <span style=\"color:#9AC0CD\">Lateinamerika/Karibik</span>]</small></span>"
+        },
+        "sha1": [
+          114,
+          103,
+          109,
+          106,
+          120,
+          117,
+          113,
+          113,
+          99,
+          119,
+          102,
+          102,
+          102,
+          120,
+          101,
+          103,
+          97,
+          117,
+          118,
+          111,
+          121,
+          104,
+          119,
+          48,
+          56,
+          48,
+          100,
+          55,
+          116,
+          120,
+          109
+        ],
+        "comment": null,
+        "minor": false
+      },
+      {
+        "id": 552578,
+        "timestamp": "2007-05-23T15:43:05Z",
+        "contributor": {
+          "username": "Pajz",
+          "id": 1390
+        },
+        "text": {
+          "Normal": "en hier eine numerische [[IP-Adresse]] zur Identifizierung verwenden. Eine solche Adresse kann nacheinander von mehreren Benutzern verwendet werden. Wenn du denkst, dass auf dieser Seite für dich irrelevante Kommentare an deine IP-Adresse gerichtet wurden, und du zukünftig solchen Verwirrungen lieber entgehen möchtest, dann <span class=\"plainlinks\">[http://de.wiktionary.org/wiki/Spezial:Userlogin?type=signup erstelle ein Benutzerkonto].</span>''\n\n<span class=\"plainlinks\"><small>&nbsp;&nbsp;&nbsp;''[http://www.dnsstuff.com/tools/whois.ch?&ip={{PAGENAME}} WHOIS]'' <small>[[:w:Whois|&nbsp;(Was ist das?)]]</small></small></span>"
+        },
+        "sha1": [
+          97,
+          108,
+          104,
+          120,
+          55,
+          110,
+          104,
+          56,
+          116,
+          48,
+          57,
+          108,
+          120,
+          103,
+          101,
+          118,
+          109,
+          54,
+          98,
+          106,
+          101,
+          99,
+          52,
+          117,
+          119,
+          107,
+          105,
+          56,
+          50,
+          106,
+          116
+        ],
+        "comment": null,
+        "minor": true
+      }
+    ]
+  }

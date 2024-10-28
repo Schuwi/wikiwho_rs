@@ -2,15 +2,15 @@
 //! All tests need to be run in a Python venv that has installed the `requirements.txt`!
 
 use chrono::DateTime;
-use pyo3::FromPyObject;
-use quick_xml::events::{BytesEnd, BytesStart, BytesText, Event};
-use std::{collections::HashMap, io::Cursor};
+use memchr::memmem::Finder;
+use rand::seq::SliceRandom;
+use std::{collections::HashMap, fs::File, io::{BufRead, BufReader, Read}};
 
-use crate::dump_parser::{Contributor, Page, Revision, Text};
+use wikiwho::dump_parser::{self, Contributor, Page, Revision, Text};
 
 pub mod prelude {
-    pub(crate) use super::proptest as proptest_support;
-    pub(crate) use super::{dummy_revision, page_to_xml, with_gil};
+    pub(crate) use super::proptest_support;
+    pub(crate) use super::{dummy_revision, with_gil};
     pub(crate) use proptest::prelude::*;
     pub(crate) use pyo3::prelude::*;
 }
@@ -46,207 +46,377 @@ pub fn dummy_revision() -> Revision {
     }
 }
 
-#[derive(FromPyObject)]
-pub struct PyWikiwho {
-    pub spam_ids: Vec<i32>,
-    pub revisions: HashMap<i32, PyRevision>,
-    pub ordered_revisions: Vec<i32>,
-    pub revision_curr: PyRevision,
-}
+/// Note that the propability distribution for picking a page is not uniform
+/// but proportional to the size of it's XML representation. I.e. larger pages
+/// are more likely to be picked.
+///
+/// May return less than `n` pages.
+///
+/// The input is a tuple of two `BufRead` instances that should be equal.
+/// That's because the function needs to do two passes over the input to pick the pages.
+pub fn pick_n_random_pages<P: PageRepresentation, R: std::io::Read>(
+    full_xml: (R, R),
+    n: usize,
+) -> Result<Vec<P>, P::Error> {
+    // First pass: find page start offsets
+    const PAGE_START: &[u8] = b"<page";
+    const SEARCH_BUFFER_LEN: usize = 8192 + PAGE_START.len();
 
-#[derive(FromPyObject)]
-pub struct PyRevision {
-    pub id: i32,
-    pub paragraphs: HashMap<String, Vec<PyParagraph>>,
-    pub ordered_paragraphs: Vec<String>,
-    pub original_adds: usize,
-}
+    let mut buffer = Box::new([0; SEARCH_BUFFER_LEN]);
+    let mut buffered_bytes = 0;
 
-#[derive(FromPyObject)]
-pub struct PyParagraph {
-    pub value: String,
-    pub sentences: HashMap<String, Vec<PySentence>>,
-    pub ordered_sentences: Vec<String>,
-}
+    let mut reader = full_xml.0;
+    let mut page_starts = Vec::new();
+    let mut stream_offset = 0;
 
-#[derive(FromPyObject)]
-pub struct PySentence {
-    pub value: String,
-    pub words: Vec<PyWord>,
-}
+    let finder = Finder::new(PAGE_START);
 
-#[derive(FromPyObject)]
-pub struct PyWord {
-    pub token_id: i32,
-    pub value: String,
-    pub origin_rev_id: i32,
-    pub last_rev_id: i32,
-    pub outbound: Vec<i32>,
-    pub inbound: Vec<i32>,
-}
+    loop {
+        // fill buffer from reader
+        let empty_buf = &mut buffer[buffered_bytes..];
+        let read = reader.read(empty_buf)?;
+        buffered_bytes += read;
 
-pub fn page_to_xml(page: &Page) -> String {
-    let mut xml = Vec::new();
-    let mut writer = quick_xml::Writer::new(Cursor::new(&mut xml));
+        let last_iteration = read == 0;
 
-    write_page(&mut writer, page).expect("writing to Vec should not fail");
+        if !last_iteration && buffer.len() < PAGE_START.len() {
+            // buffer is not full and we need more data to find a page start
+            continue;
+        }
 
-    String::from_utf8(xml).unwrap()
-}
+        let consume;
 
-trait WriterExt {
-    fn write_str_tag(&mut self, tag: &str, content: &str) -> Result<(), quick_xml::Error>;
-    fn write_tag_with_attributes(
-        &mut self,
-        tag: &str,
-        content: &str,
-        attributes: &[(&str, &str)],
-    ) -> Result<(), quick_xml::Error>;
-    fn write_start_tag(&mut self, tag: &str) -> Result<(), quick_xml::Error>;
-    fn write_end_tag(&mut self, tag: &str) -> Result<(), quick_xml::Error>;
-}
+        let buf = &buffer[..buffered_bytes];
+        if let Some(start) = finder.find(buf) {
+            page_starts.push(stream_offset + start as u64);
 
-impl<W: std::io::Write> WriterExt for quick_xml::Writer<W> {
-    fn write_str_tag(&mut self, tag: &str, content: &str) -> Result<(), quick_xml::Error> {
-        if content.is_empty() {
-            self.write_event(Event::Empty(BytesStart::new(tag)))?;
+            consume = start + PAGE_START.len();
         } else {
-            self.write_event(Event::Start(BytesStart::new(tag)))?;
-            self.write_event(Event::Text(BytesText::new(content)))?;
-            self.write_event(Event::End(BytesEnd::new(tag)))?;
+            // No page start found in this buffer
+            
+            // keep the last few bytes to find a potential page start that spans two buffers
+            consume = buf.len() - PAGE_START.len();
         }
-        Ok(())
+        stream_offset += consume as u64;
+        buffer.copy_within(consume..buffered_bytes, 0);
+        buffered_bytes -= consume;
+
+        if last_iteration {
+            break;
+        }
     }
 
-    fn write_tag_with_attributes(
-        &mut self,
-        tag: &str,
-        content: &str,
-        attributes: &[(&str, &str)],
-    ) -> Result<(), quick_xml::Error> {
-        let start = BytesStart::new(tag).with_attributes(attributes.iter().copied());
-        if content.is_empty() {
-            self.write_event(Event::Empty(start))?;
+    // pick n random pages
+    let mut rng = rand::thread_rng();
+    let mut chosen_offsets: Vec<_> = page_starts.choose_multiple(&mut rng, n).copied().collect();
+    chosen_offsets.sort_unstable();
+
+    // Second pass: parse the chosen pages
+    let mut pages = Vec::new();
+
+    let mut current_offset = 0;
+    let mut reader = BufReader::new(full_xml.1);
+
+    for offset in chosen_offsets {
+        // skip to the start of the page
+        loop {
+            let buf = reader.fill_buf()?;
+            if buf.is_empty() {
+                break;
+            }
+            let offset_diff = offset - current_offset;
+
+            if buf.len() as u64 >= offset_diff {
+                current_offset += offset_diff;
+                reader.consume(offset_diff as usize);
+                break;
+            } else {
+                let consume = buf.len();
+                current_offset += consume as u64;
+                reader.consume(consume);
+            }
+        }
+
+        let mut read_bytes = 0;
+        let page = P::from_xml(&mut reader, &mut read_bytes)?;
+        pages.push(page);
+    }
+
+    Ok(pages)
+}
+
+/// Find a page by title and namespace in a full XML dump.
+///
+/// The function uses a regex to find the page start tag and then parses the page.
+///
+/// It may fail to find the page if the XML is formatted in an unexpected way.
+///
+/// # Arguments
+/// * `full_xml` - A reader for the full XML dump
+/// * `title` - The title of the page to find
+/// * `namespace` - The namespace id of the page to find
+///
+/// # Returns
+/// The page if found, otherwise `None`
+///
+/// # Errors
+/// * May error if the XML is malformed or an IO error occurs
+pub fn find_page_by_title_and_ns<P: PageRepresentation, R: std::io::Read>(
+    full_xml: R,
+    title: &str,
+    namespace: i32,
+) -> Result<Option<P>, P::Error> {
+    // the expected maximum length of a match in bytes
+    // (includes page start tag, title and any potential whitespace in between)
+    const MAXIMUM_MATCH_LEN: usize = 512;
+    const SEARCH_BUFFER_LEN: usize = 8192 + MAXIMUM_MATCH_LEN;
+    let page_regex = regex::bytes::Regex::new(&format!(
+        r#"<page[^>]*>[^<]*<title[^>]*>([^:<]+:)?{}</title>[^<]*<ns[^>]*>{}</ns>"#,
+        title, namespace
+    ))
+    .unwrap();
+    let mut buffer = Box::new([0; SEARCH_BUFFER_LEN]);
+    let mut buffered_bytes = 0;
+    let mut reader = full_xml;
+
+    loop {
+        // fill buffer from reader
+        let empty_buf = &mut buffer[buffered_bytes..];
+        let read = reader.read(empty_buf)?;
+        buffered_bytes += read;
+
+        let last_iteration = read == 0;
+
+        if !last_iteration && buffer.len() < MAXIMUM_MATCH_LEN {
+            // buffer is not full and we need more data to find a page start
+            continue;
+        }
+
+        if let Some(m) = page_regex.find(&buffer[..buffered_bytes]) {
+            let start = m.start();
+            
+            let buf = &buffer[start..buffered_bytes];
+
+            return Ok(Some(P::from_xml(buf.chain(BufReader::new(reader)), &mut 0)?));
         } else {
-            self.write_event(Event::Start(start))?;
-            self.write_event(Event::Text(BytesText::new(content)))?;
-            self.write_event(Event::End(BytesEnd::new(tag)))?;
+            // No page start found in this buffer
+
+            // keep the last few bytes to find a potential page start that spans two buffers
+            let consume = buffered_bytes - MAXIMUM_MATCH_LEN;
+            buffer.copy_within(consume..buffered_bytes, 0);
+            buffered_bytes -= consume;
         }
-        Ok(())
+
+        if last_iteration {
+            break;
+        }
     }
 
-    fn write_start_tag(&mut self, tag: &str) -> Result<(), quick_xml::Error> {
-        self.write_event(Event::Start(BytesStart::new(tag)))?;
-        Ok(())
-    }
+    Ok(None)
+}
 
-    fn write_end_tag(&mut self, tag: &str) -> Result<(), quick_xml::Error> {
-        self.write_event(Event::End(BytesEnd::new(tag)))?;
-        Ok(())
+pub fn open_test_dump() -> impl Read {
+    const DUMP_PATH: &str = "dewiktionary-20240901-pages-meta-history.xml.zst";
+
+    let file = File::open(DUMP_PATH)
+        .unwrap_or_else(|_| panic!("file not found: {}", DUMP_PATH));
+    let reader = zstd::stream::Decoder::new(file).unwrap();
+
+    reader
+}
+
+pub trait PageRepresentation: Sized {
+    type Error: From<std::io::Error>;
+    fn from_xml<R: BufRead>(xml_reader: R, read_bytes: &mut usize) -> Result<Self, Self::Error>;
+}
+
+impl PageRepresentation for Page {
+    type Error = dump_parser::ParsingError;
+
+    fn from_xml<R: BufRead>(xml_reader: R, read_bytes: &mut usize) -> Result<Self, Self::Error> {
+        dump_parser::DumpParser::parse_single_page(xml_reader, read_bytes)
     }
 }
 
-fn write_page<W: std::io::Write>(
-    writer: &mut quick_xml::Writer<W>,
-    page: &Page,
-) -> Result<(), quick_xml::Error> {
-    // Source: https://github.com/mediawiki-utilities/python-mwtypes/blob/523a93f98fe1372938fc15872b5abb1f267cc643/mwtypes/timestamp.py#L12
-    const TIMESTAMP_FORMAT_LONG: &str = "%Y-%m-%dT%H:%M:%SZ";
+impl PageRepresentation for Vec<u8> {
+    type Error = std::io::Error;
 
-    writer.write_start_tag("page")?;
+    fn from_xml<R: BufRead>(
+        mut xml_reader: R,
+        read_bytes: &mut usize,
+    ) -> Result<Self, Self::Error> {
+        let mut xml = Vec::new();
 
-    writer.write_str_tag("title", &page.title)?;
-    // namespaces are not supported by python if using `Dump.from_page_xml` (i.e. the `siteinfo` is not present)
-    writer.write_str_tag("ns", "0")?;
-    // ignored in algorithm
-    writer.write_str_tag("id", &"20".to_string())?;
-
-    for revision in &page.revisions {
-        writer.write_start_tag("revision")?;
-
-        writer.write_str_tag("id", &revision.id.to_string())?;
-        writer.write_str_tag(
-            "timestamp",
-            &revision.timestamp.format(TIMESTAMP_FORMAT_LONG).to_string(),
-        )?;
-
-        writer.write_start_tag("contributor")?;
-        writer.write_str_tag("username", &revision.contributor.username)?;
-        if let Some(id) = revision.contributor.id {
-            writer.write_str_tag("id", &id.to_string())?;
-        }
-        writer.write_end_tag("contributor")?;
-
-        if revision.minor {
-            writer.write_str_tag("minor", "")?;
-        }
-
-        if let Some(comment) = &revision.comment {
-            writer.write_str_tag("comment", comment)?;
-        }
-
-        writer.write_str_tag("origin", &revision.id.to_string())?;
-        writer.write_str_tag("model", "wikitext")?;
-        writer.write_str_tag("format", "text/x-wiki")?;
-
-        match (&revision.text, &revision.sha1) {
-            (Text::Normal(text), Some(sha1)) => {
-                let bytes_str = text.len().to_string();
-                let attributes = &[
-                    ("xml:space", "preserve"),
-                    ("bytes", &bytes_str),
-                    ("sha1", std::str::from_utf8(&sha1.0)?),
-                ];
-
-                writer.write_tag_with_attributes("text", text, attributes)?;
+        // read bytes until </page> is found
+        let mut buf = Vec::new();
+        loop {
+            xml_reader.read_until(b'>', &mut buf)?;
+            xml.extend_from_slice(&buf);
+            if buf.ends_with(b"</page>") {
+                break;
             }
-            (Text::Normal(text), None) => {
-                let bytes_str = text.len().to_string();
-                let attributes = &[("xml:space", "preserve"), ("bytes", &bytes_str)];
-
-                writer.write_tag_with_attributes("text", text, attributes)?;
-            }
-            (Text::Deleted, Some(sha1)) => {
-                let attributes = &[
-                    ("xml:space", "preserve"),
-                    ("bytes", "0"),
-                    ("sha1", std::str::from_utf8(&sha1.0)?),
-                    ("deleted", "deleted"),
-                ];
-
-                writer.write_tag_with_attributes("text", "", attributes)?;
-            }
-            (Text::Deleted, None) => {
-                let attributes = &[
-                    ("xml:space", "preserve"),
-                    ("bytes", "0"),
-                    ("deleted", "deleted"),
-                ];
-
-                writer.write_tag_with_attributes("text", "", attributes)?;
-            }
+            buf.clear();
         }
 
-        if let Some(sha1) = &revision.sha1 {
-            writer.write_str_tag(
-                "sha1",
-                std::str::from_utf8(&sha1.0).expect("sha1 not base36 encoded"),
-            )?;
-        }
+        *read_bytes = xml.len();
 
-        writer.write_end_tag("revision")?;
+        Ok(xml)
     }
-    writer.write_end_tag("page")?;
-
-    Ok(())
 }
 
-pub mod proptest {
+pub mod output_structs {
+    use super::*;
+    use pyo3::FromPyObject;
+
+    #[derive(FromPyObject)]
+    pub struct PyWikiwho {
+        pub spam_ids: Vec<i32>,
+        pub revisions: HashMap<i32, PyRevision>,
+        pub ordered_revisions: Vec<i32>,
+        pub revision_curr: PyRevision,
+    }
+
+    #[derive(FromPyObject)]
+    pub struct PyRevision {
+        pub id: i32,
+        pub paragraphs: HashMap<String, Vec<PyParagraph>>,
+        pub ordered_paragraphs: Vec<String>,
+        pub original_adds: usize,
+    }
+
+    #[derive(FromPyObject)]
+    pub struct PyParagraph {
+        pub value: String,
+        pub sentences: HashMap<String, Vec<PySentence>>,
+        pub ordered_sentences: Vec<String>,
+    }
+
+    #[derive(FromPyObject)]
+    pub struct PySentence {
+        pub value: String,
+        pub words: Vec<PyWord>,
+    }
+
+    #[derive(FromPyObject)]
+    pub struct PyWord {
+        pub token_id: i32,
+        pub value: String,
+        pub origin_rev_id: i32,
+        pub last_rev_id: i32,
+        pub outbound: Vec<i32>,
+        pub inbound: Vec<i32>,
+    }
+}
+
+pub mod input_structs {
+    use super::*;
+    use pyo3::prelude::*;
+
+    #[pyclass]
+    #[derive(Clone)]
+    pub struct PyDeleted(bool);
+
+    #[pymethods]
+    impl PyDeleted {
+        #[getter]
+        fn text(&self) -> bool {
+            self.0
+        }
+
+        #[getter]
+        fn restricted(&self) -> bool {
+            // not relevant for algorithm behavior
+            false
+        }
+    }
+
+    #[pyclass]
+    #[derive(Clone)]
+    pub struct PyTimestamp;
+
+    #[pymethods]
+    impl PyTimestamp {
+        fn long_format(&self) -> String {
+            // not relevant for algorithm behavior
+            "".to_string()
+        }
+    }
+
+    #[pyclass]
+    pub struct PyRevision {
+        #[pyo3(get)]
+        pub id: i32,
+        #[pyo3(get)]
+        pub text: Option<String>,
+        #[pyo3(get)]
+        pub comment: Option<String>,
+        #[pyo3(get)]
+        pub sha1: Option<String>,
+        #[pyo3(get)]
+        pub minor: bool,
+        #[pyo3(get)]
+        pub deleted: PyDeleted,
+        #[pyo3(get)]
+        pub timestamp: PyTimestamp,
+    }
+
+    impl PyRevision {
+        pub fn from_revision(rev: &Revision) -> Self {
+            let (text, deleted) = match &rev.text {
+                Text::Normal(s) => (Some(s.clone()), PyDeleted(false)),
+                Text::Deleted => (None, PyDeleted(true)),
+            };
+            Self {
+                id: rev.id,
+                text,
+                comment: rev.comment.as_ref().map(|s| s.to_string()),
+                sha1: rev.sha1.as_ref().map(|s| {
+                    std::str::from_utf8(&s.0)
+                        .expect("sha1 to be base36 encoded")
+                        .to_string()
+                }),
+                minor: rev.minor,
+                deleted,
+                timestamp: PyTimestamp,
+            }
+        }
+    }
+
+    #[pymethods]
+    impl PyRevision {
+        #[getter]
+        fn user(&self) -> Option<()> {
+            // not relevant for algorithm behavior
+            None
+        }
+    }
+
+    pub struct PyPage(pub Vec<PyRevision>);
+
+    impl IntoPy<PyObject> for PyPage {
+        fn into_py(self, py: Python) -> PyObject {
+            self.0.into_py(py)
+        }
+    }
+
+    impl PyPage {
+        pub fn from_page(page: &wikiwho::dump_parser::Page) -> Self {
+            Self(
+                page.revisions
+                    .iter()
+                    .map(PyRevision::from_revision)
+                    .collect(),
+            )
+        }
+    }
+}
+
+pub mod proptest_support {
     use compact_str::CompactString;
     use proptest::prelude::*;
     use proptest::strategy::Strategy;
 
-    use crate::dump_parser::{Contributor, Page, Revision, Sha1Hash, Text};
+    use wikiwho::dump_parser::{Contributor, Page, Revision, Sha1Hash, Text};
 
     pub fn maybe_comment() -> impl Strategy<Value = Option<CompactString>> {
         prop_oneof![
@@ -331,12 +501,13 @@ pub mod proptest {
     }
 }
 
+
 pub mod delta_debugging {
     use std::collections::HashSet;
 
-    use crate::{
+    use wikiwho::{
         dump_parser::{Page, Text},
-        test_support::page_to_xml,
+        // test_support::page_to_xml,
     };
 
     fn simplify_text(text: &str) -> Vec<String> {
@@ -462,7 +633,7 @@ pub mod delta_debugging {
         for candidate in candidates {
             *iterations += 1;
             if test_page(&candidate) {
-                println!("Simplified individually: {}", page_to_xml(&candidate));
+                println!("Simplified individually: {}", serde_json::to_string(&candidate).unwrap());
                 return Some(candidate);
             }
         }
@@ -478,7 +649,8 @@ pub mod delta_debugging {
         for candidate in candidates {
             *iterations += 1;
             if test_page(&candidate) {
-                println!("Simplified jointly: {}", page_to_xml(&candidate));
+                #[cfg(test)]
+                println!("Simplified jointly: {}", serde_json::to_string(&candidate).unwrap());
                 return Some(candidate);
             }
         }
@@ -549,3 +721,4 @@ pub mod delta_debugging {
         current_page
     }
 }
+

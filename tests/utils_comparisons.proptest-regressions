@@ -4,6 +4,9 @@
 #
 # It is recommended to check this file in to source control so that
 # everyone who runs the test benefits from these saved cases.
+cc 06d1c585017858e6cbdaf432efc422901bdb5818e7033bcd35f871253e6e10c6 # shrinks to input = ""
+cc a3f16d77210a8d796d2f5fa4ac0e6d1d4107a810548a738c38cdbbfe8b4639f3 # shrinks to input = ""
+cc fc43d6852102fcad97e56861b55e56277fad3795c5694f1e71eca0e71df81225 # shrinks to input = ""
 cc ff60107bcd5cb54863d417074867294126c006b2139ee37685ac9fea6f81f735 # shrinks to input = "\r"
 cc 7bea0894b223b42f38b68b7e8d25580d2a0550150eca6c95ff3e50f077db99b1 # shrinks to input = "\r<tr>"
 cc 876bb7921d4ba91a30725b38b04af1c0ef5bebab24b369c58d7654fd7520d2a3 # shrinks to input = "\n<tr>"
