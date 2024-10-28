@@ -204,12 +204,14 @@ impl Tag {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Contributor {
     pub username: CompactString,
     pub id: Option<i32>,
 }
 
 #[derive(Clone, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum Text {
     Normal(String),
     Deleted,
@@ -251,6 +253,7 @@ impl Debug for Text {
 }
 
 #[derive(Clone, Copy, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Sha1Hash(
     /// 31 bytes, sha1 hash -> base36 encoded -> as ASCII bytes
     /// 
@@ -270,6 +273,7 @@ impl Debug for Sha1Hash {
 
 // apparently `restricted` is never set in mwxml (https://github.com/mediawiki-utilities/python-mwxml/blob/2b477be6aa9794064d03b5be38c7759d1570488b/mwxml/iteration/revision.py#L80)
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Revision {
     pub id: i32,
     pub timestamp: chrono::DateTime<chrono::Utc>,
@@ -341,6 +345,7 @@ impl RevisionBuilder {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Page {
     pub title: CompactString,
     pub namespace: i32,
