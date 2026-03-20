@@ -56,10 +56,56 @@ from WikiWho.wikiwho import Wikiwho
 import pickle
 import tests.support
 
+UNUSED_ATTRS = {
+    "Wikiwho": ["paragraphs_ht", "sentences_ht", "spam_hashes", "tokens", "rvcontinue",
+                "page_id", "token_id", "revision_prev", "text_curr", "temp"],
+    "Revision": ["editor", "timestamp", "length"],
+    "Paragraph": ["hash_value", "matched"],
+    "Sentence": ["hash_value", "matched", "splitted"],
+    "Word": ["matched"],
+}
+
+def try_delete_attr(obj, attr):
+    if hasattr(obj, attr):
+        delattr(obj, attr)
+
+def cleanup_sentence(sentence):
+    for attr in UNUSED_ATTRS["Sentence"]:
+        try_delete_attr(sentence, attr)
+    
+    for word in sentence.words:
+        for attr in UNUSED_ATTRS["Word"]:
+            try_delete_attr(word, attr)
+
+def cleanup_paragraph(paragraph):
+    for attr in UNUSED_ATTRS["Paragraph"]:
+        try_delete_attr(paragraph, attr)
+    
+    for sent_list in paragraph.sentences.values():
+        for sent in sent_list:
+            cleanup_sentence(sent)
+
+def cleanup_revision(revision):
+    for attr in UNUSED_ATTRS["Revision"]:
+        try_delete_attr(revision, attr)
+    
+    for para_list in revision.paragraphs.values():
+        for para in para_list:
+            cleanup_paragraph(para)
+
+def cleanup_wikiwho(wikiwho):
+    # Remove unused attributes to reduce size
+    for attr in UNUSED_ATTRS["Wikiwho"]:
+        try_delete_attr(wikiwho, attr)
+    
+    for rev in wikiwho.revisions.values():
+        cleanup_revision(rev)
+
 def process_page(page_bincode):
     page = tests.support.PyPage.from_bincode(page_bincode)
     wikiwho = Wikiwho(f"{page.namespace}:{page.title}") # Use the title for identification in multi-threaded processing
     wikiwho.analyse_article_from_xml_dump(page)
+    cleanup_wikiwho(wikiwho)
     return pickle.dumps(wikiwho, protocol=5)
 
 from multiprocessing import Pool, Process, Queue

@@ -118,8 +118,12 @@ fn run_analysis_python_mt(
     // Result collection thread: receive processed pages from Python pool and send to main thread
     std::thread::spawn(move || {
         import_exception!(queue, Empty);
+
+        let mut last_log_time = std::time::Instant::now();
         let mut received = 0;
+
         let mut pickle_buf = Vec::new();
+        let pickle_options = pickled::DeOptions::new();
         loop {
             // Acquire the GIL only for one get() call at a time.
             // Queue.get(timeout) releases the GIL internally while waiting,
@@ -139,22 +143,30 @@ fn run_analysis_python_mt(
                                 .copy_to_slice(py, &mut pickle_buf[..pickled_page.len_bytes()])
                                 .unwrap();
 
-                            let options = pickled::DeOptions::new();
-                            let page: output_structs::PyWikiwho = pickled::from_slice(
-                                &pickle_buf[..pickled_page.len_bytes()],
-                                options,
-                            )
-                            .unwrap();
-
                             received += 1;
-                            Ok(Some(page))
+
+                            let is_elapsed = last_log_time.elapsed().as_secs() >= 5;
+                            if is_elapsed || received % 20 == 0 {
+                                if is_elapsed {
+                                    println!("Python processing... ({received})");
+                                } else {
+                                    println!("Python processing... ({received} pages done)");
+                                }
+                                last_log_time = std::time::Instant::now();
+                            }
+
+                            Ok(Some(&pickle_buf[..pickled_page.len_bytes()]))
                         }
                         Err(err) if err.is_instance_of::<Empty>(py) => Err(()),
                         Err(err) => panic!("Error in python process: {:?}", err),
                     },
                 );
+
+            // Do unpickling outside of the GIL to avoid blocking Python.
             match item {
-                Ok(Some(page)) => result_sender.send(page).unwrap(),
+                Ok(Some(pickled_page)) => result_sender
+                    .send(pickled::from_slice(pickled_page, pickle_options.clone()).unwrap())
+                    .unwrap(),
                 Ok(None) => break,
                 Err(()) => {} // timeout, retry
             }
@@ -491,7 +503,7 @@ fn random_pages_100() {
 
 #[test]
 fn first_1000_pages_mt() {
-    const PAGE_COUNT: usize = 200; // TODO: fix some memory issues and increase to 1000 or more
+    const PAGE_COUNT: usize = 350; // TODO: fix some memory issues and increase to 1000 or more
 
     let reader = common::open_test_dump();
     let temp_path = std::env::temp_dir().join(format!("wikiwho_test_{}.bin", std::process::id()));
@@ -522,6 +534,7 @@ fn first_1000_pages_mt() {
             let mut file = File::open(&rust_temp_path).unwrap();
             let mut buf = Vec::new();
 
+            let mut last_log_time = std::time::Instant::now();
             let mut processed = 0;
 
             for page_ref in work_receiver {
@@ -534,6 +547,16 @@ fn first_1000_pages_mt() {
                 result_sender.send((key, page_ref, analysis)).unwrap();
 
                 processed += 1;
+
+                let is_elapsed = last_log_time.elapsed().as_secs() >= 5;
+                if is_elapsed || processed % 20 == 0 {
+                    if is_elapsed {
+                        println!("Rust processing... ({processed})");
+                    } else {
+                        println!("Rust processing... ({processed} of {PAGE_COUNT} pages done)");
+                    }
+                    last_log_time = std::time::Instant::now();
+                }
             }
 
             println!("Rust thread done, processed {processed} pages");
