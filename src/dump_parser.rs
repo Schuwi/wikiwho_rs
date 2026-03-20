@@ -474,9 +474,10 @@ impl From<std::io::Error> for ParsingError {
 
 impl<R: BufRead> DumpParser<R> {
     fn new_impl(reader: R, preallocate: bool) -> Self {
-        let xml_parser = quick_xml::Reader::from_reader(reader);
-        //let config = xml_parser.config_mut();
+        let mut xml_parser = quick_xml::Reader::from_reader(reader);
+        let config = xml_parser.config_mut();
         // expand_empty_elements not set, take care to handle empty elements!
+        config.check_end_names = false; /* we do this anyway so avoid extra allocations */
 
         let buf = if preallocate {
             // preallocate 1 MiB for the buffer
