@@ -12,6 +12,8 @@ use std::{
 
 use wikiwho::dump_parser::{self, Contributor, Page, Revision, Text};
 
+use pyo3::prelude::*;
+
 pub mod prelude {
     pub(crate) use super::proptest_support;
     pub(crate) use super::{dummy_revision, with_gil};
@@ -202,10 +204,13 @@ pub fn find_page_by_title_and_ns<P: PageRepresentation, R: std::io::Read>(
 
         if let Some(m) = page_regex.find(&buffer[..buffered_bytes]) {
             let start = m.start();
-            
+
             let buf = &buffer[start..buffered_bytes];
 
-            return Ok(Some(P::from_xml(buf.chain(BufReader::new(reader)), &mut 0)?));
+            return Ok(Some(P::from_xml(
+                buf.chain(BufReader::new(reader)),
+                &mut 0,
+            )?));
         } else {
             // No page start found in this buffer
 
@@ -226,8 +231,7 @@ pub fn find_page_by_title_and_ns<P: PageRepresentation, R: std::io::Read>(
 pub fn open_test_dump() -> impl Read {
     const DUMP_PATH: &str = "dewiktionary-20240901-pages-meta-history.xml.zst";
 
-    let file = File::open(DUMP_PATH)
-        .unwrap_or_else(|_| panic!("file not found: {}", DUMP_PATH));
+    let file = File::open(DUMP_PATH).unwrap_or_else(|_| panic!("file not found: {}", DUMP_PATH));
     let reader = zstd::stream::Decoder::new(file).unwrap();
 
     reader
@@ -272,12 +276,29 @@ impl PageRepresentation for Vec<u8> {
     }
 }
 
+pub fn load_local_module<'a>(py: Python<'a>, module_name: &str) -> PyResult<Bound<'a, PyModule>> {
+    // make sure the current directory is in sys.path
+    py.run_bound(
+        "
+import sys
+if '' not in sys.path:
+    sys.path.append('')
+        ",
+        None,
+        None,
+    )?;
+
+    let module = PyModule::import_bound(py, module_name)?;
+    Ok(module)
+}
+
 pub mod output_structs {
     use super::*;
     use pyo3::FromPyObject;
 
     #[derive(FromPyObject)]
     pub struct PyWikiwho {
+        pub title: String,
         pub spam_ids: Vec<i32>,
         pub revisions: HashMap<i32, PyRevision>,
         pub ordered_revisions: Vec<i32>,
@@ -320,37 +341,76 @@ pub mod input_structs {
     use super::*;
     use pyo3::prelude::*;
 
-    #[pyclass]
-    #[derive(Clone)]
+    macro_rules! with_pickle_functions {
+        (#[pymethods] impl $name:ident { $($other:tt)* }) => {
+            #[pymethods]
+            impl $name {
+                #[new]
+                fn new() -> Self {
+                    Self::default()
+                }
+
+                pub fn __getstate__(&self, py: Python) -> PyResult<PyObject> {
+                    Ok(pyo3::types::PyBytes::new_bound(py, &bincode::serialize(self).unwrap()).into())
+                }
+
+                pub fn __setstate__(&mut self, _py: Python, state: PyObject) -> PyResult<()> {
+                    let state = state.extract::<&[u8]>(_py).unwrap();
+                    *self = bincode::deserialize(state).unwrap();
+                    Ok(())
+                }
+
+                pub fn __reduce__(slf: &pyo3::Bound<Self>) -> PyResult<PyObject> {
+                    let py = slf.py();
+                    let state = slf.borrow().__getstate__(py)?;
+                    let cls = slf.get_type();
+                    let new_fn = cls.getattr(pyo3::intern!(py, "__new__"))?;
+                    Ok((new_fn, (cls,), state).into_py(py))
+                }
+
+                $(
+                    $other
+                )*
+            }
+        }
+    }
+
+    #[pyclass(module = "tests.support")]
+    #[derive(Clone, Default, serde::Serialize, serde::Deserialize)]
     pub struct PyDeleted(bool);
 
-    #[pymethods]
-    impl PyDeleted {
-        #[getter]
-        fn text(&self) -> bool {
-            self.0
-        }
+    with_pickle_functions! {
+        #[pymethods]
+        impl PyDeleted {
+            #[getter]
+            fn text(&self) -> bool {
+                self.0
+            }
 
-        #[getter]
-        fn restricted(&self) -> bool {
-            // not relevant for algorithm behavior
-            false
+            #[getter]
+            fn restricted(&self) -> bool {
+                // not relevant for algorithm behavior
+                false
+            }
         }
     }
 
-    #[pyclass]
-    #[derive(Clone)]
+    #[pyclass(module = "tests.support")]
+    #[derive(Clone, Default, serde::Serialize, serde::Deserialize)]
     pub struct PyTimestamp;
 
-    #[pymethods]
-    impl PyTimestamp {
-        fn long_format(&self) -> String {
-            // not relevant for algorithm behavior
-            "".to_string()
+    with_pickle_functions! {
+        #[pymethods]
+        impl PyTimestamp {
+            fn long_format(&self) -> String {
+                // not relevant for algorithm behavior
+                "".to_string()
+            }
         }
     }
 
-    #[pyclass]
+    #[pyclass(module = "tests.support")]
+    #[derive(Clone, Default, serde::Serialize, serde::Deserialize)]
     pub struct PyRevision {
         #[pyo3(get)]
         pub id: i32,
@@ -390,31 +450,50 @@ pub mod input_structs {
         }
     }
 
-    #[pymethods]
-    impl PyRevision {
-        #[getter]
-        fn user(&self) -> Option<()> {
-            // not relevant for algorithm behavior
-            None
+    with_pickle_functions! {
+        #[pymethods]
+        impl PyRevision {
+            #[getter]
+            fn user(&self) -> Option<()> {
+                // not relevant for algorithm behavior
+                None
+            }
         }
     }
 
-    pub struct PyPage(pub Vec<PyRevision>);
+    #[pyclass(module = "tests.support")]
+    #[derive(Clone, Default, serde::Serialize, serde::Deserialize)]
+    pub struct PyPage {
+        #[pyo3(get)]
+        pub title: String,
+        #[pyo3(get)]
+        pub namespace: i32,
+        pub revisions: Vec<PyRevision>,
+    }
 
-    impl IntoPy<PyObject> for PyPage {
-        fn into_py(self, py: Python) -> PyObject {
-            self.0.into_py(py)
+    with_pickle_functions! {
+        #[pymethods]
+        impl PyPage {
+            fn __iter__<'a>(this: &Bound<'a, Self>) -> PyResult<Bound<'a, PyAny>> {
+                let py = this.py();
+                let revisions = this.borrow().revisions.clone();
+
+                revisions.into_py(py).bind(py).call_method0("__iter__")
+            }
         }
     }
 
     impl PyPage {
         pub fn from_page(page: &wikiwho::dump_parser::Page) -> Self {
-            Self(
-                page.revisions
+            Self {
+                title: page.title.to_string(),
+                namespace: page.namespace,
+                revisions: page
+                    .revisions
                     .iter()
                     .map(PyRevision::from_revision)
                     .collect(),
-            )
+            }
         }
     }
 }
@@ -508,7 +587,6 @@ pub mod proptest_support {
         }
     }
 }
-
 
 pub mod delta_debugging {
     use std::collections::HashSet;
@@ -641,7 +719,10 @@ pub mod delta_debugging {
         for candidate in candidates {
             *iterations += 1;
             if test_page(&candidate) {
-                println!("Simplified individually: {}", serde_json::to_string(&candidate).unwrap());
+                println!(
+                    "Simplified individually: {}",
+                    serde_json::to_string(&candidate).unwrap()
+                );
                 return Some(candidate);
             }
         }
@@ -658,7 +739,10 @@ pub mod delta_debugging {
             *iterations += 1;
             if test_page(&candidate) {
                 #[cfg(test)]
-                println!("Simplified jointly: {}", serde_json::to_string(&candidate).unwrap());
+                println!(
+                    "Simplified jointly: {}",
+                    serde_json::to_string(&candidate).unwrap()
+                );
                 return Some(candidate);
             }
         }
@@ -729,4 +813,3 @@ pub mod delta_debugging {
         current_page
     }
 }
-
