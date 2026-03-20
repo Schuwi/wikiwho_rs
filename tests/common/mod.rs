@@ -3,8 +3,12 @@
 
 use chrono::DateTime;
 use memchr::memmem::Finder;
-use rand::seq::SliceRandom;
-use std::{collections::HashMap, fs::File, io::{BufRead, BufReader, Read}};
+use rand::{seq::SliceRandom, SeedableRng};
+use std::{
+    collections::HashMap,
+    fs::File,
+    io::{BufRead, BufReader, Read},
+};
 
 use wikiwho::dump_parser::{self, Contributor, Page, Revision, Text};
 
@@ -57,6 +61,7 @@ pub fn dummy_revision() -> Revision {
 pub fn pick_n_random_pages<P: PageRepresentation, R: std::io::Read>(
     full_xml: (R, R),
     n: usize,
+    seed: u64,
 ) -> Result<Vec<P>, P::Error> {
     // First pass: find page start offsets
     const PAGE_START: &[u8] = b"<page";
@@ -93,7 +98,7 @@ pub fn pick_n_random_pages<P: PageRepresentation, R: std::io::Read>(
             consume = start + PAGE_START.len();
         } else {
             // No page start found in this buffer
-            
+
             // keep the last few bytes to find a potential page start that spans two buffers
             consume = buf.len() - PAGE_START.len();
         }
@@ -107,7 +112,9 @@ pub fn pick_n_random_pages<P: PageRepresentation, R: std::io::Read>(
     }
 
     // pick n random pages
-    let mut rng = rand::thread_rng();
+
+    /* define specific algorithm to ensure reproducibility */
+    let mut rng = rand_xoshiro::Xoshiro256PlusPlus::seed_from_u64(seed);
     let mut chosen_offsets: Vec<_> = page_starts.choose_multiple(&mut rng, n).copied().collect();
     chosen_offsets.sort_unstable();
 
@@ -139,6 +146,7 @@ pub fn pick_n_random_pages<P: PageRepresentation, R: std::io::Read>(
 
         let mut read_bytes = 0;
         let page = P::from_xml(&mut reader, &mut read_bytes)?;
+        current_offset += read_bytes as u64;
         pages.push(page);
     }
 
