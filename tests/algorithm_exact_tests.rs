@@ -81,6 +81,18 @@ fn run_analysis_python_mt(
         .add_class::<input_structs::PyTimestamp>()
         .unwrap();
 
+    py_support.add_class::<output_structs::PyWikiwho>().unwrap();
+    py_support
+        .add_class::<output_structs::PyRevision>()
+        .unwrap();
+    py_support
+        .add_class::<output_structs::PyParagraph>()
+        .unwrap();
+    py_support
+        .add_class::<output_structs::PySentence>()
+        .unwrap();
+    py_support.add_class::<output_structs::PyWord>().unwrap();
+
     let result = py_support
         .getattr("run_analysis_python_mt")
         .unwrap()
@@ -122,8 +134,7 @@ fn run_analysis_python_mt(
         let mut last_log_time = std::time::Instant::now();
         let mut received = 0;
 
-        let mut pickle_buf = Vec::new();
-        let pickle_options = pickled::DeOptions::new();
+        let mut result_buffer = Vec::new();
         loop {
             // Acquire the GIL only for one get() call at a time.
             // Queue.get(timeout) releases the GIL internally while waiting,
@@ -135,13 +146,11 @@ fn run_analysis_python_mt(
                             if obj.extract::<String>(py).ok().as_deref() == Some("close") {
                                 return Ok(None);
                             }
-                            let pickled_page: pyo3::buffer::PyBuffer<u8> = obj.extract(py).unwrap();
-                            if pickle_buf.len() < pickled_page.len_bytes() {
-                                pickle_buf.resize(pickled_page.len_bytes(), 0);
-                            }
-                            pickled_page
-                                .copy_to_slice(py, &mut pickle_buf[..pickled_page.len_bytes()])
-                                .unwrap();
+                            let bincoded_page: pyo3::Bound<pyo3::types::PyBytes> =
+                                obj.extract(py).unwrap();
+
+                            result_buffer.clear();
+                            result_buffer.extend_from_slice(bincoded_page.as_bytes());
 
                             received += 1;
 
@@ -155,17 +164,17 @@ fn run_analysis_python_mt(
                                 last_log_time = std::time::Instant::now();
                             }
 
-                            Ok(Some(&pickle_buf[..pickled_page.len_bytes()]))
+                            Ok(Some(&result_buffer))
                         }
                         Err(err) if err.is_instance_of::<Empty>(py) => Err(()),
                         Err(err) => panic!("Error in python process: {:?}", err),
                     },
                 );
 
-            // Do unpickling outside of the GIL to avoid blocking Python.
+            // Deserialize outside of GIL to minimize time spent holding it
             match item {
-                Ok(Some(pickled_page)) => result_sender
-                    .send(pickled::from_slice(pickled_page, pickle_options.clone()).unwrap())
+                Ok(Some(result_bytes)) => result_sender
+                    .send(bincode::deserialize(result_bytes).unwrap())
                     .unwrap(),
                 Ok(None) => break,
                 Err(()) => {} // timeout, retry

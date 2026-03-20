@@ -50,8 +50,6 @@ hex = "0.4.3"
 proptest = "1.5.0"
 pyo3 = { version = "0.22.3", features = ["auto-initialize"] }
 rand_xoshiro = "0.6.0"
-# Supports "back-references" in pickles, i.e. modifications of already-memoized values (real reference sharing)
-pickled = "2.0.0-alpha3"
 serde_json = "1.0.132"
 wikiwho = { path = ".", features = ["serde"] }
 zstd = "0.13.2"

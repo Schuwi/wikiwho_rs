@@ -294,9 +294,10 @@ if '' not in sys.path:
 
 pub mod output_structs {
     use super::*;
-    use pyo3::FromPyObject;
+    use pyo3::{types::PyBytes, FromPyObject};
 
-    #[derive(FromPyObject, serde::Deserialize)]
+    #[pyclass(module = "tests.support")]
+    #[derive(FromPyObject, serde::Serialize, serde::Deserialize)]
     pub struct PyWikiwho {
         pub title: String,
         pub spam_ids: Vec<i32>,
@@ -305,7 +306,21 @@ pub mod output_structs {
         pub revision_curr: PyRevision,
     }
 
-    #[derive(FromPyObject, serde::Deserialize)]
+    #[pymethods]
+    impl PyWikiwho {
+        #[new]
+        fn new(py_wikiwho: &pyo3::Bound<'_, PyAny>) -> PyResult<Self> {
+            py_wikiwho.extract::<Self>()
+        }
+
+        fn to_bincode<'a>(this: &Bound<'a, Self>) -> pyo3::Bound<'a, PyBytes> {
+            let serialized = bincode::serialize::<Self>(&this.borrow()).unwrap();
+            pyo3::types::PyBytes::new_bound(this.py(), &serialized)
+        }
+    }
+
+    #[pyclass(module = "tests.support")]
+    #[derive(FromPyObject, serde::Serialize, serde::Deserialize)]
     pub struct PyRevision {
         pub id: i32,
         pub paragraphs: HashMap<String, Vec<PyParagraph>>,
@@ -313,20 +328,23 @@ pub mod output_structs {
         pub original_adds: usize,
     }
 
-    #[derive(FromPyObject, serde::Deserialize)]
+    #[pyclass(module = "tests.support")]
+    #[derive(FromPyObject, serde::Serialize, serde::Deserialize)]
     pub struct PyParagraph {
         pub value: String,
         pub sentences: HashMap<String, Vec<PySentence>>,
         pub ordered_sentences: Vec<String>,
     }
 
-    #[derive(FromPyObject, serde::Deserialize)]
+    #[pyclass(module = "tests.support")]
+    #[derive(FromPyObject, serde::Serialize, serde::Deserialize)]
     pub struct PySentence {
         pub value: String,
         pub words: Vec<PyWord>,
     }
 
-    #[derive(FromPyObject, serde::Deserialize)]
+    #[pyclass(module = "tests.support")]
+    #[derive(FromPyObject, serde::Serialize, serde::Deserialize)]
     pub struct PyWord {
         pub token_id: i32,
         pub value: String,
