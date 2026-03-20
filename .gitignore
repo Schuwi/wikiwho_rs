@@ -250,3 +250,4 @@ __marimo__/
 # =============
 
 .pijul/
+.vscode/launch.json
