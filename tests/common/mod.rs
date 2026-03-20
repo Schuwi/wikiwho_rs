@@ -480,6 +480,18 @@ pub mod input_structs {
 
                 revisions.into_py(py).bind(py).call_method0("__iter__")
             }
+
+            #[staticmethod]
+            fn from_bincode(state: &[u8]) -> PyResult<Self> {
+                let page: wikiwho::dump_parser::Page = match bincode::deserialize(state) {
+                    Ok(page) => page,
+                    Err(err) => return Err(pyo3::exceptions::PyValueError::new_err(
+                        format!("Invalid state for PyPage. Expected bincode-serialized Page. Error: {err}"),
+                    )),
+                };
+
+                Ok(PyPage::from_page(&page))
+            }
         }
     }
 

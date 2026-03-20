@@ -100,11 +100,10 @@ fn run_analysis_python_mt(
             file.seek(SeekFrom::Start(page_ref.offset)).unwrap();
             buf.resize(page_ref.length as usize, 0);
             file.read_exact(&mut buf).unwrap();
-            let page: Page = bincode::deserialize(&buf).unwrap();
             Python::with_gil(|py| {
-                let page_py = input_structs::PyPage::from_page(&page);
+                let page_bytes = pyo3::types::PyBytes::new_bound(py, &buf);
                 py_work_receiver
-                    .call_method1(py, "put_nowait", (page_py,))
+                    .call_method1(py, "put_nowait", (page_bytes,))
                     .unwrap();
             });
         }

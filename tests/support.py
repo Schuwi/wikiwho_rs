@@ -54,8 +54,10 @@ def imprint(obj):
 
 from WikiWho.wikiwho import Wikiwho
 import pickle
+import tests.support
 
-def process_page(page):
+def process_page(page_bincode):
+    page = tests.support.PyPage.from_bincode(page_bincode)
     wikiwho = Wikiwho(f"{page.namespace}:{page.title}") # Use the title for identification in multi-threaded processing
     wikiwho.analyse_article_from_xml_dump(page)
     return pickle.dumps(wikiwho, protocol=5)
