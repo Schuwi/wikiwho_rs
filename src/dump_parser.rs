@@ -1,10 +1,6 @@
 // SPDX-License-Identifier: MPL-2.0
 use std::{
-    any::type_name_of_val,
-    borrow::Cow,
-    collections::HashMap,
-    convert::Infallible,
-    fmt::Debug,
+    any::type_name_of_val, borrow::Cow, collections::HashMap, convert::Infallible, fmt::Debug,
     io::BufRead,
 };
 
@@ -256,7 +252,7 @@ impl Debug for Text {
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Sha1Hash(
     /// 31 bytes, sha1 hash -> base36 encoded -> as ASCII bytes
-    /// 
+    ///
     /// Simply represents a unique identifier for the text of a revision.
     pub [u8; 31],
 );
