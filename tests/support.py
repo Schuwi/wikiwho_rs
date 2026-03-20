@@ -53,11 +53,12 @@ def imprint(obj):
 
 
 from WikiWho.wikiwho import Wikiwho
+import pickle
 
 def process_page(page):
     wikiwho = Wikiwho(f"{page.namespace}:{page.title}") # Use the title for identification in multi-threaded processing
     wikiwho.analyse_article_from_xml_dump(page)
-    return wikiwho
+    return pickle.dumps(wikiwho, protocol=5)
 
 from multiprocessing import Pool, Process, Queue
 

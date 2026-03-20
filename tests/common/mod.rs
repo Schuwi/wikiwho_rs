@@ -296,7 +296,7 @@ pub mod output_structs {
     use super::*;
     use pyo3::FromPyObject;
 
-    #[derive(FromPyObject)]
+    #[derive(FromPyObject, serde::Deserialize)]
     pub struct PyWikiwho {
         pub title: String,
         pub spam_ids: Vec<i32>,
@@ -305,7 +305,7 @@ pub mod output_structs {
         pub revision_curr: PyRevision,
     }
 
-    #[derive(FromPyObject)]
+    #[derive(FromPyObject, serde::Deserialize)]
     pub struct PyRevision {
         pub id: i32,
         pub paragraphs: HashMap<String, Vec<PyParagraph>>,
@@ -313,20 +313,20 @@ pub mod output_structs {
         pub original_adds: usize,
     }
 
-    #[derive(FromPyObject)]
+    #[derive(FromPyObject, serde::Deserialize)]
     pub struct PyParagraph {
         pub value: String,
         pub sentences: HashMap<String, Vec<PySentence>>,
         pub ordered_sentences: Vec<String>,
     }
 
-    #[derive(FromPyObject)]
+    #[derive(FromPyObject, serde::Deserialize)]
     pub struct PySentence {
         pub value: String,
         pub words: Vec<PyWord>,
     }
 
-    #[derive(FromPyObject)]
+    #[derive(FromPyObject, serde::Deserialize)]
     pub struct PyWord {
         pub token_id: i32,
         pub value: String,

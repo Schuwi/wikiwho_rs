@@ -116,9 +116,11 @@ fn run_analysis_python_mt(
         });
     });
 
+    // Result collection thread: receive processed pages from Python pool and send to main thread
     std::thread::spawn(move || {
         import_exception!(queue, Empty);
         let mut received = 0;
+        let mut pickle_buf = Vec::new();
         loop {
             // Acquire the GIL only for one get() call at a time.
             // Queue.get(timeout) releases the GIL internally while waiting,
@@ -130,7 +132,21 @@ fn run_analysis_python_mt(
                             if obj.extract::<String>(py).ok().as_deref() == Some("close") {
                                 return Ok(None);
                             }
-                            let page: output_structs::PyWikiwho = obj.extract(py).unwrap();
+                            let pickled_page: pyo3::buffer::PyBuffer<u8> = obj.extract(py).unwrap();
+                            if pickle_buf.len() < pickled_page.len_bytes() {
+                                pickle_buf.resize(pickled_page.len_bytes(), 0);
+                            }
+                            pickled_page
+                                .copy_to_slice(py, &mut pickle_buf[..pickled_page.len_bytes()])
+                                .unwrap();
+
+                            let options = pickled::DeOptions::new();
+                            let page: output_structs::PyWikiwho = pickled::from_slice(
+                                &pickle_buf[..pickled_page.len_bytes()],
+                                options,
+                            )
+                            .unwrap();
+
                             received += 1;
                             Ok(Some(page))
                         }
