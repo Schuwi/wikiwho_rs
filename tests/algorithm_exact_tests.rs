@@ -19,6 +19,7 @@ use wikiwho::{
 
 mod common;
 
+use common::output_structs::serialize_wikiwho_result;
 use common::{input_structs, output_structs};
 use common::{load_local_module, prelude::*};
 
@@ -28,7 +29,7 @@ struct PageRef {
     length: u64,
 }
 
-fn run_analysis_python(py: Python<'_>, page: &Page) -> output_structs::PyWikiwho {
+fn run_analysis_python(py: Python<'_>, page: &Page) -> PageAnalysis {
     let page_py = input_structs::PyPage::from_page(page);
     let locals = PyDict::new_bound(py);
     locals.set_item("page", page_py.into_py(py)).unwrap();
@@ -45,12 +46,9 @@ wikiwho.analyse_article_from_xml_dump(page)
     )
     .unwrap();
 
-    locals
-        .get_item("wikiwho")
-        .unwrap()
-        .unwrap()
-        .extract::<output_structs::PyWikiwho>()
-        .unwrap()
+    let py_wikiwho = locals.get_item("wikiwho").unwrap().unwrap();
+
+    page_analysis_from_wikiwho(&py_wikiwho, page).unwrap()
 }
 
 ///
@@ -64,7 +62,7 @@ wikiwho.analyse_article_from_xml_dump(page)
 fn run_analysis_python_mt(
     py: Python<'_>,
     work_receiver: Receiver<PageRef>,
-    result_sender: Sender<output_structs::PyWikiwho>,
+    result_sender: Sender<(String, PageAnalysis)>,
     temp_path: PathBuf,
 ) -> Bound<'_, PyAny> {
     let threads = std::thread::available_parallelism().unwrap().get() - 1;
@@ -81,17 +79,9 @@ fn run_analysis_python_mt(
         .add_class::<input_structs::PyTimestamp>()
         .unwrap();
 
-    py_support.add_class::<output_structs::PyWikiwho>().unwrap();
     py_support
-        .add_class::<output_structs::PyRevision>()
+        .add_function(wrap_pyfunction!(serialize_wikiwho_result, &py_support).unwrap())
         .unwrap();
-    py_support
-        .add_class::<output_structs::PyParagraph>()
-        .unwrap();
-    py_support
-        .add_class::<output_structs::PySentence>()
-        .unwrap();
-    py_support.add_class::<output_structs::PyWord>().unwrap();
 
     let result = py_support
         .getattr("run_analysis_python_mt")
@@ -146,8 +136,14 @@ fn run_analysis_python_mt(
                             if obj.extract::<String>(py).ok().as_deref() == Some("close") {
                                 return Ok(None);
                             }
-                            let bincoded_page: pyo3::Bound<pyo3::types::PyBytes> =
-                                obj.extract(py).unwrap();
+                            let py_result: &pyo3::Bound<'_, pyo3::types::PyTuple> =
+                                obj.downcast_bound(py).unwrap();
+                            let key: String = py_result.get_item(0).unwrap().extract().unwrap();
+                            let bincoded_page: pyo3::Bound<pyo3::types::PyBytes> = py_result
+                                .get_item(1)
+                                .unwrap()
+                                .downcast_into()
+                                .unwrap();
 
                             result_buffer.clear();
                             result_buffer.extend_from_slice(bincoded_page.as_bytes());
@@ -164,7 +160,7 @@ fn run_analysis_python_mt(
                                 last_log_time = std::time::Instant::now();
                             }
 
-                            Ok(Some(&result_buffer))
+                            Ok(Some((key, &result_buffer)))
                         }
                         Err(err) if err.is_instance_of::<Empty>(py) => Err(()),
                         Err(err) => panic!("Error in python process: {:?}", err),
@@ -173,8 +169,8 @@ fn run_analysis_python_mt(
 
             // Deserialize outside of GIL to minimize time spent holding it
             match item {
-                Ok(Some(result_bytes)) => result_sender
-                    .send(bincode::deserialize(result_bytes).unwrap())
+                Ok(Some((key, result_bytes))) => result_sender
+                    .send((key, bincode::deserialize(result_bytes).unwrap()))
                     .unwrap(),
                 Ok(None) => break,
                 Err(()) => {} // timeout, retry
@@ -207,28 +203,30 @@ fn test_case_1() {
             ],
         };
 
-        let analysis = PageAnalysis::analyse_page(&page.revisions).unwrap();
-        let wikiwho_py = run_analysis_python(py, &page);
+        let rust_analysis = PageAnalysis::analyse_page(&page.revisions).unwrap();
+        let py_analysis = run_analysis_python(py, &page);
 
         let sentence_rust = {
-            let paragraph = &analysis[&analysis.revisions_by_id[&2]].paragraphs_ordered[0];
-            let sentence_pointer = &analysis[paragraph].sentences_ordered[0];
-            &analysis[sentence_pointer]
+            let paragraph =
+                &rust_analysis[&rust_analysis.revisions_by_id[&2]].paragraphs_ordered[0];
+            let sentence_pointer = &rust_analysis[paragraph].sentences_ordered[0];
+            &rust_analysis[sentence_pointer]
         };
         let sentence_py = {
-            let revision = &wikiwho_py.revisions[&2];
-            let paragraph_hash = &revision.ordered_paragraphs[0];
-            let paragraph = &revision.paragraphs[paragraph_hash][0];
-            let sentence_hash = &paragraph.ordered_sentences[0];
-            &paragraph.sentences[sentence_hash][0]
+            let paragraph = &py_analysis[&py_analysis.revisions_by_id[&2]].paragraphs_ordered[0];
+            let sentence_pointer = &py_analysis[paragraph].sentences_ordered[0];
+            &py_analysis[sentence_pointer]
         };
 
-        assert_eq!(sentence_rust.words_ordered.len(), sentence_py.words.len());
+        assert_eq!(
+            sentence_rust.words_ordered.len(),
+            sentence_py.words_ordered.len()
+        );
 
         for (word_rust, word_py) in sentence_rust
             .words_ordered
             .iter()
-            .zip(sentence_py.words.iter())
+            .zip(sentence_py.words_ordered.iter())
         {
             assert_eq!(word_rust.value, word_py.value);
         }
@@ -260,28 +258,32 @@ fn test_case_2() {
 
 fn compare_results(
     page: &Page,
-    analysis: &PageAnalysis,
-    wikiwho_py: &output_structs::PyWikiwho,
+    rust_analysis: &PageAnalysis,
+    py_analysis: &PageAnalysis,
 ) -> Result<(), TestCaseError> {
     prop_assert_eq!(
-        wikiwho_py.ordered_revisions.last(),
-        Some(&wikiwho_py.revision_curr.id)
+        py_analysis.ordered_revisions.last().map(|rev| rev.id),
+        Some(py_analysis.current_revision.id)
     );
 
     prop_assert_eq!(
-        &analysis
+        &rust_analysis
             .ordered_revisions
             .iter()
             .map(|i| i.id)
             .collect::<Vec<_>>(),
-        &wikiwho_py.ordered_revisions
+        &py_analysis
+            .ordered_revisions
+            .iter()
+            .map(|i| i.id)
+            .collect::<Vec<_>>()
     );
 
     // iterate and compare result graph
     for revision_id in page.revisions.iter().map(|r| r.id) {
         // check spam
-        let is_spam_rust = analysis.spam_ids.contains(&revision_id);
-        let is_spam_py = wikiwho_py.spam_ids.contains(&revision_id);
+        let is_spam_rust = rust_analysis.spam_ids.contains(&revision_id);
+        let is_spam_py = py_analysis.spam_ids.contains(&revision_id);
         prop_assert_eq!(is_spam_rust, is_spam_py);
 
         if is_spam_rust {
@@ -296,85 +298,79 @@ fn compare_results(
 
         // compare revisions
 
-        let revision_pointer_rust = &analysis.revisions_by_id[&revision_id];
-        let revision_py = wikiwho_py.revisions.get(&revision_id).unwrap();
+        let revision_pointer_rust = &rust_analysis.revisions_by_id[&revision_id];
+        let revision_pointer_py = &py_analysis.revisions_by_id[&revision_id];
 
-        prop_assert_eq!(revision_pointer_rust.id, revision_py.id);
+        prop_assert_eq!(revision_pointer_rust.id, revision_pointer_py.id);
 
-        let revision_rust = &analysis[revision_pointer_rust];
-        let paragraphs_py = &revision_py.ordered_paragraphs;
-        prop_assert_eq!(revision_rust.paragraphs_ordered.len(), paragraphs_py.len());
+        let revision_rust = &rust_analysis[revision_pointer_rust];
+        let revision_py = &py_analysis[revision_pointer_py];
+        prop_assert_eq!(
+            revision_rust.paragraphs_ordered.len(),
+            revision_py.paragraphs_ordered.len()
+        );
         prop_assert_eq!(revision_rust.original_adds, revision_py.original_adds);
 
-        let mut paragraph_hash_disambiguation = HashMap::new();
-        for (paragraph_pointer_rust, paragraph_hash_py) in revision_rust
+        for (paragraph_pointer_rust, paragraph_pointer_py) in revision_rust
             .paragraphs_ordered
             .iter()
-            .zip(paragraphs_py.iter())
+            .zip(revision_py.paragraphs_ordered.iter())
         {
             // compare paragraphs
 
-            let count: usize = *paragraph_hash_disambiguation
-                .entry(paragraph_hash_py)
-                .and_modify(|count| {
-                    *count += 1;
-                })
-                .or_default();
-            let paragraph_py: &output_structs::PyParagraph =
-                &revision_py.paragraphs.get(paragraph_hash_py).unwrap()[count];
-            prop_assert_eq!(&paragraph_pointer_rust.value, &paragraph_py.value);
+            prop_assert_eq!(&paragraph_pointer_rust.value, &paragraph_pointer_py.value);
 
-            let paragraph_rust = &analysis[paragraph_pointer_rust];
-            let sentences_py = &paragraph_py.ordered_sentences;
-            prop_assert_eq!(paragraph_rust.sentences_ordered.len(), sentences_py.len());
+            let paragraph_rust = &rust_analysis[paragraph_pointer_rust];
+            let paragraph_py = &py_analysis[paragraph_pointer_py];
+            prop_assert_eq!(
+                paragraph_rust.sentences_ordered.len(),
+                paragraph_py.sentences_ordered.len()
+            );
 
-            let mut sentence_hash_disambiguation = HashMap::new();
-            for (sentence_pointer_rust, sentence_hash_py) in paragraph_rust
+            for (sentence_pointer_rust, sentence_pointer_py) in paragraph_rust
                 .sentences_ordered
                 .iter()
-                .zip(sentences_py.iter())
+                .zip(paragraph_py.sentences_ordered.iter())
             {
                 // compare sentences
 
-                let count: usize = *sentence_hash_disambiguation
-                    .entry(sentence_hash_py)
-                    .and_modify(|count| {
-                        *count += 1;
-                    })
-                    .or_default();
-                let sentence_py: &output_structs::PySentence =
-                    &paragraph_py.sentences.get(sentence_hash_py).unwrap()[count];
-                prop_assert_eq!(&sentence_pointer_rust.value, &sentence_py.value);
+                prop_assert_eq!(&sentence_pointer_rust.value, &sentence_pointer_py.value);
 
-                let sentence_rust = &analysis[sentence_pointer_rust];
-                let words_py = &sentence_py.words;
-                prop_assert_eq!(sentence_rust.words_ordered.len(), words_py.len());
+                let sentence_rust = &rust_analysis[sentence_pointer_rust];
+                let sentence_py = &py_analysis[sentence_pointer_py];
+                prop_assert_eq!(
+                    sentence_rust.words_ordered.len(),
+                    sentence_py.words_ordered.len()
+                );
 
-                for (word_pointer_rust, word_py) in
-                    sentence_rust.words_ordered.iter().zip(words_py.iter())
+                for (word_pointer_rust, word_pointer_py) in sentence_rust
+                    .words_ordered
+                    .iter()
+                    .zip(sentence_py.words_ordered.iter())
                 {
                     // compare words
 
-                    prop_assert_eq!(&word_pointer_rust.value, &word_py.value);
+                    prop_assert_eq!(&word_pointer_rust.value, &word_pointer_py.value);
 
-                    let word_rust = &analysis[word_pointer_rust];
-                    prop_assert_eq!(word_pointer_rust.unique_id(), word_py.token_id as usize);
+                    let word_rust = &rust_analysis[word_pointer_rust];
+                    let word_py = &py_analysis[word_pointer_py];
+                    prop_assert_eq!(word_pointer_rust.unique_id(), word_pointer_py.unique_id());
                     prop_assert_eq!(
                         &word_rust.inbound.iter().map(|i| i.id).collect::<Vec<_>>(),
-                        &word_py.inbound
+                        &word_py.inbound.iter().map(|i| i.id).collect::<Vec<_>>()
                     );
                     prop_assert_eq!(
                         &word_rust.outbound.iter().map(|i| i.id).collect::<Vec<_>>(),
-                        &word_py.outbound
+                        &word_py.outbound.iter().map(|i| i.id).collect::<Vec<_>>()
                     );
                     prop_assert_eq!(
                         word_rust.latest_revision.id,
-                        word_py.last_rev_id,
+                        word_py.latest_revision.id,
                         "inconsistency at word: {:?}, revision: {}",
                         &word_pointer_rust.value,
                         revision_id
                     );
-                    prop_assert_eq!(word_rust.origin_revision.id, word_py.origin_rev_id);
+                    prop_assert_eq!(word_rust.origin_revision.id, word_py.origin_revision.id);
                 }
             }
         }
@@ -452,6 +448,8 @@ fn known_bad_example_anontalkpagetext() {
 // delta debugging
 use common::delta_debug_texts;
 
+use crate::common::output_structs::page_analysis_from_wikiwho;
+
 #[test]
 #[ignore] // this "test" takes very long and is only useful for focus debugging
 fn simplify_bad_example_anontalkpagetext() {
@@ -512,7 +510,7 @@ fn random_pages_100() {
 
 #[test]
 fn first_1000_pages_mt() {
-    const PAGE_COUNT: usize = 350; // TODO: fix some memory issues and increase to 1000 or more
+    const PAGE_COUNT: usize = 1000;
 
     let reader = common::open_test_dump();
     let temp_path = std::env::temp_dir().join(format!("wikiwho_test_{}.bin", std::process::id()));
@@ -601,7 +599,7 @@ fn first_1000_pages_mt() {
             analysis: PageAnalysis,
         },
         PyDone {
-            analysis_py: output_structs::PyWikiwho,
+            analysis: PageAnalysis,
         },
     }
 
@@ -622,13 +620,22 @@ fn first_1000_pages_mt() {
     loop {
         if !rust_done {
             match rust_receiver.try_recv() {
-                Ok((key, page_ref, analysis)) => {
-                    if let Some(PendingResult::PyDone { analysis_py }) = pending.remove(&key) {
+                Ok((key, page_ref, analysis_rust)) => {
+                    if let Some(PendingResult::PyDone {
+                        analysis: analysis_py,
+                    }) = pending.remove(&key)
+                    {
                         let page = read_page(&mut main_file, &mut main_buf, page_ref);
-                        compare_results(&page, &analysis, &analysis_py).unwrap();
+                        compare_results(&page, &analysis_rust, &analysis_py).unwrap();
                         compared += 1;
                     } else {
-                        pending.insert(key, PendingResult::RustDone { page_ref, analysis });
+                        pending.insert(
+                            key,
+                            PendingResult::RustDone {
+                                page_ref,
+                                analysis: analysis_rust,
+                            },
+                        );
                     }
                 }
                 Err(std::sync::mpsc::TryRecvError::Disconnected) => rust_done = true,
@@ -637,16 +644,22 @@ fn first_1000_pages_mt() {
         }
         if !py_done {
             match py_receiver.try_recv() {
-                Ok(analysis_py) => {
-                    let key = analysis_py.title.clone();
-                    if let Some(PendingResult::RustDone { page_ref, analysis }) =
-                        pending.remove(&key)
+                Ok((key, analysis_py)) => {
+                    if let Some(PendingResult::RustDone {
+                        page_ref,
+                        analysis: analysis_rust,
+                    }) = pending.remove(&key)
                     {
                         let page = read_page(&mut main_file, &mut main_buf, page_ref);
-                        compare_results(&page, &analysis, &analysis_py).unwrap();
+                        compare_results(&page, &analysis_rust, &analysis_py).unwrap();
                         compared += 1;
                     } else {
-                        pending.insert(key, PendingResult::PyDone { analysis_py });
+                        pending.insert(
+                            key,
+                            PendingResult::PyDone {
+                                analysis: analysis_py,
+                            },
+                        );
                     }
                 }
                 Err(std::sync::mpsc::TryRecvError::Disconnected) => py_done = true,

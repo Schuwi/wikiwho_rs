@@ -53,14 +53,14 @@ def imprint(obj):
 
 
 from WikiWho.wikiwho import Wikiwho
-import tests.support
 
 def process_page(page_bincode):
-    page = tests.support.PyPage.from_bincode(page_bincode)
+    page = PyPage.from_bincode(page_bincode)
     wikiwho = Wikiwho(f"{page.namespace}:{page.title}") # Use the title for identification in multi-threaded processing
     wikiwho.analyse_article_from_xml_dump(page)
-    neat_result = tests.support.PyWikiwho(wikiwho)
-    return neat_result.to_bincode()
+    key = f"{page.namespace}:{page.title}"
+    result_bincode = serialize_wikiwho_result(wikiwho, page_bincode)
+    return (key, result_bincode)
 
 from multiprocessing import Pool, Process, Queue
 

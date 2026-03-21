@@ -294,64 +294,269 @@ if '' not in sys.path:
 
 pub mod output_structs {
     use super::*;
-    use pyo3::{types::PyBytes, FromPyObject};
+    use pyo3::{
+        types::{PyBytes, PyDict, PyList, PyString},
+        FromPyObject,
+    };
+    use wikiwho::algorithm::{
+        PageAnalysis, ParagraphImmutables, ParagraphPointer, RevisionAnalysis, RevisionImmutables,
+        RevisionPointer, SentenceImmutables, SentencePointer, WordAnalysis, WordImmutables,
+        WordPointer,
+    };
 
-    #[pyclass(module = "tests.support")]
-    #[derive(FromPyObject, serde::Serialize, serde::Deserialize)]
-    pub struct PyWikiwho {
-        pub title: String,
-        pub spam_ids: Vec<i32>,
-        pub revisions: HashMap<i32, PyRevision>,
-        pub ordered_revisions: Vec<i32>,
-        pub revision_curr: PyRevision,
+    #[pyfunction]
+    pub fn serialize_wikiwho_result<'a>(
+        py_wikiwho: &Bound<'a, PyAny>,
+        page_bincode: &Bound<'a, PyBytes>,
+    ) -> PyResult<Bound<'a, PyBytes>> {
+        let page: Page = bincode::deserialize(page_bincode.as_bytes()).map_err(|err| {
+            pyo3::exceptions::PyValueError::new_err(format!(
+                "Invalid page_bincode. Expected bincode-serialized Page. Error: {err}"
+            ))
+        })?;
+
+        let page_analysis = page_analysis_from_wikiwho(py_wikiwho, &page)?;
+        let serialized = bincode::serialize(&page_analysis).unwrap();
+        Ok(PyBytes::new_bound(py_wikiwho.py(), &serialized))
     }
 
-    #[pymethods]
-    impl PyWikiwho {
-        #[new]
-        fn new(py_wikiwho: &pyo3::Bound<'_, PyAny>) -> PyResult<Self> {
-            py_wikiwho.extract::<Self>()
+    pub fn page_analysis_from_wikiwho(
+        py_wikiwho: &Bound<'_, PyAny>,
+        page: &dump_parser::Page,
+    ) -> PyResult<PageAnalysis> {
+        // iterate over values in Python dict like this: {_key: [value, ..], ...}
+        // calls closure with unique Python object id of each `value` and extracted `value` (`T`)
+        fn py_iter_ht<'a, T: FromPyObject<'a>>(
+            hashtable: &Bound<'a, PyDict>,
+            mut f: impl FnMut(usize, T) -> PyResult<()>,
+        ) -> PyResult<()> {
+            for (_hash, list) in hashtable.iter() {
+                let list: Bound<PyList> = list.downcast_into()?;
+
+                for obj in list.iter() {
+                    let obj_id = obj.as_ptr().addr();
+                    let extracted: T = obj.extract()?;
+
+                    f(obj_id, extracted)?;
+                }
+            }
+
+            Ok(())
         }
 
-        fn to_bincode<'a>(this: &Bound<'a, Self>) -> pyo3::Bound<'a, PyBytes> {
-            let serialized = bincode::serialize::<Self>(&this.borrow()).unwrap();
-            pyo3::types::PyBytes::new_bound(this.py(), &serialized)
+        let py = py_wikiwho.py();
+        let py_wikiwho: PyWikiwho = py_wikiwho.extract()?;
+
+        let dummy_revision = (RevisionAnalysis::default(), RevisionImmutables::dummy());
+        let mut result = PageAnalysis::new(dummy_revision);
+
+        // maps the wikipedia revision id to a pointer
+        let mut revision_pointers: HashMap<i32, RevisionPointer> = HashMap::new();
+
+        // maps the unique Python object id to a pointer
+        let mut paragraph_id_pointers: HashMap<usize, ParagraphPointer> = HashMap::new();
+        let mut sentence_id_pointers: HashMap<usize, SentencePointer> = HashMap::new();
+        let mut token_id_pointers: HashMap<usize, WordPointer> = HashMap::new();
+
+        // Use XML page to populate revisions
+        for revision in &page.revisions {
+            let pointer = result.new_revision(RevisionImmutables::from_revision(&revision));
+            revision_pointers.insert(revision.id, pointer.clone());
         }
+
+        // Use `paragraphs_ht`, `sentences_ht` and `tokens` attrs to build all our pointers
+        py_iter_ht(
+            py_wikiwho.paragraphs_ht.bind(py),
+            |py_paragraph_id, py_paragraph: PyParagraph| {
+                let pointer = result.new_paragraph(ParagraphImmutables::new(
+                    py_paragraph.value.to_str(py)?.into(),
+                ));
+
+                paragraph_id_pointers.insert(py_paragraph_id, pointer);
+                Ok(())
+            },
+        )?;
+
+        py_iter_ht(
+            py_wikiwho.sentences_ht.bind(py),
+            |py_sentence_id, py_sentence: PySentence| {
+                let pointer = result.new_sentence(SentenceImmutables::new(
+                    py_sentence.value.to_str(py)?.into(),
+                ));
+
+                sentence_id_pointers.insert(py_sentence_id, pointer);
+                Ok(())
+            },
+        )?;
+
+        for py_token_obj in py_wikiwho.tokens.bind(py).iter() {
+            let py_token: PyWord = py_token_obj.extract()?;
+            let word_data = WordImmutables::new(py_token.value.to_str(py)?.into());
+            let mut word_analysis = WordAnalysis::new(&revision_pointers[&py_token.origin_rev_id]);
+
+            // Let's already populate `WordAnalysis` while we're at it
+            word_analysis.latest_revision = revision_pointers[&py_token.last_rev_id].clone();
+
+            for py_id in py_token.inbound.bind(py).iter() {
+                let rev_id: i32 = py_id.extract()?;
+                let pointer = revision_pointers[&rev_id].clone();
+                word_analysis.inbound.push(pointer);
+            }
+
+            for py_id in py_token.outbound.bind(py).iter() {
+                let rev_id: i32 = py_id.extract()?;
+                let pointer = revision_pointers[&rev_id].clone();
+                word_analysis.outbound.push(pointer);
+            }
+
+            let pointer = result.new_word(word_data, word_analysis);
+            result.words.push(pointer.clone());
+            token_id_pointers.insert(py_token_obj.as_ptr().addr(), pointer);
+        }
+
+        // Populate `RevisionAnalysis`, `ParagraphAnalysis` and `SentenceAnalysis`
+        fn populate_analysis_children_ht<T>(
+            py_ordered_hashes: &Bound<PyList>,
+            py_ht: &Bound<PyDict>,
+            pointers: &HashMap<usize, T>,
+        ) -> PyResult<Vec<T>>
+        where
+            T: Clone,
+        {
+            let mut disambiguation_map: HashMap<String, usize> = HashMap::new();
+
+            let mut result = Vec::new();
+            for py_hash in py_ordered_hashes.iter() {
+                let hash: String = py_hash.extract()?;
+                let py_ht_entry: Bound<PyList> = py_ht
+                    .get_item(py_hash)?
+                    .ok_or_else(|| {
+                        pyo3::exceptions::PyValueError::new_err(format!(
+                            "Hash {hash} not found in hashtable"
+                        ))
+                    })?
+                    .downcast_into()?;
+
+                // if there are multiple children with the same hash, then they are ordered by
+                // appearance in the ordered list and we can disambiguate them by counting
+                // how many times we've seen the same hash before
+                let index = *disambiguation_map
+                    .entry(hash)
+                    .and_modify(|index| *index += 1)
+                    .or_default();
+                let py_obj = py_ht_entry.get_item(index)?;
+
+                let py_id = py_obj.as_ptr().addr();
+                let pointer = pointers[&py_id].clone();
+                result.push(pointer);
+            }
+            Ok(result)
+        }
+
+        py_iter_ht(
+            py_wikiwho.sentences_ht.bind(py),
+            |py_sentence_id, py_sentence: PySentence| {
+                let sentence_ptr = &sentence_id_pointers[&py_sentence_id];
+                let sentence_analysis = &mut result[sentence_ptr];
+
+                let py_words = py_sentence.words.bind(py);
+                for py_word in py_words.iter() {
+                    let py_id = py_word.as_ptr().addr();
+                    let pointer = token_id_pointers[&py_id].clone();
+                    sentence_analysis.words_ordered.push(pointer);
+                }
+                Ok(())
+            },
+        )?;
+
+        py_iter_ht(
+            py_wikiwho.paragraphs_ht.bind(py),
+            |py_paragraph_id, py_paragraph: PyParagraph| {
+                let paragraph_ptr = &paragraph_id_pointers[&py_paragraph_id];
+                let paragraph_analysis = &mut result[paragraph_ptr];
+
+                let py_sentence_hashes = py_paragraph.ordered_sentences;
+                paragraph_analysis.sentences_ordered = populate_analysis_children_ht(
+                    py_sentence_hashes.bind(py),
+                    &py_paragraph.sentences.bind(py),
+                    &sentence_id_pointers,
+                )?;
+                Ok(())
+            },
+        )?;
+
+        for (_, py_revision_obj) in py_wikiwho.revisions.bind(py).iter() {
+            let py_revision: PyRevision = py_revision_obj.extract()?;
+            let revision_ptr = &revision_pointers[&py_revision.id];
+            let revision_analysis = &mut result[revision_ptr];
+
+            revision_analysis.original_adds = py_revision.original_adds;
+
+            let py_paragraphs = py_revision.ordered_paragraphs;
+            revision_analysis.paragraphs_ordered = populate_analysis_children_ht(
+                py_paragraphs.bind(py),
+                &py_revision.paragraphs.bind(py),
+                &paragraph_id_pointers,
+            )?;
+
+            result.revisions_by_id.insert(py_revision.id, revision_ptr.clone());
+        }
+
+        // Copy simple fields
+        for py_revision in py_wikiwho.ordered_revisions.bind(py).iter() {
+            let py_revid: i32 = py_revision.extract()?;
+            let revision_pointer = revision_pointers[&py_revid].clone();
+            result.ordered_revisions.push(revision_pointer);
+        }
+
+        result.spam_ids = py_wikiwho.spam_ids;
+        result.current_revision = revision_pointers[&py_wikiwho.revision_curr.id].clone();
+
+        Ok(result)
     }
 
-    #[pyclass(module = "tests.support")]
-    #[derive(FromPyObject, serde::Serialize, serde::Deserialize)]
-    pub struct PyRevision {
-        pub id: i32,
-        pub paragraphs: HashMap<String, Vec<PyParagraph>>,
-        pub ordered_paragraphs: Vec<String>,
-        pub original_adds: usize,
+    #[derive(FromPyObject)]
+    struct PyWikiwho {
+        // title: Py<PyString>,
+        revisions: Py<PyDict>, /* {int: PyRevision, ...} - key = wikipedia revision id */
+        paragraphs_ht: Py<PyDict>, /* {string: [PyParagraph, ..], ...} - key = hash */
+        sentences_ht: Py<PyDict>, /* {string: [PySentence, ..], ...} - key = hash */
+        tokens: Py<PyList>,    /* [PyWord, ...] */
+
+        spam_ids: Vec<i32>,
+
+        ordered_revisions: Py<PyList>, /* [int, ...] - wikipedia revision ids */
+        revision_curr: PyRevision,
     }
 
-    #[pyclass(module = "tests.support")]
-    #[derive(FromPyObject, serde::Serialize, serde::Deserialize)]
-    pub struct PyParagraph {
-        pub value: String,
-        pub sentences: HashMap<String, Vec<PySentence>>,
-        pub ordered_sentences: Vec<String>,
+    #[derive(FromPyObject)]
+    struct PyRevision {
+        id: i32,
+        paragraphs: Py<PyDict>, /* {string: [PyParagraph, ..], ...} - key = hash */
+        ordered_paragraphs: Py<PyList>, /* [string, ...] - hashes */
+        original_adds: usize,
     }
 
-    #[pyclass(module = "tests.support")]
-    #[derive(FromPyObject, serde::Serialize, serde::Deserialize)]
-    pub struct PySentence {
-        pub value: String,
-        pub words: Vec<PyWord>,
+    #[derive(FromPyObject)]
+    struct PyParagraph {
+        value: Py<PyString>,
+        sentences: Py<PyDict>, /* {string: [PySentence, ..], ...} - key = hash */
+        ordered_sentences: Py<PyList>, /* [string, ...] - hashes */
     }
 
-    #[pyclass(module = "tests.support")]
-    #[derive(FromPyObject, serde::Serialize, serde::Deserialize)]
-    pub struct PyWord {
-        pub token_id: i32,
-        pub value: String,
-        pub origin_rev_id: i32,
-        pub last_rev_id: i32,
-        pub outbound: Vec<i32>,
-        pub inbound: Vec<i32>,
+    #[derive(FromPyObject)]
+    struct PySentence {
+        value: Py<PyString>,
+        words: Py<PyList>, /* [PyWord, ...] */
+    }
+
+    #[derive(FromPyObject)]
+    struct PyWord {
+        value: Py<PyString>,
+        origin_rev_id: i32,
+        last_rev_id: i32,
+        outbound: Py<PyList>, /* [int, ...] - revision ids */
+        inbound: Py<PyList>,  /* [int, ...] - revision ids */
     }
 }
 
