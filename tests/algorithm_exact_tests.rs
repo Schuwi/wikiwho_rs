@@ -6,8 +6,7 @@ use std::{
     collections::HashMap,
     fs::File,
     io::{BufReader, Read, Seek, SeekFrom, Write},
-    path::PathBuf,
-    sync::mpsc::{Receiver, Sender},
+    sync::mpsc::Sender,
 };
 
 use pyo3::{import_exception, types::PyDict};
@@ -20,7 +19,7 @@ use wikiwho::{
 mod common;
 
 use common::output_structs::serialize_wikiwho_result;
-use common::{input_structs, output_structs};
+use common::input_structs;
 use common::{load_local_module, prelude::*};
 
 #[derive(Clone, Copy)]
@@ -51,21 +50,20 @@ wikiwho.analyse_article_from_xml_dump(page)
     page_analysis_from_wikiwho(&py_wikiwho, page).unwrap()
 }
 
+/// Starts a Python multiprocessing.Pool in a separate Process and spawns a result
+/// collection thread. Python workers read page bincode directly from `input_path`
+/// and write result bincode to per-worker files in `result_dir`.
 ///
-///
-/// Will run the analysis in a separate python process using multiprocessing.Pool.
-/// Thus it will not block the main thread.
-///
-/// # Returns
-///
-/// The `Process` object that is running the analysis.
+/// Returns the Python work queue (`Py<PyAny>`). The caller puts `(offset, length)`
+/// tuples into it and sends `None` to signal completion.
 fn run_analysis_python_mt(
     py: Python<'_>,
-    work_receiver: Receiver<PageRef>,
     result_sender: Sender<(String, PageAnalysis)>,
-    temp_path: PathBuf,
-) -> Bound<'_, PyAny> {
-    let threads = std::thread::available_parallelism().unwrap().get() - 1;
+    input_path: &std::path::Path,
+    result_dir: &std::path::Path,
+) -> Py<PyAny> {
+    // leave some headroom for the Rust side
+    let threads = std::thread::available_parallelism().unwrap().get() - 2;
     let threads = usize::max(1, threads);
 
     let py_support = load_local_module(py, "tests.support").unwrap();
@@ -86,92 +84,76 @@ fn run_analysis_python_mt(
     let result = py_support
         .getattr("run_analysis_python_mt")
         .unwrap()
-        .call1((threads,))
+        .call1((
+            threads,
+            input_path.to_str().unwrap(),
+            result_dir.to_str().unwrap(),
+        ))
         .unwrap()
         .downcast_into::<PyDict>()
         .unwrap();
 
-    let py_work_receiver = result.get_item("work_receiver").unwrap().unwrap().unbind();
-    let py_result_sender = result.get_item("result_sender").unwrap().unwrap().unbind();
+    let py_work_queue = result.get_item("work_receiver").unwrap().unwrap().unbind();
+    let py_result_queue = result.get_item("result_sender").unwrap().unwrap().unbind();
 
-    // Bridge thread: read pages from temp file and send to Python pool
-    std::thread::spawn(move || {
-        let mut file = File::open(&temp_path).unwrap();
-        let mut buf = Vec::new();
-        while let Ok(page_ref) = work_receiver.recv() {
-            file.seek(SeekFrom::Start(page_ref.offset)).unwrap();
-            buf.resize(page_ref.length as usize, 0);
-            file.read_exact(&mut buf).unwrap();
-            Python::with_gil(|py| {
-                let page_bytes = pyo3::types::PyBytes::new_bound(py, &buf);
-                py_work_receiver
-                    .call_method1(py, "put_nowait", (page_bytes,))
-                    .unwrap();
-            });
-        }
-        // signal end of work to Python pool (support.py uses iter(queue.get, None))
-        Python::with_gil(|py| {
-            py_work_receiver
-                .call_method1(py, "put_nowait", (py.None(),))
-                .unwrap();
-        });
-    });
-
-    // Result collection thread: receive processed pages from Python pool and send to main thread
+    // Result collection thread: receive (key, path, offset, length) tuples from Python,
+    // read result bincode from per-worker files outside the GIL, and forward to main thread.
     std::thread::spawn(move || {
         import_exception!(queue, Empty);
 
         let mut last_log_time = std::time::Instant::now();
         let mut received = 0;
 
+        let mut file_cache: HashMap<String, File> = HashMap::new();
         let mut result_buffer = Vec::new();
         loop {
-            // Acquire the GIL only for one get() call at a time.
-            // Queue.get(timeout) releases the GIL internally while waiting,
-            // allowing the bridge thread to enqueue pages concurrently.
-            let item =
-                Python::with_gil(
-                    |py| match py_result_sender.call_method1(py, "get", (0.5f64,)) {
-                        Ok(obj) => {
-                            if obj.extract::<String>(py).ok().as_deref() == Some("close") {
-                                return Ok(None);
-                            }
-                            let py_result: &pyo3::Bound<'_, pyo3::types::PyTuple> =
-                                obj.downcast_bound(py).unwrap();
-                            let key: String = py_result.get_item(0).unwrap().extract().unwrap();
-                            let bincoded_page: pyo3::Bound<pyo3::types::PyBytes> = py_result
-                                .get_item(1)
-                                .unwrap()
-                                .downcast_into()
-                                .unwrap();
-
-                            result_buffer.clear();
-                            result_buffer.extend_from_slice(bincoded_page.as_bytes());
-
-                            received += 1;
-
-                            let is_elapsed = last_log_time.elapsed().as_secs() >= 5;
-                            if is_elapsed || received % 20 == 0 {
-                                if is_elapsed {
-                                    println!("Python processing... ({received})");
-                                } else {
-                                    println!("Python processing... ({received} pages done)");
-                                }
-                                last_log_time = std::time::Instant::now();
-                            }
-
-                            Ok(Some((key, &result_buffer)))
+            // Acquire the GIL only to extract a small metadata tuple.
+            // Queue.get(timeout) releases the GIL internally while waiting.
+            let item = Python::with_gil(
+                |py| match py_result_queue.call_method1(py, "get", (0.5f64,)) {
+                    Ok(obj) => {
+                        if obj.extract::<String>(py).ok().as_deref() == Some("close") {
+                            return Ok(None);
                         }
-                        Err(err) if err.is_instance_of::<Empty>(py) => Err(()),
-                        Err(err) => panic!("Error in python process: {:?}", err),
-                    },
-                );
+                        let py_result: &pyo3::Bound<'_, pyo3::types::PyTuple> =
+                            obj.downcast_bound(py).unwrap();
+                        let key: String = py_result.get_item(0).unwrap().extract().unwrap();
+                        let path: String = py_result.get_item(1).unwrap().extract().unwrap();
+                        let offset: u64 = py_result.get_item(2).unwrap().extract().unwrap();
+                        let length: u64 = py_result.get_item(3).unwrap().extract().unwrap();
 
-            // Deserialize outside of GIL to minimize time spent holding it
+                        Ok(Some((key, path, offset, length)))
+                    }
+                    Err(err) if err.is_instance_of::<Empty>(py) => Err(()),
+                    Err(err) => panic!("Error in python process: {:?}", err),
+                },
+            );
+
+            // Read result bincode from per-worker file and deserialize — all outside the GIL
             match item {
-                Ok(Some((key, result_bytes))) => result_sender
-                    .send((key, bincode::deserialize(result_bytes).unwrap()))
-                    .unwrap(),
+                Ok(Some((key, path, offset, length))) => {
+                    let file = file_cache
+                        .entry(path.clone())
+                        .or_insert_with(|| File::open(&path).unwrap());
+                    file.seek(SeekFrom::Start(offset)).unwrap();
+                    result_buffer.resize(length as usize, 0);
+                    file.read_exact(&mut result_buffer).unwrap();
+
+                    received += 1;
+                    let is_elapsed = last_log_time.elapsed().as_secs() >= 5;
+                    if is_elapsed || received % 20 == 0 {
+                        if is_elapsed {
+                            println!("Python processing... ({received})");
+                        } else {
+                            println!("Python processing... ({received} pages done)");
+                        }
+                        last_log_time = std::time::Instant::now();
+                    }
+
+                    result_sender
+                        .send((key, bincode::deserialize(&result_buffer).unwrap()))
+                        .unwrap();
+                }
                 Ok(None) => break,
                 Err(()) => {} // timeout, retry
             }
@@ -179,7 +161,7 @@ fn run_analysis_python_mt(
         println!("Python processing done, received {received} results");
     });
 
-    result.get_item("process").unwrap().unwrap()
+    py_work_queue
 }
 
 #[test]
@@ -513,22 +495,25 @@ fn first_1000_pages_mt() {
     const PAGE_COUNT: usize = 1000;
 
     let reader = common::open_test_dump();
-    let temp_path = std::env::temp_dir().join(format!("wikiwho_test_{}.bin", std::process::id()));
+    let pid = std::process::id();
+    let temp_path = std::env::temp_dir().join(format!("wikiwho_test_{pid}.bin"));
+    let result_dir = std::env::temp_dir().join(format!("wikiwho_test_{pid}_results"));
     let cleanup_path = temp_path.clone();
+    let cleanup_result_dir = result_dir.clone();
 
-    // pre-create temp file so consumer threads can open it before the parser starts writing
+    // pre-create temp file and result directory
     File::create(&temp_path).unwrap();
+    std::fs::create_dir_all(&result_dir).unwrap();
 
-    // python process
-    let (py_sender, py_receiver) = {
-        let (work_sender, work_receiver) = std::sync::mpsc::channel::<PageRef>();
+    // python process — returns the work queue for the producer to feed
+    let (py_work_queue, py_receiver) = {
         let (result_sender, result_receiver) = std::sync::mpsc::channel();
 
-        Python::with_gil(|py| {
-            run_analysis_python_mt(py, work_receiver, result_sender, temp_path.clone());
+        let work_queue = Python::with_gil(|py| {
+            run_analysis_python_mt(py, result_sender, &temp_path, &result_dir)
         });
 
-        (work_sender, result_receiver)
+        (work_queue, result_receiver)
     };
 
     // rust thread
@@ -572,7 +557,8 @@ fn first_1000_pages_mt() {
         (work_sender, result_receiver)
     };
 
-    // parser/producer thread — serializes pages to temp file, sends PageRefs via unbounded channels
+    // parser/producer thread — serializes pages to temp file, sends PageRefs to Rust worker
+    // and (offset, length) tuples to Python work queue (tiny GIL acquisitions)
     std::thread::spawn(move || {
         let mut file = File::create(&temp_path).unwrap();
         let mut parser = DumpParser::new(BufReader::new(reader)).unwrap();
@@ -583,10 +569,21 @@ fn first_1000_pages_mt() {
             let length = bytes.len() as u64;
             file.write_all(&bytes).unwrap();
             let page_ref = PageRef { offset, length };
-            py_sender.send(page_ref).unwrap();
             rust_sender.send(page_ref).unwrap();
+            // Send tiny (offset, length) tuple to Python — minimal GIL time
+            Python::with_gil(|py| {
+                py_work_queue
+                    .call_method1(py, "put_nowait", ((offset, length),))
+                    .unwrap();
+            });
             offset += length;
         }
+        // Signal end of work to Python pool
+        Python::with_gil(|py| {
+            py_work_queue
+                .call_method1(py, "put_nowait", (py.None(),))
+                .unwrap();
+        });
 
         println!("Producer thread done, wrote {PAGE_COUNT} pages to temp file");
     });
@@ -681,4 +678,5 @@ fn first_1000_pages_mt() {
         pending.keys().collect::<Vec<_>>()
     );
     let _ = std::fs::remove_file(&cleanup_path);
+    let _ = std::fs::remove_dir_all(&cleanup_result_dir);
 }
