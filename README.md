@@ -1,10 +1,14 @@
-# wikiwho_rs
+<div class="rustdoc-hidden">
+
+# wikiwho
+
+</div>
 
 A high-performance Rust implementation of the WikiWho algorithm for token-level authorship tracking in Wikimedia pages.
 
 ## Overview
 
-`wikiwho` is a Rust library that implements the [WikiWho algorithm](https://github.com/wikiwho/WikiWho), enabling users to track authorship on a token level (token ≈ word) across all revisions of a Wikimedia page (e.g., Wikipedia, Wiktionary). It is designed to process entire Wikipedia/Wiktionary XML dumps efficiently, offering significant performance improvements over the original Python implementation by Fabian Flöck and Maribel Acosta.
+`wikiwho` is a Rust library that implements the [WikiWho algorithm](https://github.com/wikiwho/WikiWho), enabling users to track authorship on a token level (token ≈ word) across all revisions of a Wikimedia page (e.g., Wikipedia, Wiktionary). It reimplements the original algorithm by Fabian Flöck and Maribel Acosta with significant performance improvements, allowing for efficient processing of entire Wikipedia/Wiktionary XML dumps.
 
 **Key Features:**
 
@@ -13,9 +17,13 @@ A high-performance Rust implementation of the WikiWho algorithm for token-level 
 - **Modular Design**: Separate parser and algorithm modules that can be used independently.
 - **Faithful Implementation**: Aims to provide results comparable to the original algorithm, with an option to use the original Python diff algorithm for exact comparisons.
 
+<div class="rustdoc-hidden">
+
 ## Motivation
 
 The original Python implementation of WikiWho could process about 300 pages in one to two minutes. In contrast, `wikiwho_rs` can process an entire German Wiktionary dump (approximately 1.3 million pages) in just 2 minutes using 8 processor cores. This performance boost makes large-scale authorship analysis feasible and efficient.
+
+</div>
 
 ## Installation
 
@@ -32,7 +40,7 @@ wikiwho = "0.1"
 
 Here's a minimal example of how to load a Wikimedia XML dump and analyze a page:
 
-```rust
+```rust,no_run
 use wikiwho::dump_parser::DumpParser;
 use wikiwho::algorithm::PageAnalysis;
 use std::fs::File;
@@ -67,9 +75,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
 To process a full dump, you can iterate over all pages:
 
-```rust
+```rust,no_run
 use wikiwho::dump_parser::DumpParser;
-use wikiwho::algorithm::Analysis;
+use wikiwho::algorithm::PageAnalysis;
 use std::fs::File;
 use std::io::BufReader;
 
@@ -79,8 +87,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut parser = DumpParser::new(reader)?;
 
     while let Some(page) = parser.parse_page()? {
-        // Analyze each page in parallel or sequentially
-        let analysis = Analysis::analyse_page(&page.revisions)?;
+        // Analyze each page (can be parallelized)
+        let analysis = PageAnalysis::analyse_page(&page.revisions)?;
 
         // Your processing logic here
     }
@@ -97,6 +105,61 @@ While XML parsing is inherently linear, you can process pages in parallel once t
 - Distribute parsed pages to worker threads for analysis.
 - Use threading libraries like `std::thread` or crates like `rayon` for concurrency.
 
+**Example using multiple threads:**
+
+```rust,no_run
+use wikiwho::dump_parser::{DumpParser, Page};
+use wikiwho::algorithm::PageAnalysis;
+use std::fs::File;
+use std::io::BufReader;
+use std::sync::{mpsc::channel, Arc, Mutex};
+use std::thread;
+
+fn main() -> Result<(), Box<dyn std::error::Error>> {
+    let xml_dump = File::open("dewiktionary-20240901-pages-meta-history.xml")?;
+    let reader = BufReader::new(xml_dump);
+    let mut parser = DumpParser::new(reader)?;
+
+    // Channel to send pages to worker threads
+    let (tx, rx) = channel::<Page>();
+    let rx = Arc::new(Mutex::new(rx));
+
+    // Spawn worker threads
+    let num_workers = std::thread::available_parallelism().map(|n| n.get()).unwrap_or(1);
+    let workers: Vec<_> = (0..num_workers)
+        .map(|_| {
+            let rx = Arc::clone(&rx);
+            thread::spawn(move || {
+                loop {
+                    let page = rx.lock().unwrap().recv();
+                    match page {
+                        Ok(page) => {
+                            // Analyze the page
+                            let analysis = PageAnalysis::analyse_page(&page.revisions).unwrap();
+                            // Processing logic
+                        }
+                        Err(_) => break,
+                    }
+                }
+            })
+        })
+        .collect();
+
+    // Parse pages and send them to workers
+    while let Some(page) = parser.parse_page()? {
+        tx.send(page)?;
+    }
+    drop(tx); // Close the channel
+
+    // Wait for all workers to finish
+    for worker in workers {
+        worker.join().unwrap();
+    }
+
+    Ok(())
+}
+```
+
 ## Modules and API
 
 ### `dump_parser`
@@ -107,17 +170,12 @@ While XML parsing is inherently linear, you can process pages in parallel once t
 ### `algorithm`
 
 - **Purpose**: Implements the WikiWho algorithm.
-- **Usage**: Call `Analysis::analyse_page(&page.revisions)` to analyze the revisions of a page.
+- **Usage**: Call `PageAnalysis::analyse_page(&page.revisions)` to analyze the revisions of a page.
 
 ### `utils`
 
 - **Purpose**: Provides utility functions.
 - **Key Function**: `iterate_revision_tokens()` for easy iteration over tokens in a revision.
-
-### Data Structures
-
-- **Immutables and Analysis**: Nodes in the graph (revisions, paragraphs, sentences, tokens) are split into immutable and mutable parts for efficient processing.
-- **Pointers**: Use pointer structs (e.g., `SentencePointer`) to reference nodes. Access mutable data via indexing into the `Analysis` struct (e.g., `analysis[word_pointer].origin_revision`).
 
 ## Dependencies
 
@@ -126,34 +184,40 @@ While XML parsing is inherently linear, you can process pages in parallel once t
 ## Performance Considerations
 
 - **Parallel Analysis**: Users are encouraged to implement parallel processing for the analysis phase to maximize performance.
-- **Memory Usage**: The parser processes one page at a time, so memory usage is constant relative to the dump size. Ensure you drop processed `Page` and `Analysis` structs to free memory.
+- **Parsing Bottleneck**: XML parsing is linear and may become a bottleneck. Running the parser in a single thread and distributing analysis can optimize performance.
+- **Memory Usage**: The parser processes one page at a time, so memory usage is constant relative to the dump size. Ensure you drop processed `Page` and `PageAnalysis` structs to free memory.
 - **Diff Algorithm Choice**: By default, a faster diff algorithm is used. For exact results matching the original implementation, enable the `python-diff` feature.
 
 ## Features and Configuration
 
-### Python Diff Feature
+### Diff Algorithm Selection
 
-To use the original Python diff algorithm:
+By default, `wikiwho` uses a fast Rust implementation of the histogram diff algorithm (using the `imara-diff` crate). To use the original Python diff algorithm for exact comparison:
 
 ```toml
 [dependencies]
 wikiwho = { version = "0.1", features = ["python-diff"] }
 ```
 
-- **Note**: This significantly slows down processing as it calls the Python diff implementation via `pyo3`.  
-  Multi-threading will be less effective because of GIL contention.
-- **Purpose**: Useful for replicating the exact results of the original implementation.
+**Note**: Enabling `python-diff` significantly slows down processing as it calls the Python implementation via `pyo3`. This feature is intended for testing and validation purposes. Multi-threading will be less effective because of GIL contention.
 
 ### Logging and Error Handling
 
 - Uses the `tracing` crate for logging warnings and errors.
-- The parser is designed to recover from errors. Enable the `strict` feature to terminate parsing on errors.
+- The parser is designed to recover from errors when possible. Enable the `strict` feature to make the parser terminate upon encountering errors.
+
+```toml
+[dependencies]
+wikiwho = { version = "0.1", features = ["strict"] }
+```
 
 ## Limitations
 
-- **XML Format Compatibility**: Tested with Wikimedia dump XML format version 0.11. Dumps from other projects or versions may have variations.
-- **Accuracy**: While aiming for faithful reimplementation, slight variations may occur due to the different diff algorithm.
-- **Other Wiki Formats**: Optimized for Wikipedia-like wikis. Users can construct `Page` and `Revision` structs manually for other data sources.
+- **XML Format Compatibility**: Tested with Wikimedia dump XML format version 0.11. Dumps from other versions or projects may have variations that could cause parsing issues.
+- **Accuracy**: While the library aims for a faithful reimplementation, slight variations may occur due to differences in the diff algorithm.
+- **Other Wiki Formats**: Optimized for Wikipedia-like wikis. Users can manually construct `Page` and `Revision` structs from other data sources if needed.
+
+<div class="rustdoc-hidden">
 
 ## Future Plans
 
@@ -207,6 +271,8 @@ cargo test
 - [x] add proper readme
 - [ ] add performance comparison to python implementation
 
+</div>
+
 ## Acknowledgments
 
 This library was developed through a mix of hard work, creativity, and collaboration with various tools, including GitHub Copilot and ChatGPT. It has been an exciting journey filled with coding and brainstorming 💛.
@@ -214,6 +280,7 @@ This library was developed through a mix of hard work, creativity, and collabora
 Special thanks to the friendly guidance and support of ChatGPT along the way, helping with documentation and understanding the original implementation to make this library as robust and performant as possible.
 
 ## Licensing
+
 This project is primarily licensed under the Mozilla Public License 2.0.
 
 However, parts of this project are derived from the
