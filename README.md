@@ -211,6 +211,17 @@ wikiwho = { version = "0.1", features = ["python-diff"] }
 wikiwho = { version = "0.1", features = ["strict"] }
 ```
 
+### Optimized String Processing
+
+By default, text splitting functions use straightforward implementations based on `String::replace()` and character iteration. Enable the `optimized-str` feature for faster string processing:
+
+```toml
+[dependencies]
+wikiwho = { version = "0.1", features = ["optimized-str"] }
+```
+
+This swaps in alternative implementations that use the Aho-Corasick algorithm for tokenization, `memchr::memmem` with scratch buffers for paragraph and sentence splitting, and the `unicode-case-mapping` crate for lowercasing. These produce identical results but may be faster depending on the input text.
+
 ## Limitations
 
 - **XML Format Compatibility**: Tested with Wikimedia dump XML format version 0.11. Dumps from other versions or projects may have variations that could cause parsing issues.
@@ -228,8 +239,9 @@ wikiwho = { version = "0.1", features = ["strict"] }
 
 ## Testing and Validation
 
-- **Unit Tests**: Includes tests that compare results with the original Python implementation.
-- **Fuzzy Comparison Testing**: Plans to add tests that measure differences when using different diff algorithms.
+- **Exact comparison tests** (`algorithm_exact_tests.rs`): Compare the Rust implementation's results against the original Python WikiWho, token by token. These require the `python-diff` feature so that both implementations use the same diff algorithm. Run them with `cargo test --features python-diff`.
+- **Fuzzy Comparison Testing**: Plans to add statistical comparison tests that measure differences when using different diff algorithms. These will not require the `python-diff` feature.
+- **Temporary files**: Some tests use temporary files for IPC coordination between Rust and Python. These files can be large depending on the input dump. Their location follows `std::env::temp_dir()`, which can be controlled by setting the `TMPDIR` environment variable.
 - **Community Feedback**: Seeking input from users testing with different languages and datasets.
 
 ## Contributing
@@ -250,13 +262,19 @@ Contributions are welcome! Here are some ways you can help:
 
 ### Development Setup
 
-The test suite calls into the original Python WikiWho implementation to validate results, so a Python virtual environment must be active when running `cargo test`. Without it, tests will fail with cryptic Python/pyo3 errors.
+The exact comparison tests call into the original Python WikiWho implementation to validate results, so a Python virtual environment must be active when running them. Without it, tests will fail with cryptic Python/pyo3 errors.
 
 ```sh
 python -m venv venv
 source venv/bin/activate   # on Windows: venv\Scripts\activate
 pip install -r requirements.txt
-cargo test
+cargo test --features python-diff
+```
+
+To control where large temporary IPC files are written, set `TMPDIR` before running:
+
+```sh
+TMPDIR=/path/with/space cargo test --features python-diff
 ```
 
 ## Development and Support

@@ -322,6 +322,19 @@ impl ParasentPointer for SentencePointer {
 }
 
 impl PageAnalysis {
+    /// Runs the WikiWho authorship analysis on an ordered sequence of revisions.
+    ///
+    /// This is the main entry point for the algorithm. It processes revisions from
+    /// oldest to newest, performing spam/vandalism detection and building a
+    /// token-level authorship graph.
+    ///
+    /// `xml_revisions` must be in chronological order (oldest first), as returned
+    /// by [`DumpParser::parse_page`](crate::dump_parser::DumpParser::parse_page).
+    ///
+    /// # Errors
+    ///
+    /// Returns [`AnalysisError::NoValidRevisions`] if every revision in the input
+    /// is classified as spam or has empty/deleted text.
     pub fn analyse_page(xml_revisions: &[Revision]) -> Result<Self, AnalysisError> {
         // This means we'll always have an unreferenced dummy revision in the revisions array at index 0,
         // which is not ideal but simplifies the implementation and data model significantly.
@@ -498,7 +511,8 @@ impl PageAnalysis {
         // Analysis of the paragraphs in the current revision
         let (unmatched_paragraphs_curr, unmatched_paragraphs_prev, matched_paragraphs_prev, _) =
             self.analyse_parasents_in_revgraph(
-                #[allow(clippy::cloned_ref_to_slice_refs)] // clone is needed to a avoid borrow conflict
+                #[allow(clippy::cloned_ref_to_slice_refs)]
+                // clone is needed to a avoid borrow conflict
                 &[self.current_revision.clone()],
                 self.internals.revision_prev.as_ref().cloned().as_slice(),
             );

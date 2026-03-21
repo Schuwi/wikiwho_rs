@@ -261,6 +261,26 @@ impl RevisionBuilder {
     }
 }
 
+/// A streaming parser for Wikimedia XML dump files.
+///
+/// Parses pages one at a time from a `<mediawiki>` XML export.
+/// The `<siteinfo>` header is consumed during construction via [`DumpParser::new`],
+/// and subsequent calls to [`parse_page`](DumpParser::parse_page) yield pages sequentially.
+///
+/// # Example
+///
+/// ```rust,no_run
+/// use wikiwho::dump_parser::DumpParser;
+/// use std::io::BufReader;
+/// use std::fs::File;
+///
+/// let reader = BufReader::new(File::open("dump.xml").unwrap());
+/// let mut parser = DumpParser::new(reader).unwrap();
+///
+/// while let Some(page) = parser.parse_page().unwrap() {
+///     println!("{}", page.title);
+/// }
+/// ```
 pub struct DumpParser<R: BufRead> {
     tag_interner: TagStringInterner,
     xml_parser: quick_xml::Reader<R>,
@@ -386,6 +406,15 @@ impl<R: BufRead> DumpParser<R> {
         }
     }
 
+    /// Creates a new parser from the given buffered reader.
+    ///
+    /// Immediately parses the `<siteinfo>` header from the XML stream.
+    /// After construction, call [`parse_page`](DumpParser::parse_page) to iterate over pages.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`ParsingError`] if the XML is malformed or the `<siteinfo>` block
+    /// cannot be parsed.
     pub fn new(reader: R) -> Result<Self, ParsingError> {
         let mut new = Self::new_impl(reader, true);
 
@@ -394,10 +423,16 @@ impl<R: BufRead> DumpParser<R> {
         Ok(new)
     }
 
+    /// Returns the site information parsed from the `<siteinfo>` header.
     pub fn site_info(&self) -> &SiteInfo {
         &self.site_info
     }
 
+    /// Returns the number of bytes consumed from the underlying reader so far.
+    ///
+    /// This can be used for progress reporting when processing large dump files,
+    /// or to determine the byte extent of a page in the serialized XML
+    /// (by comparing the value before and after a [`parse_page`](DumpParser::parse_page) call).
     pub fn bytes_consumed(&self) -> u64 {
         self.xml_parser.buffer_position()
     }
@@ -650,6 +685,16 @@ impl<R: BufRead> DumpParser<R> {
         Ok(())
     }
 
+    /// Parses the next `<page>` element from the XML stream.
+    ///
+    /// # Return values
+    ///
+    /// - `Ok(Some(page))` — a complete page was successfully parsed.
+    /// - `Ok(None)` — the end of the stream was reached cleanly; no more pages.
+    /// - `Err(ParsingError::Eof)` — the stream ended mid-page (truncated/malformed dump).
+    /// - `Err(other)` — an XML parsing error occurred.
+    ///
+    /// Revisions within a page are returned in document order (oldest first).
     pub fn parse_page(&mut self) -> Result<Option<Page>, ParsingError> {
         let span = tracing::span!(tracing::Level::DEBUG, "parse_page", self=?self, title=tracing::field::Empty);
 

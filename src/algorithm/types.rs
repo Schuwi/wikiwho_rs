@@ -34,6 +34,11 @@ impl Debug for StringLenLimited<'_> {
     }
 }
 
+/// A container that holds either a single element or a `Vec`.
+///
+/// Memory optimization for hash-map values where the common case is exactly
+/// one entry (e.g., paragraph and sentence lookups by hash). Avoids a heap
+/// allocation for the single-element case.
 #[derive(Clone)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum MaybeVec<T> {
@@ -361,16 +366,27 @@ impl WordImmutables {
     }
 }
 
+/// Mutable analysis data tracked for each word (token) across revisions.
 #[derive(Clone)]
 pub struct WordAnalysis {
+    /// The revision that first introduced this word. Set once and never changed.
     pub origin_revision: RevisionPointer,
+    /// The most recent revision in which this word was present (matched).
+    /// Updated each time the word is found in a new revision.
     pub latest_revision: RevisionPointer,
-    /// whether this word was found in the current revision
+    /// Whether this word was found in the revision currently being analysed.
     pub(crate) matched_in_current: bool,
 
-    // words may be re-added after being removed
-    pub inbound: Vec<RevisionPointer>, // the revisions where this word was added (i.e. present in the revision but not present in the previous revision)
-    pub outbound: Vec<RevisionPointer>, // the revisions where this word was removed (i.e. not present in the revision but present in the previous revision)
+    /// Revisions where this word was re-added after having been removed.
+    ///
+    /// Each entry records a revision in which the word reappeared after being
+    /// absent in the preceding (non-spam) revision.
+    pub inbound: Vec<RevisionPointer>,
+    /// Revisions where this word was removed.
+    ///
+    /// Each entry records a revision in which the word was absent after being
+    /// present in the preceding revision.
+    pub outbound: Vec<RevisionPointer>,
 }
 
 impl WordAnalysis {
@@ -505,6 +521,24 @@ pub enum AnalysisError {
     NoValidRevisions,
 }
 
+/// Trait for type-safe navigation of the [`PageAnalysis`] graph.
+///
+/// Each node type (revision, paragraph, sentence, word) has a pointer that
+/// implements this trait. A pointer combines an index into `PageAnalysis`'s
+/// storage arrays with a shared reference to the node's immutable data.
+///
+/// Use pointers to index into `PageAnalysis`:
+///
+/// ```rust,ignore
+/// let data: &RevisionAnalysis = &analysis[&rev_ptr];
+/// ```
+///
+/// **Important:** A pointer is only valid for the `PageAnalysis` that created it.
+/// Using a pointer from one analysis to index into a different one will return
+/// unrelated data or panic if the index is out of bounds.
+///
+/// Implemented by [`RevisionPointer`], [`ParagraphPointer`],
+/// [`SentencePointer`], and [`WordPointer`].
 pub trait Pointer: Clone {
     type Data;
 

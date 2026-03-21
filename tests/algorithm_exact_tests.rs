@@ -482,7 +482,6 @@ fn known_bad_example_hallo() {
 }
 
 #[test]
-#[ignore] // takes quite some time to skim the whole dump twice
 fn random_pages_100() {
     let reader1 = common::open_test_dump();
     let reader2 = common::open_test_dump();
@@ -494,6 +493,8 @@ fn random_pages_100() {
 }
 
 #[test]
+// this test takes quite some time and especially a LOT of memory (~30GB), could be optimized further if needed
+#[ignore]
 fn first_1000_pages_mt() {
     const PAGE_COUNT: usize = 1000;
 
