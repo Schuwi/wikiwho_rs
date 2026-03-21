@@ -4,6 +4,7 @@ use compact_str::CompactString;
 use rustc_hash::FxHashMap;
 use std::{
     collections::HashMap,
+    fmt::Debug,
     ops::{Deref, Index, IndexMut},
     sync::Arc,
 };
@@ -14,6 +15,25 @@ use crate::{
 };
 
 use super::PageAnalysisInternals;
+
+struct StringLenLimited<'a>(&'a str, usize);
+
+impl Debug for StringLenLimited<'_> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        if self.0.len() > self.1 {
+            let split = self
+                .0
+                .char_indices()
+                .skip(self.1)
+                .next()
+                .map(|(idx, _)| idx)
+                .unwrap_or(self.0.len());
+            write!(f, "{}...", &self.0[..split])
+        } else {
+            write!(f, "{}", self.0)
+        }
+    }
+}
 
 #[derive(Clone)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
@@ -88,6 +108,17 @@ impl Deref for RevisionPointer {
     }
 }
 
+impl Debug for RevisionPointer {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "RevisionPointer({}, '{:?}')",
+            self.0,
+            StringLenLimited(&self.text_lowercase, 20)
+        )
+    }
+}
+
 impl PartialEq for RevisionPointer {
     fn eq(&self, other: &Self) -> bool {
         self.0 == other.0
@@ -105,7 +136,7 @@ pub struct RevisionImmutables {
 }
 
 impl RevisionImmutables {
-    pub(crate) fn dummy() -> Self {
+    pub fn dummy() -> Self {
         Self {
             length_lowercase: 0,
             text_lowercase: String::new(),
@@ -170,6 +201,17 @@ impl Deref for ParagraphPointer {
     }
 }
 
+impl Debug for ParagraphPointer {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "ParagraphPointer({}, '{:?}')",
+            self.0,
+            StringLenLimited(&self.value, 20)
+        )
+    }
+}
+
 #[derive(Clone)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize))]
 pub struct ParagraphImmutables {
@@ -223,6 +265,17 @@ impl Deref for SentencePointer {
 
     fn deref(&self) -> &Self::Target {
         &self.1
+    }
+}
+
+impl Debug for SentencePointer {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "SentencePointer({}, '{:?}')",
+            self.0,
+            StringLenLimited(&self.value, 20)
+        )
     }
 }
 
@@ -283,6 +336,17 @@ impl Deref for WordPointer {
 
     fn deref(&self) -> &Self::Target {
         &self.1
+    }
+}
+
+impl Debug for WordPointer {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "WordPointer({}, '{:?}')",
+            self.0,
+            StringLenLimited(&self.1.value, 20)
+        )
     }
 }
 
