@@ -152,8 +152,8 @@ pub(crate) enum RevisionHash {
 ///
 /// * `text` - The input text to split.
 /// * `scratch_buffers` - A tuple containing two scratch buffers to use for temporary storage.
-///                       They must be empty and will again be empty after the function returns.
-///                       They should be reused across multiple calls to this function.
+///   They must be empty and will again be empty after the function returns.
+///   They should be reused across multiple calls to this function.
 pub fn split_into_paragraphs(
     text: &str,
     scratch_buffers: (&mut String, &mut String),

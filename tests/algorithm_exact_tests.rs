@@ -18,8 +18,8 @@ use wikiwho::{
 
 mod common;
 
-use common::output_structs::serialize_wikiwho_result;
 use common::input_structs;
+use common::output_structs::serialize_wikiwho_result;
 use common::{load_local_module, prelude::*};
 
 #[derive(Clone, Copy)]
@@ -109,25 +109,26 @@ fn run_analysis_python_mt(
         loop {
             // Acquire the GIL only to extract a small metadata tuple.
             // Queue.get(timeout) releases the GIL internally while waiting.
-            let item = Python::with_gil(
-                |py| match py_result_queue.call_method1(py, "get", (0.5f64,)) {
-                    Ok(obj) => {
-                        if obj.extract::<String>(py).ok().as_deref() == Some("close") {
-                            return Ok(None);
-                        }
-                        let py_result: &pyo3::Bound<'_, pyo3::types::PyTuple> =
-                            obj.downcast_bound(py).unwrap();
-                        let key: String = py_result.get_item(0).unwrap().extract().unwrap();
-                        let path: String = py_result.get_item(1).unwrap().extract().unwrap();
-                        let offset: u64 = py_result.get_item(2).unwrap().extract().unwrap();
-                        let length: u64 = py_result.get_item(3).unwrap().extract().unwrap();
+            let item =
+                Python::with_gil(
+                    |py| match py_result_queue.call_method1(py, "get", (0.5f64,)) {
+                        Ok(obj) => {
+                            if obj.extract::<String>(py).ok().as_deref() == Some("close") {
+                                return Ok(None);
+                            }
+                            let py_result: &pyo3::Bound<'_, pyo3::types::PyTuple> =
+                                obj.downcast_bound(py).unwrap();
+                            let key: String = py_result.get_item(0).unwrap().extract().unwrap();
+                            let path: String = py_result.get_item(1).unwrap().extract().unwrap();
+                            let offset: u64 = py_result.get_item(2).unwrap().extract().unwrap();
+                            let length: u64 = py_result.get_item(3).unwrap().extract().unwrap();
 
-                        Ok(Some((key, path, offset, length)))
-                    }
-                    Err(err) if err.is_instance_of::<Empty>(py) => Err(()),
-                    Err(err) => panic!("Error in python process: {:?}", err),
-                },
-            );
+                            Ok(Some((key, path, offset, length)))
+                        }
+                        Err(err) if err.is_instance_of::<Empty>(py) => Err(()),
+                        Err(err) => panic!("Error in python process: {:?}", err),
+                    },
+                );
 
             // Read result bincode from per-worker file and deserialize — all outside the GIL
             match item {
@@ -273,7 +274,7 @@ fn compare_results(
             continue;
         }
         let input_revision = page.revisions.iter().find(|r| r.id == revision_id).unwrap();
-        if input_revision.text.len() == 0 {
+        if input_revision.text.is_empty() {
             // empty revisions are not analysed further
             continue;
         }
@@ -369,7 +370,7 @@ fn compare_algorithm_python(page: &Page) -> Result<(), TestCaseError> {
         let analysis = result.unwrap();
 
         // run Python implementation
-        let wikiwho_py = run_analysis_python(py, &page);
+        let wikiwho_py = run_analysis_python(py, page);
         compare_results(page, &analysis, &wikiwho_py)?;
     });
     Ok(())
@@ -384,6 +385,7 @@ proptest! {
     #[test]
     fn random_unicode_page(page in proptest_support::correct_page(r"\PC*".boxed(), 50)) {
         // \0 character fails XML parsing in python
+        #[allow(clippy::question_mark)]
         if let Err(err) = compare_algorithm_python(&page) {
             // don't ask, the proptest macro is a bit weird
             return Err(err);
@@ -400,6 +402,7 @@ proptest! {
     #[test]
     fn tokenized_page(page in proptest_support::correct_page("(some|funny|words|\\.|\\{\\{|\\}\\}|\\PC| |-|\n|&|;|'|\\]|\\[|\\||no|yes|why)*".boxed(), 10)) {
         // \0 character fails XML parsing in python
+        #[allow(clippy::question_mark)]
         if let Err(err) = compare_algorithm_python(&page) {
             // don't ask, the proptest macro is a bit weird
             return Err(err);

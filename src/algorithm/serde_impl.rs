@@ -207,7 +207,7 @@ impl<'de> serde::Deserialize<'de> for PageAnalysis {
                 let paragraphs_ordered = r
                     .paragraphs_ordered
                     .into_iter()
-                    .map(|idx| par_ptr(idx))
+                    .map(&par_ptr)
                     .collect::<Result<Vec<_>, _>>()?;
                 Ok(RevisionAnalysis {
                     paragraphs_by_hash: FxHashMap::default(),
@@ -225,7 +225,7 @@ impl<'de> serde::Deserialize<'de> for PageAnalysis {
                 let sentences_ordered = p
                     .sentences_ordered
                     .into_iter()
-                    .map(|idx| sent_ptr(idx))
+                    .map(&sent_ptr)
                     .collect::<Result<Vec<_>, _>>()?;
                 Ok(ParagraphAnalysis {
                     sentences_by_hash: FxHashMap::default(),
@@ -243,7 +243,7 @@ impl<'de> serde::Deserialize<'de> for PageAnalysis {
                 let words_ordered = s
                     .words_ordered
                     .into_iter()
-                    .map(|idx| word_ptr(idx))
+                    .map(&word_ptr)
                     .collect::<Result<Vec<_>, _>>()?;
                 Ok(SentenceAnalysis {
                     words_ordered,
@@ -264,12 +264,12 @@ impl<'de> serde::Deserialize<'de> for PageAnalysis {
                     inbound: w
                         .inbound
                         .into_iter()
-                        .map(|idx| rev_ptr(idx))
+                        .map(&rev_ptr)
                         .collect::<Result<Vec<_>, _>>()?,
                     outbound: w
                         .outbound
                         .into_iter()
-                        .map(|idx| rev_ptr(idx))
+                        .map(&rev_ptr)
                         .collect::<Result<Vec<_>, _>>()?,
                 })
             })
@@ -284,12 +284,12 @@ impl<'de> serde::Deserialize<'de> for PageAnalysis {
         let ordered_revisions = s
             .ordered_revisions
             .into_iter()
-            .map(|idx| rev_ptr(idx))
+            .map(&rev_ptr)
             .collect::<Result<Vec<_>, _>>()?;
         let words = s
             .words
             .into_iter()
-            .map(|idx| word_ptr(idx))
+            .map(word_ptr)
             .collect::<Result<Vec<_>, _>>()?;
         let current_revision = rev_ptr(s.current_revision)?;
 
@@ -502,12 +502,7 @@ mod tests {
                 d.words_ordered.len(),
                 "sentences[{i}].words_ordered.len"
             );
-            for (j, (ow, dw)) in o
-                .words_ordered
-                .iter()
-                .zip(&d.words_ordered)
-                .enumerate()
-            {
+            for (j, (ow, dw)) in o.words_ordered.iter().zip(&d.words_ordered).enumerate() {
                 assert_eq!(ow.0, dw.0, "sentences[{i}].words_ordered[{j}]");
             }
         }
@@ -616,7 +611,10 @@ mod tests {
     fn test_roundtrip_with_real_analysis() {
         let revisions = vec![
             make_revision(1, "Hello world. This is a test."),
-            make_revision(2, "Hello world. This is a modified test. New sentence added."),
+            make_revision(
+                2,
+                "Hello world. This is a modified test. New sentence added.",
+            ),
             make_revision(3, "Hello world. New sentence added."),
         ];
         let pa = PageAnalysis::analyse_page(&revisions).expect("analyse_page");
@@ -642,8 +640,7 @@ mod tests {
             minor: true,
         };
 
-        let mut pa =
-            PageAnalysis::new((RevisionAnalysis::default(), RevisionImmutables::dummy()));
+        let mut pa = PageAnalysis::new((RevisionAnalysis::default(), RevisionImmutables::dummy()));
         let rev_ptr = pa.new_revision(RevisionImmutables::from_revision(&revision));
         pa.revisions_by_id.insert(42, rev_ptr.clone());
         pa.ordered_revisions.push(rev_ptr.clone());

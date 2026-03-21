@@ -498,6 +498,7 @@ impl PageAnalysis {
         // Analysis of the paragraphs in the current revision
         let (unmatched_paragraphs_curr, unmatched_paragraphs_prev, matched_paragraphs_prev, _) =
             self.analyse_parasents_in_revgraph(
+                #[allow(clippy::cloned_ref_to_slice_refs)] // clone is needed to a avoid borrow conflict
                 &[self.current_revision.clone()],
                 self.internals.revision_prev.as_ref().cloned().as_slice(),
             );
@@ -622,7 +623,7 @@ impl PageAnalysis {
             let mut matched_one = false;
             let mut matched_all = true;
 
-            P::iterate_words(self, &[parasent_prev_pointer.clone()], |word| {
+            P::iterate_words(self, std::slice::from_ref(parasent_prev_pointer), |word| {
                 if word.matched_in_current {
                     matched_one = true;
                 } else {

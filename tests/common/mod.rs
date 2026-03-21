@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: MPL-2.0
 //! All tests need to be run in a Python venv that has installed the `requirements.txt`!
+#![allow(unused)]
 
 use chrono::DateTime;
 use memchr::memmem::Finder;
@@ -30,6 +31,7 @@ macro_rules! with_gil {
             Ok(())
         });
         // workaround for prop_assert! not working correctly in Python::with_gil
+        #[allow(clippy::question_mark)]
         if result.is_err() {
             return result;
         }
@@ -232,9 +234,7 @@ pub fn open_test_dump() -> impl Read {
     const DUMP_PATH: &str = "dewiktionary-20240901-pages-meta-history.xml.zst";
 
     let file = File::open(DUMP_PATH).unwrap_or_else(|_| panic!("file not found: {}", DUMP_PATH));
-    let reader = zstd::stream::Decoder::new(file).unwrap();
-
-    reader
+    zstd::stream::Decoder::new(file).unwrap()
 }
 
 pub trait PageRepresentation: Sized {
@@ -292,6 +292,7 @@ if '' not in sys.path:
     Ok(module)
 }
 
+#[allow(clippy::useless_conversion)] // pyo3 proc macros generate identity conversions for PyErr
 pub mod output_structs {
     use super::*;
     use pyo3::{
@@ -360,7 +361,7 @@ pub mod output_structs {
 
         // Use XML page to populate revisions
         for revision in &page.revisions {
-            let pointer = result.new_revision(RevisionImmutables::from_revision(&revision));
+            let pointer = result.new_revision(RevisionImmutables::from_revision(revision));
             revision_pointers.insert(revision.id, pointer.clone());
         }
 
@@ -478,7 +479,7 @@ pub mod output_structs {
                 let py_sentence_hashes = py_paragraph.ordered_sentences;
                 paragraph_analysis.sentences_ordered = populate_analysis_children_ht(
                     py_sentence_hashes.bind(py),
-                    &py_paragraph.sentences.bind(py),
+                    py_paragraph.sentences.bind(py),
                     &sentence_id_pointers,
                 )?;
                 Ok(())
@@ -495,11 +496,13 @@ pub mod output_structs {
             let py_paragraphs = py_revision.ordered_paragraphs;
             revision_analysis.paragraphs_ordered = populate_analysis_children_ht(
                 py_paragraphs.bind(py),
-                &py_revision.paragraphs.bind(py),
+                py_revision.paragraphs.bind(py),
                 &paragraph_id_pointers,
             )?;
 
-            result.revisions_by_id.insert(py_revision.id, revision_ptr.clone());
+            result
+                .revisions_by_id
+                .insert(py_revision.id, revision_ptr.clone());
         }
 
         // Copy simple fields
@@ -560,6 +563,7 @@ pub mod output_structs {
     }
 }
 
+#[allow(clippy::useless_conversion)] // pyo3 proc macros generate identity conversions for PyErr
 pub mod input_structs {
     use super::*;
     use pyo3::prelude::*;
@@ -750,7 +754,7 @@ pub mod proptest_support {
     pub fn correct_text(text_strategy: BoxedStrategy<String>) -> impl Strategy<Value = Text> {
         prop_oneof![
             1 => Just(Text::Deleted),
-            3 => text_strategy.prop_map(|s| Text::Normal(s))
+            3 => text_strategy.prop_map(Text::Normal)
         ]
     }
 

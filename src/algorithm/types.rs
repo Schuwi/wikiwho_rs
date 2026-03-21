@@ -24,8 +24,7 @@ impl Debug for StringLenLimited<'_> {
             let split = self
                 .0
                 .char_indices()
-                .skip(self.1)
-                .next()
+                .nth(self.1)
                 .map(|(idx, _)| idx)
                 .unwrap_or(self.0.len());
             write!(f, "{}...", &self.0[..split])

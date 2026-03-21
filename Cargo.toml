@@ -65,3 +65,8 @@ opt-level = 3
 
 [profile.test.package.pyo3]
 opt-level = 3
+
+# pyo3 macros (import_exception! etc.) internally check cfg(feature = "gil-refs"),
+# which was removed in pyo3 0.22. Declare it as expected to suppress warnings.
+[lints.rust]
+unexpected_cfgs = { level = "warn", check-cfg = ['cfg(feature, values("gil-refs"))'] }

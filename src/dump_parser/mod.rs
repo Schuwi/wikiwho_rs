@@ -338,7 +338,7 @@ pub enum ParsingError {
     Eof,
     #[cfg(feature = "strict")]
     #[error("missing field: {0}")]
-    MissingField,
+    MissingField(&'static str),
     #[cfg(feature = "strict")]
     #[error("mismatched tags")]
     MismatchedTags,
@@ -896,7 +896,7 @@ impl<R: BufRead> DumpParser<R> {
                                             partial_revision = ?revision_builder,
                                             revision_end_position = self.xml_parser.buffer_position()
                                         );
-                                        return Self::abort_parsing(&mut self.xml_parser);
+                                        return Err(ParsingError::MissingField(field));
                                     }
                                     #[cfg(not(feature = "strict"))]
                                     {
