@@ -213,10 +213,10 @@
 //! let origin_revision = &analysis[word_pointer].origin_revision;
 //! ```
 //!
-//! - Alternatively you may index into the corresponding `Vec` in the `PageAnalysis` struct directly:
+//! - Alternatively you may use the `words()` getter on `PageAnalysis` directly:
 //!
 //! ```rust
-//! let origin_revision = &analysis.words[word_pointer.0].origin_revision;
+//! let origin_revision = &analysis.words()[word_pointer.unique_id()].origin_revision;
 //! ```
 //!
 //! ## Performance Considerations

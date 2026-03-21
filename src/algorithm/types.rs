@@ -78,14 +78,7 @@ impl<T> MaybeVec<T> {
 
 // index is unique within a page
 #[derive(Clone)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-pub struct RevisionPointer(pub usize, pub Arc<RevisionImmutables>);
-
-impl RevisionPointer {
-    pub(crate) fn new(index: usize, revision: RevisionImmutables) -> Self {
-        Self(index, Arc::new(revision))
-    }
-}
+pub struct RevisionPointer(pub(crate) usize, pub(crate) Arc<RevisionImmutables>);
 
 impl Deref for RevisionPointer {
     type Target = RevisionImmutables;
@@ -158,9 +151,7 @@ impl Deref for RevisionImmutables {
 }
 
 #[derive(Clone, Default)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct RevisionAnalysis {
-    #[cfg_attr(feature = "serde", serde(skip))]
     pub(crate) paragraphs_by_hash: FxHashMap<blake3::Hash, MaybeVec<ParagraphPointer>>, /* assume that duplicate paragraphs are not very common and optimize to avoid allocation */
     pub paragraphs_ordered: Vec<ParagraphPointer>,
 
@@ -169,14 +160,7 @@ pub struct RevisionAnalysis {
 
 // index is unique within a page
 #[derive(Clone)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-pub struct ParagraphPointer(pub usize, pub Arc<ParagraphImmutables>);
-
-impl ParagraphPointer {
-    pub(crate) fn new(index: usize, paragraph: ParagraphImmutables) -> Self {
-        Self(index, Arc::new(paragraph))
-    }
-}
+pub struct ParagraphPointer(pub(crate) usize, pub(crate) Arc<ParagraphImmutables>);
 
 impl Deref for ParagraphPointer {
     type Target = ParagraphImmutables;
@@ -222,27 +206,17 @@ impl ParagraphImmutables {
 }
 
 #[derive(Clone, Default)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct ParagraphAnalysis {
-    #[cfg_attr(feature = "serde", serde(skip))]
     pub(crate) sentences_by_hash: FxHashMap<blake3::Hash, MaybeVec<SentencePointer>>,
     pub sentences_ordered: Vec<SentencePointer>,
 
     /// whether this paragraph was found in the current revision
-    #[cfg_attr(feature = "serde", serde(skip))]
     pub(crate) matched_in_current: bool,
 }
 
 // index is unique within a page
 #[derive(Clone)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-pub struct SentencePointer(pub usize, pub Arc<SentenceImmutables>);
-
-impl SentencePointer {
-    pub(crate) fn new(index: usize, sentence: SentenceImmutables) -> Self {
-        Self(index, Arc::new(sentence))
-    }
-}
+pub struct SentencePointer(pub(crate) usize, pub(crate) Arc<SentenceImmutables>);
 
 impl Deref for SentencePointer {
     type Target = SentenceImmutables;
@@ -287,25 +261,18 @@ impl SentenceImmutables {
 }
 
 #[derive(Clone, Default)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct SentenceAnalysis {
     pub words_ordered: Vec<WordPointer>,
 
     /// whether this sentence was found in the current revision
-    #[cfg_attr(feature = "serde", serde(skip))]
     pub(crate) matched_in_current: bool,
 }
 
 // index is unique within a page
 #[derive(Clone)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-pub struct WordPointer(pub usize, pub Arc<WordImmutables>);
+pub struct WordPointer(pub(crate) usize, pub(crate) Arc<WordImmutables>);
 
 impl WordPointer {
-    pub(crate) fn new(index: usize, word: WordImmutables) -> Self {
-        Self(index, Arc::new(word))
-    }
-
     pub fn unique_id(&self) -> usize {
         self.0
     }
@@ -332,12 +299,10 @@ impl WordImmutables {
 }
 
 #[derive(Clone)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct WordAnalysis {
     pub origin_revision: RevisionPointer,
     pub latest_revision: RevisionPointer,
     /// whether this word was found in the current revision
-    #[cfg_attr(feature = "serde", serde(skip))]
     pub(crate) matched_in_current: bool,
 
     // words may be re-added after being removed
@@ -357,15 +322,17 @@ impl WordAnalysis {
     }
 }
 
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct PageAnalysis {
     // single array where the structural and analytical information of all the revisions/paragraphs/sentences/words in this page is stored
     // the goal is to work with Rust's memory model and avoid falling back to Arc<RefCell<...>> everywhere
-    #[cfg_attr(feature = "serde", serde(skip))]
     pub(crate) revisions: Vec<RevisionAnalysis>, /* access via ordered_revisions */
-    pub paragraphs: Vec<ParagraphAnalysis>,
-    pub sentences: Vec<SentenceAnalysis>,
-    pub words: Vec<WordAnalysis>, // Ordered, unique list of tokens in the page
+    pub(crate) revision_immutables: Vec<Arc<RevisionImmutables>>, // lockstep with revisions
+    pub(crate) paragraphs: Vec<ParagraphAnalysis>,
+    pub(crate) paragraph_immutables: Vec<Arc<ParagraphImmutables>>, // lockstep with paragraphs
+    pub(crate) sentences: Vec<SentenceAnalysis>,
+    pub(crate) sentence_immutables: Vec<Arc<SentenceImmutables>>, // lockstep with sentences
+    pub(crate) word_analyses: Vec<WordAnalysis>,
+    pub(crate) word_immutables: Vec<Arc<WordImmutables>>, // lockstep with words
 
     /// Collection of revision IDs that were detected as spam.
     ///
@@ -380,13 +347,14 @@ pub struct PageAnalysis {
     ///
     /// Does not contain revisions that were detected as spam.
     pub ordered_revisions: Vec<RevisionPointer>,
+    /// Ordered, unique list of tokens in the page
+    pub words: Vec<WordPointer>,
 
     /// The current revision being analysed.
     ///
     /// After analysis finished this will be the latest revision that was not marked as spam.
     pub current_revision: RevisionPointer,
 
-    #[cfg_attr(feature = "serde", serde(skip))]
     pub(crate) internals: PageAnalysisInternals,
 }
 
@@ -394,25 +362,61 @@ impl PageAnalysis {
     /// Creates a PageAnalysis initialized with the given revision as `current_revision`.
     /// For normal use, prefer `analyse_page()`.
     pub fn new(initial_revision: (RevisionAnalysis, RevisionImmutables)) -> Self {
-        let initial_revision_ptr = RevisionPointer::new(0, initial_revision.1);
+        let arc = Arc::new(initial_revision.1);
+        let initial_revision_ptr = RevisionPointer(0, arc.clone());
 
         Self {
             revisions: vec![initial_revision.0],
+            revision_immutables: vec![arc],
             paragraphs: Vec::new(),
+            paragraph_immutables: Vec::new(),
             sentences: Vec::new(),
-            words: Vec::new(),
+            sentence_immutables: Vec::new(),
+            word_analyses: Vec::new(),
+            word_immutables: Vec::new(),
             spam_ids: Vec::new(),
             revisions_by_id: HashMap::new(),
             ordered_revisions: Vec::new(),
+            words: Vec::new(),
             current_revision: initial_revision_ptr,
             internals: PageAnalysisInternals::default(),
         }
     }
 
     pub fn new_revision(&mut self, revision_data: RevisionImmutables) -> RevisionPointer {
-        let revision_pointer = RevisionPointer::new(self.revisions.len(), revision_data);
+        let arc = Arc::new(revision_data);
+        let revision_pointer = RevisionPointer(self.revisions.len(), arc.clone());
         self.revisions.push(RevisionAnalysis::default());
+        self.revision_immutables.push(arc);
         revision_pointer
+    }
+
+    pub fn new_paragraph(&mut self, paragraph_data: ParagraphImmutables) -> ParagraphPointer {
+        let arc = Arc::new(paragraph_data);
+        let paragraph_pointer = ParagraphPointer(self.paragraphs.len(), arc.clone());
+        self.paragraphs.push(ParagraphAnalysis::default());
+        self.paragraph_immutables.push(arc);
+        paragraph_pointer
+    }
+
+    pub fn new_sentence(&mut self, sentence_data: SentenceImmutables) -> SentencePointer {
+        let arc = Arc::new(sentence_data);
+        let sentence_pointer = SentencePointer(self.sentences.len(), arc.clone());
+        self.sentences.push(SentenceAnalysis::default());
+        self.sentence_immutables.push(arc);
+        sentence_pointer
+    }
+
+    pub fn new_word(
+        &mut self,
+        word_data: WordImmutables,
+        word_analysis: WordAnalysis,
+    ) -> WordPointer {
+        let arc = Arc::new(word_data);
+        let word_pointer = WordPointer(self.word_analyses.len(), arc.clone());
+        self.word_analyses.push(word_analysis);
+        self.word_immutables.push(arc);
+        word_pointer
     }
 }
 
@@ -519,10 +523,10 @@ impl Pointer for WordPointer {
     }
 
     fn data<'a>(&self, analysis: &'a PageAnalysis) -> &'a Self::Data {
-        &analysis.words[self.0]
+        &analysis.word_analyses[self.0]
     }
 
     fn data_mut<'a>(&self, analysis: &'a mut PageAnalysis) -> &'a mut Self::Data {
-        &mut analysis.words[self.0]
+        &mut analysis.word_analyses[self.0]
     }
 }

@@ -2,6 +2,9 @@
 mod types;
 pub use types::*;
 
+#[cfg(feature = "serde")]
+mod serde_impl;
+
 use imara_diff::intern::Interner;
 use rustc_hash::{FxHashMap, FxHashSet};
 
@@ -105,9 +108,7 @@ impl ParasentPointer for ParagraphPointer {
         parent: &RevisionPointer,
         text: String,
     ) -> Self {
-        let paragraph_data = ParagraphImmutables::new(text);
-        let paragraph_pointer = ParagraphPointer::new(analysis.paragraphs.len(), paragraph_data);
-        analysis.paragraphs.push(ParagraphAnalysis::default());
+        let paragraph_pointer = analysis.new_paragraph(ParagraphImmutables::new(text));
 
         let revision_curr = &mut analysis.revisions[parent.0];
         revision_curr
@@ -196,7 +197,7 @@ impl ParasentPointer for ParagraphPointer {
         for sentence in &analysis.paragraphs[self.0].sentences_ordered {
             analysis.sentences[sentence.0].matched_in_current = true;
             for word in &analysis.sentences[sentence.0].words_ordered {
-                analysis.words[word.0].matched_in_current = true;
+                analysis.word_analyses[word.0].matched_in_current = true;
             }
         }
     }
@@ -219,9 +220,7 @@ impl ParasentPointer for SentencePointer {
         parent: &ParagraphPointer,
         text: String,
     ) -> Self {
-        let sentence_data = SentenceImmutables::new(text);
-        let sentence_pointer = SentencePointer::new(analysis.sentences.len(), sentence_data);
-        analysis.sentences.push(SentenceAnalysis::default());
+        let sentence_pointer = analysis.new_sentence(SentenceImmutables::new(text));
 
         let paragraph_curr = &mut analysis.paragraphs[parent.0];
         paragraph_curr
@@ -309,7 +308,7 @@ impl ParasentPointer for SentencePointer {
 
     fn mark_all_children_matched(&self, analysis: &mut PageAnalysis) {
         for word in &analysis.sentences[self.0].words_ordered {
-            analysis.words[word.0].matched_in_current = true;
+            analysis.word_analyses[word.0].matched_in_current = true;
         }
     }
 
@@ -442,7 +441,7 @@ impl PageAnalysis {
     ) {
         for sentence in sentences {
             for word in &self.sentences[sentence.0].words_ordered {
-                f(&mut self.words[word.0]);
+                f(&mut self.word_analyses[word.0]);
             }
         }
     }
@@ -455,7 +454,7 @@ impl PageAnalysis {
         for paragraph in paragraphs {
             for sentence in &self.paragraphs[paragraph.0].sentences_ordered {
                 for word in &self.sentences[sentence.0].words_ordered {
-                    f(&mut self.words[word.0]);
+                    f(&mut self.word_analyses[word.0]);
                 }
             }
         }
@@ -589,7 +588,7 @@ impl PageAnalysis {
                 self.sentences[matched_sentence.0].matched_in_current = false;
 
                 for matched_word in &self.sentences[matched_sentence.0].words_ordered {
-                    handle_word(&mut self.words[matched_word.0], true);
+                    handle_word(&mut self.word_analyses[matched_word.0], true);
                 }
             }
         }
@@ -597,12 +596,12 @@ impl PageAnalysis {
             matched_sentence.set_matched_in_current(self, false);
 
             for matched_word in &self.sentences[matched_sentence.0].words_ordered {
-                handle_word(&mut self.words[matched_word.0], true);
+                handle_word(&mut self.word_analyses[matched_word.0], true);
             }
         }
         for matched_word in &matched_words_prev {
             // there is no inbound chance because we only diff with words of previous revision -> push_inbound = false
-            handle_word(&mut self.words[matched_word.0], false);
+            handle_word(&mut self.word_analyses[matched_word.0], false);
         }
 
         vandalism
@@ -758,7 +757,7 @@ impl PageAnalysis {
         for sentence_prev_pointer in unmatched_sentences_prev {
             let sentence_prev = &self.sentences[sentence_prev_pointer.0];
             for word_prev_pointer in &sentence_prev.words_ordered {
-                if !self.words[word_prev_pointer.0].matched_in_current {
+                if !self.word_analyses[word_prev_pointer.0].matched_in_current {
                     let interned = interner.intern(word_prev_pointer.value().to_string());
                     text_prev.push(interned);
                     unmatched_words_prev.push((interned, word_prev_pointer.clone()));
@@ -798,11 +797,12 @@ impl PageAnalysis {
             word: &str,
             sentence_pointer: &SentencePointer,
         ) {
-            let word_data = WordImmutables::new(word.into());
-            let word_pointer = WordPointer::new(analysis.words.len(), word_data);
-            analysis
-                .words
-                .push(WordAnalysis::new(&analysis.current_revision));
+            let word_pointer = analysis.new_word(
+                WordImmutables::new(word.into()),
+                WordAnalysis::new(&analysis.current_revision),
+            );
+
+            analysis.words.push(word_pointer.clone());
             analysis.sentences[sentence_pointer.0]
                 .words_ordered
                 .push(word_pointer);
@@ -840,7 +840,7 @@ impl PageAnalysis {
                                 if let Some((_, word_prev)) =
                                     unmatched_words_prev.iter().find(|(w_interned, w_pointer)| {
                                         w_interned == word_interned
-                                            && !self.words[w_pointer.0].matched_in_current
+                                            && !self.word_analyses[w_pointer.0].matched_in_current
                                     })
                                 {
                                     curr_matched = true;
@@ -857,7 +857,7 @@ impl PageAnalysis {
                                 if let Some((_, word_prev)) =
                                     unmatched_words_prev.iter().find(|(w_interned, w_pointer)| {
                                         w_interned == word_interned
-                                            && !self.words[w_pointer.0].matched_in_current
+                                            && !self.word_analyses[w_pointer.0].matched_in_current
                                     })
                                 {
                                     self[word_prev].matched_in_current = true;
