@@ -19,14 +19,12 @@ The original Python implementation of WikiWho could process about 300 pages in o
 
 ## Installation
 
-Currently, `wikiwho` is available via its [GitHub repository](https://github.com/Schuwi/wikiwho_rs). You can include it in your `Cargo.toml` as follows:
+`wikiwho` is available on [crates.io](https://crates.io/crates/wikiwho). Add it to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-wikiwho = { git = "https://github.com/Schuwi/wikiwho_rs.git" }
+wikiwho = "0.1"
 ```
-
-A release on [crates.io](https://crates.io/) is planned soon.
 
 ## Usage
 
@@ -36,7 +34,7 @@ Here's a minimal example of how to load a Wikimedia XML dump and analyze a page:
 
 ```rust
 use wikiwho::dump_parser::DumpParser;
-use wikiwho::algorithm::Analysis;
+use wikiwho::algorithm::PageAnalysis;
 use std::fs::File;
 use std::io::BufReader;
 
@@ -49,10 +47,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Parse a single page
     if let Some(page) = parser.parse_page()? {
         // Analyze the page revisions
-        let analysis = Analysis::analyse_page(&page.revisions)?;
+        let analysis = PageAnalysis::analyse_page(&page.revisions)?;
 
         // Iterate over tokens in the current revision
-        for token in wikiwho_rs::utils::iterate_revision_tokens(&analysis, &analysis.current_revision) {
+        for token in wikiwho::utils::iterate_revision_tokens(&analysis, &analysis.current_revision) {
             println!(
                 "'{}' by '{}'",
                 token.value,
@@ -139,11 +137,12 @@ To use the original Python diff algorithm:
 
 ```toml
 [dependencies]
-wikiwho = { git = "https://github.com/Schuwi/wikiwho_rs.git", features = ["python-diff"] }
+wikiwho = { version = "0.1", features = ["python-diff"] }
 ```
 
-- **Note**: This significantly slows down processing as it calls the Python diff implementation via `pyo3`.
-- **Purpose**: Useful for comparing results with the original implementation.
+- **Note**: This significantly slows down processing as it calls the Python diff implementation via `pyo3`.  
+  Multi-threading will be less effective because of GIL contention.
+- **Purpose**: Useful for replicating the exact results of the original implementation.
 
 ### Logging and Error Handling
 
@@ -184,6 +183,17 @@ Contributions are welcome! Here are some ways you can help:
 - Fork the repository: [wikiwho_rs GitHub](https://github.com/Schuwi/wikiwho_rs)
 - Create a new branch for your feature or bug fix.
 - Submit a pull request with a clear description of your changes.
+
+### Development Setup
+
+The test suite calls into the original Python WikiWho implementation to validate results, so a Python virtual environment must be active when running `cargo test`. Without it, tests will fail with cryptic Python/pyo3 errors.
+
+```sh
+python -m venv venv
+source venv/bin/activate   # on Windows: venv\Scripts\activate
+pip install -r requirements.txt
+cargo test
+```
 
 ## Development and Support
 

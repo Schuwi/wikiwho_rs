@@ -221,10 +221,10 @@
 //! let origin_revision = &analysis[word_pointer].origin_revision;
 //! ```
 //!
-//! - Alternatively you may use the `words()` getter on `PageAnalysis` directly:
+//! - Alternatively you may access the `words` field on `PageAnalysis` directly:
 //!
 //! ```rust,ignore
-//! let origin_revision = &analysis.words()[word_pointer.unique_id()].origin_revision;
+//! let origin_revision = &analysis.words[word_pointer.unique_id()].origin_revision;
 //! ```
 //!
 //! ## Performance Considerations
