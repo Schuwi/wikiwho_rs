@@ -31,7 +31,7 @@
 //!
 //! ```rust
 //! use wikiwho::dump_parser::DumpParser;
-//! use wikiwho::algorithm::Analysis;
+//! use wikiwho::algorithm::PageAnalysis;
 //! use std::fs::File;
 //! use std::io::BufReader;
 //!
@@ -44,7 +44,7 @@
 //!     // Parse a single page
 //!     if let Some(page) = parser.parse_page()? {
 //!         // Analyze the page revisions
-//!         let analysis = Analysis::analyse_page(&page.revisions)?;
+//!         let analysis = PageAnalysis::analyse_page(&page.revisions)?;
 //!
 //!         // Iterate over tokens in the current revision
 //!         for token in wikiwho::utils::iterate_revision_tokens(&analysis, &analysis.current_revision) {
@@ -66,7 +66,7 @@
 //!
 //! ```rust
 //! use wikiwho::dump_parser::DumpParser;
-//! use wikiwho::algorithm::Analysis;
+//! use wikiwho::algorithm::PageAnalysis;
 //! use std::fs::File;
 //! use std::io::BufReader;
 //!
@@ -77,7 +77,7 @@
 //!
 //!     while let Some(page) = parser.parse_page()? {
 //!         // Analyze each page (can be parallelized)
-//!         let analysis = Analysis::analyse_page(&page.revisions)?;
+//!         let analysis = PageAnalysis::analyse_page(&page.revisions)?;
 //!
 //!         // Your processing logic here
 //!     }
@@ -98,7 +98,7 @@
 //!
 //! ```rust
 //! use wikiwho::dump_parser::DumpParser;
-//! use wikiwho::algorithm::Analysis;
+//! use wikiwho::algorithm::PageAnalysis;
 //! use std::fs::File;
 //! use std::io::BufReader;
 //! use std::sync::mpsc::channel;
@@ -119,7 +119,7 @@
 //!             thread::spawn(move || {
 //!                 for page in rx.iter() {
 //!                     // Analyze the page
-//!                     let analysis = Analysis::analyse_page(&page.revisions).unwrap();
+//!                     let analysis = PageAnalysis::analyse_page(&page.revisions).unwrap();
 //!                     // Processing logic
 //!                 }
 //!             })
@@ -171,13 +171,13 @@
 //!
 //! **Usage**:
 //!
-//! - Call `Analysis::analyse_page(&page.revisions)` to analyze the revisions of a page.
-//! - Access the analysis results via the `Analysis` struct.
+//! - Call `PageAnalysis::analyse_page(&page.revisions)` to analyze the revisions of a page.
+//! - Access the analysis results via the `PageAnalysis` struct.
 //!
 //! **Example**:
 //!
 //! ```rust
-//! let analysis = Analysis::analyse_page(&page.revisions)?;
+//! let analysis = PageAnalysis::analyse_page(&page.revisions)?;
 //! ```
 //!
 //! ### `utils` Module
@@ -207,13 +207,13 @@
 //! **Pointers and Indexing**
 //!
 //! - Nodes are referenced using pointer structs (e.g., `SentencePointer`), which include an index and a shared reference to the immutable data.
-//! - To access mutable data, use indexing into the `Analysis` struct:
+//! - To access mutable data, use indexing into the `PageAnalysis` struct:
 //!
 //! ```rust
 //! let origin_revision = &analysis[word_pointer].origin_revision;
 //! ```
 //!
-//! - Alternatively you may index into the corresponding `Vec` in the `Analysis` struct directly:
+//! - Alternatively you may index into the corresponding `Vec` in the `PageAnalysis` struct directly:
 //!
 //! ```rust
 //! let origin_revision = &analysis.words[word_pointer.0].origin_revision;
@@ -222,7 +222,7 @@
 //! ## Performance Considerations
 //!
 //! - **Parsing Bottleneck**: XML parsing is linear and may become a bottleneck. Running the parser in a single thread and distributing analysis can optimize performance.
-//! - **Memory Usage**: The parser processes one page at a time. Memory usage should remain constant relative to the dump size. Ensure you drop `Page` and `Analysis` structs after processing.
+//! - **Memory Usage**: The parser processes one page at a time. Memory usage should remain constant relative to the dump size. Ensure you drop `Page` and `PageAnalysis` structs after processing.
 //! - **Scalability**: The analysis phase is designed for parallel execution. Utilize multiple threads to process pages concurrently after parsing.
 //!
 //! ## Features and Configuration

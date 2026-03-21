@@ -443,7 +443,7 @@ pub fn split_into_tokens_corasick(text: &str) -> Vec<String> {
 use std::{collections::HashMap, hash::Hash, ops::Range, sync::LazyLock};
 
 use crate::{
-    algorithm::{Analysis, RevisionPointer, WordPointer},
+    algorithm::{PageAnalysis, RevisionPointer, WordPointer},
     dump_parser::Sha1Hash,
 };
 
@@ -495,7 +495,7 @@ pub fn trim_in_place(mut input: String) -> String {
 }
 
 pub fn iterate_revision_tokens<'a>(
-    analysis: &'a Analysis,
+    analysis: &'a PageAnalysis,
     revision: &RevisionPointer,
 ) -> impl Iterator<Item = &'a WordPointer> + 'a {
     let revision = &analysis[revision];

@@ -1,315 +1,19 @@
 // SPDX-License-Identifier: MIT AND MPL-2.0
-use chrono::prelude::*;
-use compact_str::CompactString;
+mod types;
+pub use types::*;
+
 use imara_diff::intern::Interner;
 use rustc_hash::{FxHashMap, FxHashSet};
-use std::{
-    collections::HashMap,
-    ops::{Deref, Index, IndexMut},
-    sync::Arc,
-};
 
 use crate::{
-    dump_parser::{Contributor, Revision, Text},
+    dump_parser::{Revision, Text},
     utils::{
         self, compute_avg_word_freq, split_into_paragraphs, split_into_sentences,
         split_into_tokens, trim_in_place, ChangeTag, RevisionHash,
     },
 };
 
-#[derive(Clone)]
-pub enum MaybeVec<T> {
-    Single(T),
-    Vec(Vec<T>),
-}
-
-impl<T> MaybeVec<T> {
-    pub fn new_single(value: T) -> Self {
-        MaybeVec::Single(value)
-    }
-
-    pub fn new_vec(value: Vec<T>) -> Self {
-        MaybeVec::Vec(value)
-    }
-
-    pub fn as_slice(&self) -> &[T] {
-        match self {
-            MaybeVec::Single(t) => std::slice::from_ref(t),
-            MaybeVec::Vec(v) => v,
-        }
-    }
-
-    pub fn push(&mut self, value: T) {
-        let mut temp = MaybeVec::new_vec(Vec::new());
-        std::mem::swap(&mut temp, self);
-
-        match temp {
-            MaybeVec::Single(t) => {
-                let vec = vec![t, value];
-                *self = MaybeVec::Vec(vec);
-            }
-            MaybeVec::Vec(mut v) => {
-                v.push(value);
-                *self = MaybeVec::Vec(v);
-            }
-        }
-    }
-
-    pub fn into_vec(self) -> Vec<T> {
-        match self {
-            MaybeVec::Single(t) => vec![t],
-            MaybeVec::Vec(v) => v,
-        }
-    }
-
-    pub fn len(&self) -> usize {
-        match self {
-            MaybeVec::Single(_) => 1,
-            MaybeVec::Vec(v) => v.len(),
-        }
-    }
-
-    pub fn is_empty(&self) -> bool {
-        match self {
-            MaybeVec::Single(_) => false,
-            MaybeVec::Vec(v) => v.is_empty(),
-        }
-    }
-}
-
-// index is unique within a page
-#[derive(Clone)]
-pub struct RevisionPointer(pub usize, pub Arc<RevisionImmutables>);
-
-impl RevisionPointer {
-    fn new(index: usize, revision: RevisionImmutables) -> Self {
-        Self(index, Arc::new(revision))
-    }
-}
-
-impl Deref for RevisionPointer {
-    type Target = RevisionImmutables;
-
-    fn deref(&self) -> &Self::Target {
-        &self.1
-    }
-}
-
-impl PartialEq for RevisionPointer {
-    fn eq(&self, other: &Self) -> bool {
-        self.0 == other.0
-    }
-}
-
-impl Eq for RevisionPointer {}
-
-#[derive(Clone)]
-pub struct RevisionImmutables {
-    pub length_lowercase: usize, /* text length when lowercased, in bytes (for `test` compile target this is the number of unicode codepoints, to match the python implementation) */
-    pub text_lowercase: String,  /* lowercased text of revision */
-    pub xml_revision: Revision,
-}
-
-impl RevisionImmutables {
-    fn dummy() -> Self {
-        Self {
-            length_lowercase: 0,
-            text_lowercase: String::new(),
-            xml_revision: Revision {
-                id: 0,
-                timestamp: Utc::now(),
-                contributor: Contributor {
-                    id: None,
-                    username: CompactString::new(""),
-                },
-                comment: None,
-                minor: false,
-                text: Text::Normal(String::new()),
-                sha1: None,
-            },
-        }
-    }
-}
-
-#[derive(Clone, Default)]
-pub struct RevisionAnalysis {
-    paragraphs_by_hash: FxHashMap<blake3::Hash, MaybeVec<ParagraphPointer>>, /* assume that duplicate paragraphs are not very common and optimize to avoid allocation */
-    pub paragraphs_ordered: Vec<ParagraphPointer>,
-
-    pub original_adds: usize, /* number of tokens added in this revision for the first time */
-}
-
-impl RevisionImmutables {
-    pub fn from_revision(revision: &Revision) -> Self {
-        Self {
-            // #[cfg(not(any(test, feature = "match-reference-impl")))]
-            // // for spam detection it should be enough to use the length of the text in bytes
-            // length: revision.text.len(),
-            // #[cfg(any(test, feature = "match-reference-impl"))]
-            // python's `len` function returns the number of unicode codepoints for a string,
-            // so when testing against the python implementation we need to match that behavior to get identical results
-            length_lowercase: revision.text.as_str().chars().count(),
-            text_lowercase: match revision.text {
-                Text::Normal(ref t) => utils::to_lowercase(t),
-                Text::Deleted => String::new(),
-            },
-            xml_revision: revision.clone(),
-        }
-    }
-}
-
-impl Deref for RevisionImmutables {
-    type Target = Revision;
-
-    fn deref(&self) -> &Self::Target {
-        &self.xml_revision
-    }
-}
-
-// index is unique within a page
-#[derive(Clone)]
-pub struct ParagraphPointer(pub usize, pub Arc<ParagraphImmutables>);
-
-impl ParagraphPointer {
-    fn new(index: usize, paragraph: ParagraphImmutables) -> Self {
-        Self(index, Arc::new(paragraph))
-    }
-}
-
-impl Deref for ParagraphPointer {
-    type Target = ParagraphImmutables;
-
-    fn deref(&self) -> &Self::Target {
-        &self.1
-    }
-}
-
-#[derive(Clone)]
-pub struct ParagraphImmutables {
-    hash_value: blake3::Hash,
-    pub value: String,
-}
-
-#[derive(Clone, Default)]
-pub struct ParagraphAnalysis {
-    sentences_by_hash: FxHashMap<blake3::Hash, MaybeVec<SentencePointer>>,
-    pub sentences_ordered: Vec<SentencePointer>,
-
-    /// whether this paragraph was found in the current revision
-    pub(crate) matched_in_current: bool,
-}
-
-impl ParagraphImmutables {
-    pub fn new(value: String) -> Self {
-        let hash_value = blake3::hash(value.as_bytes());
-        Self { hash_value, value }
-    }
-
-    pub fn hash(&self) -> &[u8] {
-        /* return a slice of bytes as not to commit our API to any hash algorithm */
-        self.hash_value.as_bytes()
-    }
-}
-
-// index is unique within a page
-#[derive(Clone)]
-pub struct SentencePointer(pub usize, pub Arc<SentenceImmutables>);
-
-impl SentencePointer {
-    fn new(index: usize, sentence: SentenceImmutables) -> Self {
-        Self(index, Arc::new(sentence))
-    }
-}
-
-impl Deref for SentencePointer {
-    type Target = SentenceImmutables;
-
-    fn deref(&self) -> &Self::Target {
-        &self.1
-    }
-}
-
-#[derive(Clone)]
-pub struct SentenceImmutables {
-    hash_value: blake3::Hash,
-    pub value: String,
-}
-
-#[derive(Clone, Default)]
-pub struct SentenceAnalysis {
-    pub words_ordered: Vec<WordPointer>,
-
-    /// whether this sentence was found in the current revision
-    pub(crate) matched_in_current: bool,
-}
-
-impl SentenceImmutables {
-    pub fn new(value: String) -> Self {
-        let hash_value = blake3::hash(value.as_bytes());
-        Self { hash_value, value }
-    }
-
-    pub fn hash(&self) -> &[u8] {
-        self.hash_value.as_bytes()
-    }
-}
-
-// index is unique within a page
-#[derive(Clone)]
-pub struct WordPointer(pub usize, pub Arc<WordImmutables>);
-
-impl WordPointer {
-    fn new(index: usize, word: WordImmutables) -> Self {
-        Self(index, Arc::new(word))
-    }
-
-    pub fn unique_id(&self) -> usize {
-        self.0
-    }
-}
-
-impl Deref for WordPointer {
-    type Target = WordImmutables;
-
-    fn deref(&self) -> &Self::Target {
-        &self.1
-    }
-}
-
-#[derive(Clone)]
-pub struct WordImmutables {
-    pub value: CompactString,
-}
-
-#[derive(Clone)]
-pub struct WordAnalysis {
-    pub origin_revision: RevisionPointer,
-    pub latest_revision: RevisionPointer,
-    /// whether this word was found in the current revision
-    pub(crate) matched_in_current: bool,
-
-    // words may be re-added after being removed
-    pub inbound: Vec<RevisionPointer>, // the revisions where this word was added (i.e. present in the revision but not present in the previous revision)
-    pub outbound: Vec<RevisionPointer>, // the revisions where this word was removed (i.e. not present in the revision but present in the previous revision)
-}
-
-impl WordImmutables {
-    pub fn new(value: CompactString) -> Self {
-        Self { value }
-    }
-}
-
 impl WordAnalysis {
-    pub fn new(_pointer: WordPointer, origin_rev: &RevisionPointer) -> Self {
-        Self {
-            origin_revision: origin_rev.clone(),
-            latest_revision: origin_rev.clone(),
-            matched_in_current: false,
-            inbound: Vec::new(),
-            outbound: Vec::new(),
-        }
-    }
-
     fn maybe_push_inbound(
         &mut self,
         vandalism: bool,
@@ -333,7 +37,7 @@ impl WordAnalysis {
 }
 
 #[derive(Default)]
-struct AnalysisInternals {
+pub(crate) struct PageAnalysisInternals {
     paragraphs_ht: FxHashMap<blake3::Hash, Vec<ParagraphPointer>>, // Hash table of paragraphs of all revisions
     sentences_ht: FxHashMap<blake3::Hash, Vec<SentencePointer>>, // Hash table of sentences of all revisions
     spam_hashes: FxHashSet<RevisionHash>, // Hashes of spam revisions; RevisionHash can be a SHA1 hash or a BLAKE3 hash but we expect all hashes in this revision to be of the same type
@@ -344,50 +48,6 @@ struct AnalysisInternals {
     scratch_buffers: (String, String),
 }
 
-pub struct Analysis {
-    // single array where the structural and analytical information of all the revisions/paragraphs/sentences/words in this page is stored
-    // the goal is to work with Rust's memory model and avoid falling back to Arc<RefCell<...>> everywhere
-    pub revisions: Vec<RevisionAnalysis>,
-    pub paragraphs: Vec<ParagraphAnalysis>,
-    pub sentences: Vec<SentenceAnalysis>,
-    pub words: Vec<WordAnalysis>, // Ordered, unique list of tokens in the page
-
-    /// Collection of revision IDs that were detected as spam.
-    ///
-    /// These revisions were not analysed and are not included in the `revisions`,
-    /// `revisions_by_id` and `ordered_revisions` fields.
-    pub spam_ids: Vec<i32>,
-    /// Map of revision ID to RevisionData.
-    ///
-    /// Does not contain revisions that were detected as spam.
-    pub revisions_by_id: HashMap<i32, RevisionPointer>,
-    /// List of revisions in order from oldest to newest.
-    ///
-    /// Does not contain revisions that were detected as spam.
-    pub ordered_revisions: Vec<RevisionPointer>,
-
-    /// The current revision being analysed.
-    ///
-    /// After analysis finished this will be the latest revision that was not marked as spam.
-    pub current_revision: RevisionPointer,
-
-    internals: AnalysisInternals,
-}
-
-impl<P: Pointer> Index<&P> for Analysis {
-    type Output = P::Data;
-
-    fn index(&self, index: &P) -> &Self::Output {
-        index.data(self)
-    }
-}
-
-impl<P: Pointer> IndexMut<&P> for Analysis {
-    fn index_mut(&mut self, index: &P) -> &mut Self::Output {
-        index.data_mut(self)
-    }
-}
-
 // Spam detection variables.
 // use f64 instead of f32 to replicate the behavior of the Python script
 const CHANGE_PERCENTAGE: f64 = -0.40;
@@ -396,135 +56,44 @@ const CURR_LENGTH: usize = 1000;
 const UNMATCHED_PARAGRAPH: f64 = 0.0;
 const TOKEN_DENSITY_LIMIT: f64 = 20.0;
 
-#[derive(Debug, PartialEq, Eq, thiserror::Error)]
-#[non_exhaustive]
-pub enum AnalysisError {
-    #[error("No valid revisions found")]
-    NoValidRevisions,
-}
-
-pub trait Pointer: Clone {
-    type Data;
-
-    fn index(&self) -> usize;
-    fn value(&self) -> &str;
-    fn data<'a>(&self, analysis: &'a Analysis) -> &'a Self::Data;
-    fn data_mut<'a>(&self, analysis: &'a mut Analysis) -> &'a mut Self::Data;
-}
-
-impl Pointer for RevisionPointer {
-    type Data = RevisionAnalysis;
-
-    fn index(&self) -> usize {
-        self.0
-    }
-
-    fn value(&self) -> &str {
-        &self.text_lowercase
-    }
-
-    fn data<'a>(&self, analysis: &'a Analysis) -> &'a Self::Data {
-        &analysis.revisions[self.0]
-    }
-
-    fn data_mut<'a>(&self, analysis: &'a mut Analysis) -> &'a mut Self::Data {
-        &mut analysis.revisions[self.0]
-    }
-}
-
-impl Pointer for ParagraphPointer {
-    type Data = ParagraphAnalysis;
-
-    fn index(&self) -> usize {
-        self.0
-    }
-
-    fn value(&self) -> &str {
-        &self.value
-    }
-
-    fn data<'a>(&self, analysis: &'a Analysis) -> &'a Self::Data {
-        &analysis.paragraphs[self.0]
-    }
-
-    fn data_mut<'a>(&self, analysis: &'a mut Analysis) -> &'a mut Self::Data {
-        &mut analysis.paragraphs[self.0]
-    }
-}
-
-impl Pointer for SentencePointer {
-    type Data = SentenceAnalysis;
-
-    fn index(&self) -> usize {
-        self.0
-    }
-
-    fn value(&self) -> &str {
-        &self.value
-    }
-
-    fn data<'a>(&self, analysis: &'a Analysis) -> &'a Self::Data {
-        &analysis.sentences[self.0]
-    }
-
-    fn data_mut<'a>(&self, analysis: &'a mut Analysis) -> &'a mut Self::Data {
-        &mut analysis.sentences[self.0]
-    }
-}
-
-impl Pointer for WordPointer {
-    type Data = WordAnalysis;
-
-    fn index(&self) -> usize {
-        self.0
-    }
-
-    fn value(&self) -> &str {
-        &self.1.value
-    }
-
-    fn data<'a>(&self, analysis: &'a Analysis) -> &'a Self::Data {
-        &analysis.words[self.0]
-    }
-
-    fn data_mut<'a>(&self, analysis: &'a mut Analysis) -> &'a mut Self::Data {
-        &mut analysis.words[self.0]
-    }
-}
-
 // since the handling of paragraphs and sentences is almost identical, we generalize
 trait ParasentPointer: Sized + Pointer {
     type ParentPointer: Pointer;
     const IS_SENTENCE: bool;
 
     fn allocate_new_in_parent(
-        analysis: &mut Analysis,
+        analysis: &mut PageAnalysis,
         parent: &Self::ParentPointer,
         text: String,
     ) -> Self;
 
-    fn iterate_words(analysis: &mut Analysis, parasents: &[Self], f: impl FnMut(&mut WordAnalysis));
+    fn iterate_words(
+        analysis: &mut PageAnalysis,
+        parasents: &[Self],
+        f: impl FnMut(&mut WordAnalysis),
+    );
     fn all_parasents_in_parents(
-        analysis: &mut Analysis,
+        analysis: &mut PageAnalysis,
         prevs: &[Self::ParentPointer],
     ) -> Vec<Self>;
     fn find_in_parents(
-        analysis: &mut Analysis,
+        analysis: &mut PageAnalysis,
         prevs: &[Self::ParentPointer],
         hash: &blake3::Hash,
     ) -> Vec<Self>;
-    fn store_in_parent(&self, analysis: &mut Analysis, curr: &Self::ParentPointer);
-    fn find_in_any_previous_revision(analysis: &mut Analysis, hash: &blake3::Hash) -> Vec<Self>;
+    fn store_in_parent(&self, analysis: &mut PageAnalysis, curr: &Self::ParentPointer);
+    fn find_in_any_previous_revision(analysis: &mut PageAnalysis, hash: &blake3::Hash)
+        -> Vec<Self>;
 
     fn split_into_parasents(
         parasent_text: &str,
         scratch_buffers: (&mut String, &mut String),
     ) -> Vec<String>;
 
-    fn mark_all_children_matched(&self, analysis: &mut Analysis);
+    fn mark_all_children_matched(&self, analysis: &mut PageAnalysis);
 
-    fn matched_in_current(&self, analysis: &mut Analysis) -> bool;
-    fn set_matched_in_current(&self, analysis: &mut Analysis, value: bool);
+    fn matched_in_current(&self, analysis: &mut PageAnalysis) -> bool;
+    fn set_matched_in_current(&self, analysis: &mut PageAnalysis, value: bool);
 }
 
 impl ParasentPointer for ParagraphPointer {
@@ -532,7 +101,7 @@ impl ParasentPointer for ParagraphPointer {
     const IS_SENTENCE: bool = false;
 
     fn allocate_new_in_parent(
-        analysis: &mut Analysis,
+        analysis: &mut PageAnalysis,
         parent: &RevisionPointer,
         text: String,
     ) -> Self {
@@ -553,14 +122,17 @@ impl ParasentPointer for ParagraphPointer {
     }
 
     fn iterate_words(
-        analysis: &mut Analysis,
+        analysis: &mut PageAnalysis,
         paragraphs: &[Self],
         f: impl FnMut(&mut WordAnalysis),
     ) {
         analysis.iterate_words_in_paragraphs(paragraphs, f);
     }
 
-    fn all_parasents_in_parents(analysis: &mut Analysis, prevs: &[RevisionPointer]) -> Vec<Self> {
+    fn all_parasents_in_parents(
+        analysis: &mut PageAnalysis,
+        prevs: &[RevisionPointer],
+    ) -> Vec<Self> {
         let mut result = Vec::new();
         for revision_prev in prevs {
             result.extend_from_slice(&analysis.revisions[revision_prev.0].paragraphs_ordered);
@@ -582,7 +154,7 @@ impl ParasentPointer for ParagraphPointer {
     }
 
     fn find_in_parents(
-        analysis: &mut Analysis,
+        analysis: &mut PageAnalysis,
         prevs: &[RevisionPointer],
         hash: &blake3::Hash,
     ) -> Vec<Self> {
@@ -598,7 +170,7 @@ impl ParasentPointer for ParagraphPointer {
         result
     }
 
-    fn store_in_parent(&self, analysis: &mut Analysis, curr: &Self::ParentPointer) {
+    fn store_in_parent(&self, analysis: &mut PageAnalysis, curr: &Self::ParentPointer) {
         let revision_curr = &mut analysis.revisions[curr.0];
         revision_curr
             .paragraphs_by_hash
@@ -608,7 +180,10 @@ impl ParasentPointer for ParagraphPointer {
         revision_curr.paragraphs_ordered.push(self.clone());
     }
 
-    fn find_in_any_previous_revision(analysis: &mut Analysis, hash: &blake3::Hash) -> Vec<Self> {
+    fn find_in_any_previous_revision(
+        analysis: &mut PageAnalysis,
+        hash: &blake3::Hash,
+    ) -> Vec<Self> {
         analysis
             .internals
             .paragraphs_ht
@@ -617,7 +192,7 @@ impl ParasentPointer for ParagraphPointer {
             .unwrap_or_default()
     }
 
-    fn mark_all_children_matched(&self, analysis: &mut Analysis) {
+    fn mark_all_children_matched(&self, analysis: &mut PageAnalysis) {
         for sentence in &analysis.paragraphs[self.0].sentences_ordered {
             analysis.sentences[sentence.0].matched_in_current = true;
             for word in &analysis.sentences[sentence.0].words_ordered {
@@ -626,11 +201,11 @@ impl ParasentPointer for ParagraphPointer {
         }
     }
 
-    fn matched_in_current(&self, analysis: &mut Analysis) -> bool {
+    fn matched_in_current(&self, analysis: &mut PageAnalysis) -> bool {
         analysis.paragraphs[self.0].matched_in_current
     }
 
-    fn set_matched_in_current(&self, analysis: &mut Analysis, value: bool) {
+    fn set_matched_in_current(&self, analysis: &mut PageAnalysis, value: bool) {
         analysis.paragraphs[self.0].matched_in_current = value;
     }
 }
@@ -640,7 +215,7 @@ impl ParasentPointer for SentencePointer {
     const IS_SENTENCE: bool = true;
 
     fn allocate_new_in_parent(
-        analysis: &mut Analysis,
+        analysis: &mut PageAnalysis,
         parent: &ParagraphPointer,
         text: String,
     ) -> Self {
@@ -661,14 +236,17 @@ impl ParasentPointer for SentencePointer {
     }
 
     fn iterate_words(
-        analysis: &mut Analysis,
+        analysis: &mut PageAnalysis,
         sentences: &[Self],
         f: impl FnMut(&mut WordAnalysis),
     ) {
         analysis.iterate_words_in_sentences(sentences, f);
     }
 
-    fn all_parasents_in_parents(analysis: &mut Analysis, prevs: &[ParagraphPointer]) -> Vec<Self> {
+    fn all_parasents_in_parents(
+        analysis: &mut PageAnalysis,
+        prevs: &[ParagraphPointer],
+    ) -> Vec<Self> {
         let mut result = Vec::new();
         for paragraph_prev in prevs {
             result.extend_from_slice(&analysis.paragraphs[paragraph_prev.0].sentences_ordered);
@@ -691,7 +269,7 @@ impl ParasentPointer for SentencePointer {
     }
 
     fn find_in_parents(
-        analysis: &mut Analysis,
+        analysis: &mut PageAnalysis,
         unmatched_paragraphs_prev: &[ParagraphPointer],
         hash: &blake3::Hash,
     ) -> Vec<Self> {
@@ -707,7 +285,7 @@ impl ParasentPointer for SentencePointer {
         result
     }
 
-    fn store_in_parent(&self, analysis: &mut Analysis, curr: &Self::ParentPointer) {
+    fn store_in_parent(&self, analysis: &mut PageAnalysis, curr: &Self::ParentPointer) {
         let paragraph_curr = &mut analysis.paragraphs[curr.0];
         paragraph_curr
             .sentences_by_hash
@@ -717,7 +295,10 @@ impl ParasentPointer for SentencePointer {
         paragraph_curr.sentences_ordered.push(self.clone());
     }
 
-    fn find_in_any_previous_revision(analysis: &mut Analysis, hash: &blake3::Hash) -> Vec<Self> {
+    fn find_in_any_previous_revision(
+        analysis: &mut PageAnalysis,
+        hash: &blake3::Hash,
+    ) -> Vec<Self> {
         analysis
             .internals
             .sentences_ht
@@ -726,44 +307,27 @@ impl ParasentPointer for SentencePointer {
             .unwrap_or_default()
     }
 
-    fn mark_all_children_matched(&self, analysis: &mut Analysis) {
+    fn mark_all_children_matched(&self, analysis: &mut PageAnalysis) {
         for word in &analysis.sentences[self.0].words_ordered {
             analysis.words[word.0].matched_in_current = true;
         }
     }
 
-    fn matched_in_current(&self, analysis: &mut Analysis) -> bool {
+    fn matched_in_current(&self, analysis: &mut PageAnalysis) -> bool {
         analysis.sentences[self.0].matched_in_current
     }
 
-    fn set_matched_in_current(&self, analysis: &mut Analysis, value: bool) {
+    fn set_matched_in_current(&self, analysis: &mut PageAnalysis, value: bool) {
         analysis.sentences[self.0].matched_in_current = value;
     }
 }
 
-impl Analysis {
+impl PageAnalysis {
     pub fn analyse_page(xml_revisions: &[Revision]) -> Result<Self, AnalysisError> {
-        let mut analysis = Self {
-            revisions: Vec::new(),
-            paragraphs: Vec::new(),
-            sentences: Vec::new(),
-            words: Vec::new(),
-
-            spam_ids: Vec::new(),
-            revisions_by_id: HashMap::new(),
-            ordered_revisions: Vec::new(),
-
-            current_revision: RevisionPointer::new(0, RevisionImmutables::dummy()), /* will be overwritten before being read */
-
-            internals: AnalysisInternals {
-                paragraphs_ht: FxHashMap::default(),
-                sentences_ht: FxHashMap::default(),
-                spam_hashes: FxHashSet::default(),
-                revision_prev: None,
-
-                scratch_buffers: (String::new(), String::new()),
-            },
-        };
+        // This means we'll always have an unreferenced dummy revision in the revisions array at index 0,
+        // which is not ideal but simplifies the implementation and data model significantly.
+        let initial_revision = (RevisionAnalysis::default(), RevisionImmutables::dummy()); /* will be overwritten before being read */
+        let mut analysis = PageAnalysis::new(initial_revision);
 
         let mut at_least_one = false;
 
@@ -794,8 +358,9 @@ impl Analysis {
             }
 
             // Spam detection: Deletion
+            // On initial revision this resolves to a no-op, since length_lowercase is 0
             if !(vandalism || xml_revision.comment.is_some() && xml_revision.minor) {
-                let revision_prev = &analysis.current_revision; /* !! since we have not yet updated revision_curr, this is the previous revision */
+                let revision_prev = &analysis.current_revision; /* !! since we have not yet updated current_revision, this is the previous revision */
                 let change_percentage = (revision_data.length_lowercase as f64
                     - revision_prev.length_lowercase as f64)
                     / revision_prev.length_lowercase as f64;
@@ -817,15 +382,14 @@ impl Analysis {
             }
 
             // Allocate a new revision and create a pointer to it.
-            let mut revision_pointer =
-                RevisionPointer::new(analysis.revisions.len(), revision_data);
-            analysis.revisions.push(RevisionAnalysis::default());
+            let mut revision_pointer = analysis.new_revision(revision_data);
 
             // Update the information about the previous revision.
             std::mem::swap(&mut analysis.current_revision, &mut revision_pointer);
             if at_least_one {
                 analysis.internals.revision_prev = Some(revision_pointer);
-            } /* if !at_least_one we do not yet have a valid revision (revision_pointer contains a dummy value) to refer to as previous */
+            } /* if !at_least_one we do not yet have any valid revision (revision_pointer contains a
+              dummy value or vandalism revision) to refer to as previous, so the previous revision is discarded */
 
             // Perform the actual word (aka. token) matching
             vandalism = analysis.determine_authorship();
@@ -1230,16 +794,15 @@ impl Analysis {
         }
 
         fn allocate_new_word(
-            analysis: &mut Analysis,
+            analysis: &mut PageAnalysis,
             word: &str,
             sentence_pointer: &SentencePointer,
         ) {
             let word_data = WordImmutables::new(word.into());
             let word_pointer = WordPointer::new(analysis.words.len(), word_data);
-            analysis.words.push(WordAnalysis::new(
-                word_pointer.clone(),
-                &analysis.current_revision,
-            ));
+            analysis
+                .words
+                .push(WordAnalysis::new(&analysis.current_revision));
             analysis.sentences[sentence_pointer.0]
                 .words_ordered
                 .push(word_pointer);

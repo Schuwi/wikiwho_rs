@@ -13,7 +13,7 @@ use std::{
 use pyo3::{import_exception, types::PyDict};
 
 use wikiwho::{
-    algorithm::{Analysis, AnalysisError},
+    algorithm::{AnalysisError, PageAnalysis},
     dump_parser::{DumpParser, Page, Revision, Text},
 };
 
@@ -207,7 +207,7 @@ fn test_case_1() {
             ],
         };
 
-        let analysis = Analysis::analyse_page(&page.revisions).unwrap();
+        let analysis = PageAnalysis::analyse_page(&page.revisions).unwrap();
         let wikiwho_py = run_analysis_python(py, &page);
 
         let sentence_rust = {
@@ -260,7 +260,7 @@ fn test_case_2() {
 
 fn compare_results(
     page: &Page,
-    analysis: &Analysis,
+    analysis: &PageAnalysis,
     wikiwho_py: &output_structs::PyWikiwho,
 ) -> Result<(), TestCaseError> {
     prop_assert_eq!(
@@ -385,7 +385,7 @@ fn compare_results(
 fn compare_algorithm_python(page: &Page) -> Result<(), TestCaseError> {
     with_gil!(py, {
         // run Rust implementation
-        let result = Analysis::analyse_page(&page.revisions);
+        let result = PageAnalysis::analyse_page(&page.revisions);
         // reject test case if there are no valid revisions
         prop_assume!(!matches!(result, Err(AnalysisError::NoValidRevisions)));
         let analysis = result.unwrap();
@@ -552,7 +552,7 @@ fn first_1000_pages_mt() {
                 file.read_exact(&mut buf).unwrap();
                 let page: Page = bincode::deserialize(&buf).unwrap();
                 let key = format!("{}:{}", page.namespace, page.title);
-                let analysis = Analysis::analyse_page(&page.revisions).unwrap();
+                let analysis = PageAnalysis::analyse_page(&page.revisions).unwrap();
                 result_sender.send((key, page_ref, analysis)).unwrap();
 
                 processed += 1;
@@ -598,7 +598,7 @@ fn first_1000_pages_mt() {
     enum PendingResult {
         RustDone {
             page_ref: PageRef,
-            analysis: Analysis,
+            analysis: PageAnalysis,
         },
         PyDone {
             analysis_py: output_structs::PyWikiwho,
