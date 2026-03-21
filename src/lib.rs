@@ -29,7 +29,7 @@
 //!
 //! Here's a minimal example of how to load a Wikimedia XML dump and analyze a page:
 //!
-//! ```rust
+//! ```rust,no_run
 //! use wikiwho::dump_parser::DumpParser;
 //! use wikiwho::algorithm::PageAnalysis;
 //! use std::fs::File;
@@ -64,7 +64,7 @@
 //!
 //! To process a full dump, you can iterate over all pages:
 //!
-//! ```rust
+//! ```rust,no_run
 //! use wikiwho::dump_parser::DumpParser;
 //! use wikiwho::algorithm::PageAnalysis;
 //! use std::fs::File;
@@ -96,12 +96,12 @@
 //!
 //! **Example using multiple threads:**
 //!
-//! ```rust
-//! use wikiwho::dump_parser::DumpParser;
+//! ```rust,no_run
+//! use wikiwho::dump_parser::{DumpParser, Page};
 //! use wikiwho::algorithm::PageAnalysis;
 //! use std::fs::File;
 //! use std::io::BufReader;
-//! use std::sync::mpsc::channel;
+//! use std::sync::{mpsc::channel, Arc, Mutex};
 //! use std::thread;
 //!
 //! fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -110,17 +110,25 @@
 //!     let mut parser = DumpParser::new(reader)?;
 //!
 //!     // Channel to send pages to worker threads
-//!     let (tx, rx) = channel();
+//!     let (tx, rx) = channel::<Page>();
+//!     let rx = Arc::new(Mutex::new(rx));
 //!
 //!     // Spawn worker threads
-//!     let workers: Vec<_> = (0..num_cpus::get()-1)
+//!     let num_workers = std::thread::available_parallelism().map(|n| n.get()).unwrap_or(1);
+//!     let workers: Vec<_> = (0..num_workers)
 //!         .map(|_| {
-//!             let rx = rx.clone();
+//!             let rx = Arc::clone(&rx);
 //!             thread::spawn(move || {
-//!                 for page in rx.iter() {
-//!                     // Analyze the page
-//!                     let analysis = PageAnalysis::analyse_page(&page.revisions).unwrap();
-//!                     // Processing logic
+//!                 loop {
+//!                     let page = rx.lock().unwrap().recv();
+//!                     match page {
+//!                         Ok(page) => {
+//!                             // Analyze the page
+//!                             let analysis = PageAnalysis::analyse_page(&page.revisions).unwrap();
+//!                             // Processing logic
+//!                         }
+//!                         Err(_) => break,
+//!                     }
 //!                 }
 //!             })
 //!         })
@@ -155,7 +163,7 @@
 //!
 //! **Example**:
 //!
-//! ```rust
+//! ```rust,ignore
 //! let xml_dump = File::open("path_to_dump.xml")?;
 //! let reader = BufReader::new(xml_dump);
 //! let mut parser = DumpParser::new(reader)?;
@@ -176,7 +184,7 @@
 //!
 //! **Example**:
 //!
-//! ```rust
+//! ```rust,ignore
 //! let analysis = PageAnalysis::analyse_page(&page.revisions)?;
 //! ```
 //!
@@ -188,7 +196,7 @@
 //!
 //! **Example**:
 //!
-//! ```rust
+//! ```rust,ignore
 //! for token_pointer in wikiwho::utils::iterate_revision_tokens(&analysis, &analysis.current_revision) {
 //!     // Use the token pointer to access token data
 //!     let token = &analysis[token_pointer];
@@ -209,13 +217,13 @@
 //! - Nodes are referenced using pointer structs (e.g., `SentencePointer`), which include an index and a shared reference to the immutable data.
 //! - To access mutable data, use indexing into the `PageAnalysis` struct:
 //!
-//! ```rust
+//! ```rust,ignore
 //! let origin_revision = &analysis[word_pointer].origin_revision;
 //! ```
 //!
 //! - Alternatively you may use the `words()` getter on `PageAnalysis` directly:
 //!
-//! ```rust
+//! ```rust,ignore
 //! let origin_revision = &analysis.words()[word_pointer.unique_id()].origin_revision;
 //! ```
 //!
