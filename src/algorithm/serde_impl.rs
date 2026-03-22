@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MIT AND MPL-2.0
+// SPDX-License-Identifier: MPL-2.0
 use std::{collections::HashMap, sync::Arc};
 
 use rustc_hash::FxHashMap;
