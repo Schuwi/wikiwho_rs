@@ -31,7 +31,7 @@ The original Python implementation of WikiWho could process about 300 pages in o
 
 ```toml
 [dependencies]
-wikiwho = "0.1"
+wikiwho = "0.2"
 ```
 
 ## Usage
@@ -196,7 +196,7 @@ By default, `wikiwho` uses a fast Rust implementation of the histogram diff algo
 
 ```toml
 [dependencies]
-wikiwho = { version = "0.1", features = ["python-diff"] }
+wikiwho = { version = "0.2", features = ["python-diff"] }
 ```
 
 **Note**: Enabling `python-diff` significantly slows down processing as it calls the Python implementation via `pyo3`. This feature is intended for testing and validation purposes. Multi-threading will be less effective because of GIL contention.
@@ -208,7 +208,7 @@ wikiwho = { version = "0.1", features = ["python-diff"] }
 
 ```toml
 [dependencies]
-wikiwho = { version = "0.1", features = ["strict"] }
+wikiwho = { version = "0.2", features = ["strict"] }
 ```
 
 ### Optimized String Processing
@@ -217,7 +217,7 @@ By default, text splitting functions use straightforward implementations based o
 
 ```toml
 [dependencies]
-wikiwho = { version = "0.1", features = ["optimized-str"] }
+wikiwho = { version = "0.2", features = ["optimized-str"] }
 ```
 
 This swaps in alternative implementations that use the Aho-Corasick algorithm for tokenization, `memchr::memmem` with scratch buffers for paragraph and sentence splitting, and the `unicode-case-mapping` crate for lowercasing. These produce identical results but may be faster depending on the input text.
