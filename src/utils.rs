@@ -6,6 +6,26 @@ use imara_diff::{
 };
 use memchr::memmem;
 
+use std::fmt::Debug;
+
+pub(crate) struct DebugStringEllipsis<'a>(pub &'a str, pub usize);
+
+impl Debug for DebugStringEllipsis<'_> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        if self.0.len() > self.1 {
+            let split = self
+                .0
+                .char_indices()
+                .nth(self.1)
+                .map(|(idx, _)| idx)
+                .unwrap_or(self.0.len());
+            write!(f, "{}...", &self.0[..split])
+        } else {
+            write!(f, "{}", self.0)
+        }
+    }
+}
+
 #[allow(dead_code)] // it IS used in `split_into_tokens_corasick`
 const fn const_str_equals(a: &str, b: &str) -> bool {
     let mut i = 0;
