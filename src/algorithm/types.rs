@@ -1,5 +1,4 @@
 // SPDX-License-Identifier: MPL-2.0
-use chrono::prelude::*;
 use compact_str::CompactString;
 use rustc_hash::FxHashMap;
 use std::{
@@ -10,29 +9,12 @@ use std::{
 };
 
 use crate::{
-    dump_parser::{Contributor, Revision, Text},
-    utils,
+    algorithm::PageAnalysisOptions,
+    dump_parser::{Revision, Text},
+    utils::{self, DebugStringEllipsis},
 };
 
 use super::PageAnalysisInternals;
-
-struct StringLenLimited<'a>(&'a str, usize);
-
-impl Debug for StringLenLimited<'_> {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        if self.0.len() > self.1 {
-            let split = self
-                .0
-                .char_indices()
-                .nth(self.1)
-                .map(|(idx, _)| idx)
-                .unwrap_or(self.0.len());
-            write!(f, "{}...", &self.0[..split])
-        } else {
-            write!(f, "{}", self.0)
-        }
-    }
-}
 
 /// A container that holds either a single element or a `Vec`.
 ///
@@ -100,119 +82,41 @@ impl<T> MaybeVec<T> {
     }
 }
 
-// index is unique within a page
-#[derive(Clone)]
-pub struct RevisionPointer(pub(crate) usize, pub(crate) Arc<RevisionImmutables>);
-
-impl Deref for RevisionPointer {
-    type Target = RevisionImmutables;
-
-    fn deref(&self) -> &Self::Target {
-        &self.1
-    }
-}
-
-impl Debug for RevisionPointer {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(
-            f,
-            "RevisionPointer({}, '{:?}')",
-            self.0,
-            StringLenLimited(&self.text_lowercase, 20)
-        )
-    }
-}
-
-impl PartialEq for RevisionPointer {
-    fn eq(&self, other: &Self) -> bool {
-        self.0 == other.0
-    }
-}
-
-impl Eq for RevisionPointer {}
-
 #[derive(Clone)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct RevisionImmutables {
+    pub id: i32,
     pub length_lowercase: usize, /* text length when lowercased, in bytes (for `test` compile target this is the number of unicode codepoints, to match the python implementation) */
     pub text_lowercase: String,  /* lowercased text of revision */
-    pub xml_revision: Revision,
 }
 
 impl RevisionImmutables {
     pub fn dummy() -> Self {
         Self {
+            id: 0,
             length_lowercase: 0,
             text_lowercase: String::new(),
-            xml_revision: Revision {
-                id: 0,
-                timestamp: Utc::now(),
-                contributor: Contributor {
-                    id: None,
-                    username: CompactString::new(""),
-                },
-                comment: None,
-                minor: false,
-                text: Text::Normal(String::new()),
-                sha1: None,
-            },
         }
     }
 
     pub fn from_revision(revision: &Revision) -> Self {
+        Self::from_revision_with_options(revision, PageAnalysisOptions::default())
+    }
+
+    pub fn from_revision_with_options(
+        revision: &Revision,
+        analysis_options: PageAnalysisOptions,
+    ) -> Self {
         Self {
-            // #[cfg(not(any(test, feature = "match-reference-impl")))]
-            // // for spam detection it should be enough to use the length of the text in bytes
-            // length: revision.text.len(),
-            // #[cfg(any(test, feature = "match-reference-impl"))]
+            id: revision.id,
             // python's `len` function returns the number of unicode codepoints for a string,
             // so when testing against the python implementation we need to match that behavior to get identical results
             length_lowercase: revision.text.as_str().chars().count(),
             text_lowercase: match revision.text {
-                Text::Normal(ref t) => utils::to_lowercase(t),
+                Text::Normal(ref t) => utils::to_lowercase(t, analysis_options),
                 Text::Deleted => String::new(),
             },
-            xml_revision: revision.clone(),
         }
-    }
-}
-
-impl Deref for RevisionImmutables {
-    type Target = Revision;
-
-    fn deref(&self) -> &Self::Target {
-        &self.xml_revision
-    }
-}
-
-#[derive(Clone, Default)]
-pub struct RevisionAnalysis {
-    pub(crate) paragraphs_by_hash: FxHashMap<blake3::Hash, MaybeVec<ParagraphPointer>>, /* assume that duplicate paragraphs are not very common and optimize to avoid allocation */
-    pub paragraphs_ordered: Vec<ParagraphPointer>,
-
-    pub original_adds: usize, /* number of tokens added in this revision for the first time */
-}
-
-// index is unique within a page
-#[derive(Clone)]
-pub struct ParagraphPointer(pub(crate) usize, pub(crate) Arc<ParagraphImmutables>);
-
-impl Deref for ParagraphPointer {
-    type Target = ParagraphImmutables;
-
-    fn deref(&self) -> &Self::Target {
-        &self.1
-    }
-}
-
-impl Debug for ParagraphPointer {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(
-            f,
-            "ParagraphPointer({}, '{:?}')",
-            self.0,
-            StringLenLimited(&self.value, 20)
-        )
     }
 }
 
@@ -251,38 +155,6 @@ impl ParagraphImmutables {
     }
 }
 
-#[derive(Clone, Default)]
-pub struct ParagraphAnalysis {
-    pub(crate) sentences_by_hash: FxHashMap<blake3::Hash, MaybeVec<SentencePointer>>,
-    pub sentences_ordered: Vec<SentencePointer>,
-
-    /// whether this paragraph was found in the current revision
-    pub(crate) matched_in_current: bool,
-}
-
-// index is unique within a page
-#[derive(Clone)]
-pub struct SentencePointer(pub(crate) usize, pub(crate) Arc<SentenceImmutables>);
-
-impl Deref for SentencePointer {
-    type Target = SentenceImmutables;
-
-    fn deref(&self) -> &Self::Target {
-        &self.1
-    }
-}
-
-impl Debug for SentencePointer {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(
-            f,
-            "SentencePointer({}, '{:?}')",
-            self.0,
-            StringLenLimited(&self.value, 20)
-        )
-    }
-}
-
 #[derive(Clone)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize))]
 pub struct SentenceImmutables {
@@ -317,43 +189,6 @@ impl SentenceImmutables {
     }
 }
 
-#[derive(Clone, Default)]
-pub struct SentenceAnalysis {
-    pub words_ordered: Vec<WordPointer>,
-
-    /// whether this sentence was found in the current revision
-    pub(crate) matched_in_current: bool,
-}
-
-// index is unique within a page
-#[derive(Clone)]
-pub struct WordPointer(pub(crate) usize, pub(crate) Arc<WordImmutables>);
-
-impl WordPointer {
-    pub fn unique_id(&self) -> usize {
-        self.0
-    }
-}
-
-impl Deref for WordPointer {
-    type Target = WordImmutables;
-
-    fn deref(&self) -> &Self::Target {
-        &self.1
-    }
-}
-
-impl Debug for WordPointer {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(
-            f,
-            "WordPointer({}, '{:?}')",
-            self.0,
-            StringLenLimited(&self.1.value, 20)
-        )
-    }
-}
-
 #[derive(Clone)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct WordImmutables {
@@ -364,6 +199,31 @@ impl WordImmutables {
     pub fn new(value: CompactString) -> Self {
         Self { value }
     }
+}
+
+#[derive(Clone, Default)]
+pub struct RevisionAnalysis {
+    pub(crate) paragraphs_by_hash: FxHashMap<blake3::Hash, MaybeVec<ParagraphPointer>>, /* assume that duplicate paragraphs are not very common and optimize to avoid allocation */
+    pub paragraphs_ordered: Vec<ParagraphPointer>,
+
+    pub original_adds: usize, /* number of tokens added in this revision for the first time */
+}
+
+#[derive(Clone, Default)]
+pub struct ParagraphAnalysis {
+    pub(crate) sentences_by_hash: FxHashMap<blake3::Hash, MaybeVec<SentencePointer>>,
+    pub sentences_ordered: Vec<SentencePointer>,
+
+    /// whether this paragraph was found in the current revision
+    pub(crate) matched_in_current: bool,
+}
+
+#[derive(Clone, Default)]
+pub struct SentenceAnalysis {
+    pub words_ordered: Vec<WordPointer>,
+
+    /// whether this sentence was found in the current revision
+    pub(crate) matched_in_current: bool,
 }
 
 /// Mutable analysis data tracked for each word (token) across revisions.
@@ -519,6 +379,112 @@ impl<P: Pointer> IndexMut<&P> for PageAnalysis {
 pub enum AnalysisError {
     #[error("No valid revisions found")]
     NoValidRevisions,
+}
+
+// index is unique within a page
+#[derive(Clone)]
+pub struct RevisionPointer(pub(crate) usize, pub(crate) Arc<RevisionImmutables>);
+
+impl Deref for RevisionPointer {
+    type Target = RevisionImmutables;
+
+    fn deref(&self) -> &Self::Target {
+        &self.1
+    }
+}
+
+impl Debug for RevisionPointer {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "RevisionPointer({}, '{:?}')",
+            self.0,
+            DebugStringEllipsis(&self.text_lowercase, 20)
+        )
+    }
+}
+
+impl PartialEq for RevisionPointer {
+    fn eq(&self, other: &Self) -> bool {
+        self.0 == other.0
+    }
+}
+
+impl Eq for RevisionPointer {}
+
+// index is unique within a page
+#[derive(Clone)]
+pub struct ParagraphPointer(pub(crate) usize, pub(crate) Arc<ParagraphImmutables>);
+
+impl Deref for ParagraphPointer {
+    type Target = ParagraphImmutables;
+
+    fn deref(&self) -> &Self::Target {
+        &self.1
+    }
+}
+
+impl Debug for ParagraphPointer {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "ParagraphPointer({}, '{:?}')",
+            self.0,
+            DebugStringEllipsis(&self.value, 20)
+        )
+    }
+}
+
+// index is unique within a page
+#[derive(Clone)]
+pub struct SentencePointer(pub(crate) usize, pub(crate) Arc<SentenceImmutables>);
+
+impl Deref for SentencePointer {
+    type Target = SentenceImmutables;
+
+    fn deref(&self) -> &Self::Target {
+        &self.1
+    }
+}
+
+impl Debug for SentencePointer {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "SentencePointer({}, '{:?}')",
+            self.0,
+            DebugStringEllipsis(&self.value, 20)
+        )
+    }
+}
+
+// index is unique within a page
+#[derive(Clone)]
+pub struct WordPointer(pub(crate) usize, pub(crate) Arc<WordImmutables>);
+
+impl WordPointer {
+    pub fn unique_id(&self) -> usize {
+        self.0
+    }
+}
+
+impl Deref for WordPointer {
+    type Target = WordImmutables;
+
+    fn deref(&self) -> &Self::Target {
+        &self.1
+    }
+}
+
+impl Debug for WordPointer {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "WordPointer({}, '{:?}')",
+            self.0,
+            DebugStringEllipsis(&self.1.value, 20)
+        )
+    }
 }
 
 /// Trait for type-safe navigation of the [`PageAnalysis`] graph.

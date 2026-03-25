@@ -41,6 +41,8 @@ impl WordAnalysis {
 
 #[derive(Default)]
 pub(crate) struct PageAnalysisInternals {
+    options: PageAnalysisOptions,
+
     paragraphs_ht: FxHashMap<blake3::Hash, Vec<ParagraphPointer>>, // Hash table of paragraphs of all revisions
     sentences_ht: FxHashMap<blake3::Hash, Vec<SentencePointer>>, // Hash table of sentences of all revisions
     spam_hashes: FxHashSet<RevisionHash>, // Hashes of spam revisions; RevisionHash can be a SHA1 hash or a BLAKE3 hash but we expect all hashes in this revision to be of the same type
@@ -321,6 +323,44 @@ impl ParasentPointer for SentencePointer {
     }
 }
 
+#[derive(Default, Clone, Copy, PartialEq, Eq)]
+#[non_exhaustive]
+pub struct PageAnalysisOptions {
+    /// Use optimized lowercasing algorithm that is faster than default for inputs with <= 90% ASCII content.
+    #[cfg(feature = "optimized-lowercase")]
+    pub optimize_non_ascii: bool,
+    /// Use the original Python stdlib diff algorithm by invoking Python with pyo3.
+    ///
+    /// Multi-threading may be significantly slower than in pure-Rust due to global interpreter lock (GIL) contention.
+    #[cfg(feature = "python-diff")]
+    pub use_python_diff: bool,
+    // optimized-str is absolutely better in performance, the only downside is more dependencies,
+    // so we provide no runtime switch since cargo feature merging in dependency trees should be fine
+}
+
+impl PageAnalysisOptions {
+    pub const fn new() -> Self {
+        Self {
+            #[cfg(feature = "optimized-lowercase")]
+            optimize_non_ascii: false,
+            #[cfg(feature = "python-diff")]
+            use_python_diff: false,
+        }
+    }
+
+    #[cfg(feature = "optimized-lowercase")]
+    pub const fn optimize_non_ascii(mut self) -> Self {
+        self.optimize_non_ascii = true;
+        self
+    }
+
+    #[cfg(feature = "python-diff")]
+    pub const fn use_python_diff(mut self) -> Self {
+        self.use_python_diff = true;
+        self
+    }
+}
+
 impl PageAnalysis {
     /// Runs the WikiWho authorship analysis on an ordered sequence of revisions.
     ///
@@ -336,10 +376,18 @@ impl PageAnalysis {
     /// Returns [`AnalysisError::NoValidRevisions`] if every revision in the input
     /// is classified as spam or has empty/deleted text.
     pub fn analyse_page(xml_revisions: &[Revision]) -> Result<Self, AnalysisError> {
+        Self::analyse_page_with_options(xml_revisions, PageAnalysisOptions::default())
+    }
+
+    pub fn analyse_page_with_options(
+        xml_revisions: &[Revision],
+        analysis_options: PageAnalysisOptions,
+    ) -> Result<Self, AnalysisError> {
         // This means we'll always have an unreferenced dummy revision in the revisions array at index 0,
         // which is not ideal but simplifies the implementation and data model significantly.
         let initial_revision = (RevisionAnalysis::default(), RevisionImmutables::dummy()); /* will be overwritten before being read */
         let mut analysis = PageAnalysis::new(initial_revision);
+        analysis.internals.options = analysis_options;
 
         let mut at_least_one = false;
 
@@ -361,7 +409,8 @@ impl PageAnalysis {
                 None => RevisionHash::Blake3(blake3::hash(text.as_bytes())),
             };
 
-            let revision_data = RevisionImmutables::from_revision(xml_revision);
+            let revision_data =
+                RevisionImmutables::from_revision_with_options(xml_revision, analysis_options);
             let mut vandalism = false;
 
             if analysis.internals.spam_hashes.contains(&rev_hash) {
@@ -836,9 +885,16 @@ impl PageAnalysis {
 
         // do the diffing!
         let mut diff: Vec<_>;
-        if cfg!(feature = "python-diff") {
-            diff = utils::python_diff(&text_prev, &text_curr, &mut interner);
-        } else {
+        #[cfg(feature = "python-diff")]
+        {
+            if self.internals.options.use_python_diff {
+                diff = utils::python_diff(&text_prev, &text_curr, &mut interner);
+            } else {
+                diff = utils::imara_diff(&text_prev, &text_curr, interner.num_tokens());
+            }
+        }
+        #[cfg(not(feature = "python-diff"))]
+        {
             diff = utils::imara_diff(&text_prev, &text_curr, interner.num_tokens());
         }
 

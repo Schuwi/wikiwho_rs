@@ -418,10 +418,7 @@ mod tests {
                 o.text_lowercase, d.text_lowercase,
                 "revision_immutables[{i}].text_lowercase"
             );
-            assert_eq!(
-                o.xml_revision.id, d.xml_revision.id,
-                "revision_immutables[{i}].id"
-            );
+            assert_eq!(o.id, d.id, "revision_immutables[{i}].id");
         }
 
         // Paragraph immutables
@@ -650,20 +647,7 @@ mod tests {
         let deser: PageAnalysis = serde_json::from_str(&json).expect("deserialize");
 
         let d = &deser.revision_immutables[1];
-        assert_eq!(d.xml_revision.id, 42);
-        assert_eq!(d.xml_revision.timestamp, revision.timestamp);
-        assert_eq!(d.xml_revision.contributor.id, Some(7));
-        assert_eq!(d.xml_revision.contributor.username, "SpecificUser");
-        assert_eq!(
-            d.xml_revision.sha1,
-            Some(Sha1Hash(*b"abcdefghijklmnopqrstuvwxyz12345"))
-        );
-        assert_eq!(d.xml_revision.comment.as_deref(), Some("my edit comment"));
-        assert!(d.xml_revision.minor);
-        assert_eq!(
-            d.xml_revision.text,
-            Text::Normal("Test text content".to_string())
-        );
+        assert_eq!(d.id, 42);
         assert_eq!(d.text_lowercase, "test text content");
     }
 
