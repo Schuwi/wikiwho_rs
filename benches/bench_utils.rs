@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MPL-2.0
 use criterion::{criterion_group, criterion_main, BenchmarkId, Criterion};
 use rand::{Rng, SeedableRng};
-use wikiwho::utils;
+use wikiwho::{optimized_str, utils};
 
 fn generate_input_split_into_paragraphs(length: u64) -> String {
     // generate inputs from fixed seeds
@@ -38,7 +38,7 @@ fn bench_split_into_paragraphs(c: &mut Criterion) {
         group.bench_with_input(BenchmarkId::new("Optimized", length), &input, |b, i| {
             let mut scratch_buffers = (String::new(), String::new());
             b.iter(|| {
-                utils::split_into_paragraphs_optimized(
+                optimized_str::split_into_paragraphs_optimized(
                     i,
                     (&mut scratch_buffers.0, &mut scratch_buffers.1),
                 )
@@ -82,7 +82,7 @@ fn bench_split_into_sentences(c: &mut Criterion) {
         group.bench_with_input(BenchmarkId::new("Optimized", length), &input, |b, i| {
             let mut scratch_buffers = (String::new(), String::new());
             b.iter(|| {
-                utils::split_into_sentences_optimized(
+                optimized_str::split_into_sentences_optimized(
                     i,
                     (&mut scratch_buffers.0, &mut scratch_buffers.1),
                 )
@@ -129,7 +129,7 @@ fn bench_split_into_tokens(c: &mut Criterion) {
             b.iter(|| utils::split_into_tokens_naive(i));
         });
         group.bench_with_input(BenchmarkId::new("Corasick", length), &input, |b, i| {
-            b.iter(|| utils::split_into_tokens_corasick(i));
+            b.iter(|| optimized_str::split_into_tokens_corasick(i));
         });
     }
 }

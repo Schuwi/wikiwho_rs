@@ -70,7 +70,7 @@ proptest! {
 #[test]
 fn test_case_1() {
     Python::with_gil(|py| {
-        let tokens_rust = wikiwho::utils::split_into_tokens("®\u{2000}￼");
+        let tokens_rust = wikiwho::utils::split_into_tokens_naive("®\u{2000}￼");
         let tokens_py = call_split_fn_py(py, "®\u{2000}￼", "split_into_tokens");
 
         assert_eq!(tokens_rust, tokens_py);

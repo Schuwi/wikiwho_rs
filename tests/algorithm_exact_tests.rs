@@ -12,7 +12,7 @@ use std::{
 use pyo3::{import_exception, types::PyDict};
 
 use wikiwho::{
-    algorithm::{AnalysisError, PageAnalysis},
+    algorithm::{AnalysisError, PageAnalysis, PageAnalysisOptions},
     dump_parser::{DumpParser, Page, Revision, Text},
 };
 
@@ -21,6 +21,8 @@ mod common;
 use common::input_structs;
 use common::output_structs::serialize_wikiwho_result;
 use common::{load_local_module, prelude::*};
+
+const ANALYSIS_OPTIONS_PY: PageAnalysisOptions = PageAnalysisOptions::new().use_python_diff();
 
 #[derive(Clone, Copy)]
 struct PageRef {
@@ -186,7 +188,8 @@ fn test_case_1() {
             ],
         };
 
-        let rust_analysis = PageAnalysis::analyse_page(&page.revisions).unwrap();
+        let rust_analysis =
+            PageAnalysis::analyse_page_with_options(&page.revisions, ANALYSIS_OPTIONS_PY).unwrap();
         let py_analysis = run_analysis_python(py, &page);
 
         let sentence_rust = {
@@ -364,7 +367,7 @@ fn compare_results(
 fn compare_algorithm_python(page: &Page) -> Result<(), TestCaseError> {
     with_gil!(py, {
         // run Rust implementation
-        let result = PageAnalysis::analyse_page(&page.revisions);
+        let result = PageAnalysis::analyse_page_with_options(&page.revisions, ANALYSIS_OPTIONS_PY);
         // reject test case if there are no valid revisions
         prop_assume!(!matches!(result, Err(AnalysisError::NoValidRevisions)));
         let analysis = result.unwrap();
@@ -539,7 +542,9 @@ fn first_1000_pages_mt() {
                 file.read_exact(&mut buf).unwrap();
                 let page: Page = bincode::deserialize(&buf).unwrap();
                 let key = format!("{}:{}", page.namespace, page.title);
-                let analysis = PageAnalysis::analyse_page(&page.revisions).unwrap();
+                let analysis =
+                    PageAnalysis::analyse_page_with_options(&page.revisions, ANALYSIS_OPTIONS_PY)
+                        .unwrap();
                 result_sender.send((key, page_ref, analysis)).unwrap();
 
                 processed += 1;

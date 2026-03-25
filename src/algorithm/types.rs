@@ -10,6 +10,7 @@ use std::{
 };
 
 use crate::{
+    algorithm::PageAnalysisOptions,
     dump_parser::{Contributor, Revision, Text},
     utils::{self, DebugStringEllipsis},
 };
@@ -111,6 +112,13 @@ impl RevisionImmutables {
     }
 
     pub fn from_revision(revision: &Revision) -> Self {
+        Self::from_revision_with_options(revision, PageAnalysisOptions::default())
+    }
+
+    pub fn from_revision_with_options(
+        revision: &Revision,
+        analysis_options: PageAnalysisOptions,
+    ) -> Self {
         Self {
             // #[cfg(not(any(test, feature = "match-reference-impl")))]
             // // for spam detection it should be enough to use the length of the text in bytes
@@ -120,7 +128,7 @@ impl RevisionImmutables {
             // so when testing against the python implementation we need to match that behavior to get identical results
             length_lowercase: revision.text.as_str().chars().count(),
             text_lowercase: match revision.text {
-                Text::Normal(ref t) => utils::to_lowercase(t),
+                Text::Normal(ref t) => utils::to_lowercase(t, analysis_options),
                 Text::Deleted => String::new(),
             },
             xml_revision: revision.clone(),

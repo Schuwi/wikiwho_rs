@@ -28,4 +28,7 @@
 
 pub mod algorithm;
 pub mod dump_parser;
+#[cfg(feature = "optimized-str")]
+#[doc(hidden)] /* only public for benchmarking */
+pub mod optimized_str;
 pub mod utils;
