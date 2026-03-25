@@ -41,8 +41,9 @@ wikiwho = "0.2"
 Here's a minimal example of how to load a Wikimedia XML dump and analyze a page:
 
 ```rust,no_run
-use wikiwho::dump_parser::DumpParser;
+use wikiwho::dump_parser::{DumpParser, Revision};
 use wikiwho::algorithm::PageAnalysis;
+use std::collections::HashMap;
 use std::fs::File;
 use std::io::BufReader;
 
@@ -57,12 +58,18 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         // Analyze the page revisions
         let analysis = PageAnalysis::analyse_page(&page.revisions)?;
 
+        let revisions_by_id: HashMap<i32, Revision> = page.revisions.into_iter()
+            .map(|rev| (rev.id, rev))
+            .collect();
+
         // Iterate over tokens in the current revision
         for token in wikiwho::utils::iterate_revision_tokens(&analysis, &analysis.current_revision) {
+            let token_analysis = &analysis[token];
+            let origin_revision_xml = &revisions_by_id[&token_analysis.origin_revision.id];
             println!(
                 "'{}' by '{}'",
                 token.value,
-                analysis[token].origin_revision.contributor.username
+                origin_revision_xml.contributor.username
             );
         }
     }

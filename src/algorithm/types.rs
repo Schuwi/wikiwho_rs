@@ -1,5 +1,4 @@
 // SPDX-License-Identifier: MPL-2.0
-use chrono::prelude::*;
 use compact_str::CompactString;
 use rustc_hash::FxHashMap;
 use std::{
@@ -11,7 +10,7 @@ use std::{
 
 use crate::{
     algorithm::PageAnalysisOptions,
-    dump_parser::{Contributor, Revision, Text},
+    dump_parser::{Revision, Text},
     utils::{self, DebugStringEllipsis},
 };
 
@@ -86,28 +85,17 @@ impl<T> MaybeVec<T> {
 #[derive(Clone)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct RevisionImmutables {
+    pub id: i32,
     pub length_lowercase: usize, /* text length when lowercased, in bytes (for `test` compile target this is the number of unicode codepoints, to match the python implementation) */
     pub text_lowercase: String,  /* lowercased text of revision */
-    pub xml_revision: Revision,
 }
 
 impl RevisionImmutables {
     pub fn dummy() -> Self {
         Self {
+            id: 0,
             length_lowercase: 0,
             text_lowercase: String::new(),
-            xml_revision: Revision {
-                id: 0,
-                timestamp: Utc::now(),
-                contributor: Contributor {
-                    id: None,
-                    username: CompactString::new(""),
-                },
-                comment: None,
-                minor: false,
-                text: Text::Normal(String::new()),
-                sha1: None,
-            },
         }
     }
 
@@ -120,10 +108,7 @@ impl RevisionImmutables {
         analysis_options: PageAnalysisOptions,
     ) -> Self {
         Self {
-            // #[cfg(not(any(test, feature = "match-reference-impl")))]
-            // // for spam detection it should be enough to use the length of the text in bytes
-            // length: revision.text.len(),
-            // #[cfg(any(test, feature = "match-reference-impl"))]
+            id: revision.id,
             // python's `len` function returns the number of unicode codepoints for a string,
             // so when testing against the python implementation we need to match that behavior to get identical results
             length_lowercase: revision.text.as_str().chars().count(),
@@ -131,16 +116,7 @@ impl RevisionImmutables {
                 Text::Normal(ref t) => utils::to_lowercase(t, analysis_options),
                 Text::Deleted => String::new(),
             },
-            xml_revision: revision.clone(),
         }
-    }
-}
-
-impl Deref for RevisionImmutables {
-    type Target = Revision;
-
-    fn deref(&self) -> &Self::Target {
-        &self.xml_revision
     }
 }
 
