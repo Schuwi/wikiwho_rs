@@ -1,12 +1,14 @@
 // SPDX-License-Identifier: MPL-2.0
-use compact_str::CompactString;
 use rustc_hash::FxHashMap;
 use std::{
+    borrow::Cow,
     collections::HashMap,
     fmt::Debug,
+    hash::Hash,
     ops::{Deref, Index, IndexMut},
     sync::Arc,
 };
+use yoke::Yoke;
 
 use crate::{
     algorithm::PageAnalysisOptions,
@@ -15,6 +17,104 @@ use crate::{
 };
 
 use super::PageAnalysisInternals;
+
+// reference-counted optimization for algorithms that strictly split larger strings into substrings,
+// tracking source string through `Arc<String>`, with support for occasional non-exact substrings
+// (maintains a new Arc<String> for following split operations)
+#[derive(Clone)]
+pub struct ArcSubstring(Yoke<&'static str, Arc<String>>);
+
+impl ArcSubstring {
+    pub fn new_source(source_string: Arc<String>) -> Self {
+        Self(Yoke::attach_to_cart(source_string, |cart| cart.as_str()))
+    }
+
+    // `substr`` must be a **true** substring of `source_str` (i.e. by reference)
+    pub fn new_substr(source_string: Arc<String>, substr: &str) -> Self {
+        Self(Yoke::attach_to_cart(source_string, |cart| {
+            Self::substr_in_parent(cart, substr)
+        }))
+    }
+
+    // Cow::Borrowed must be a **true** substring of self (i.e. by reference)
+    pub fn reattach_substring<'a>(&'a self, substring: Cow<'a, str>) -> Self {
+        match substring {
+            Cow::Owned(owned_string) => Self::new_source(Arc::new(owned_string)),
+            Cow::Borrowed(substr) => Self(
+                self.0
+                    .map_project_cloned(|parent, _| Self::substr_in_parent(parent, substr)),
+            ),
+        }
+    }
+
+    pub fn as_str(&self) -> &str {
+        self.0.get()
+    }
+
+    pub fn base_string(&self) -> &Arc<String> {
+        self.0.backing_cart()
+    }
+
+    fn substr_in_parent<'a: 'b, 'b>(parent: &'a str, substr: &'b str) -> &'a str {
+        if substr.is_empty() {
+            return &parent[..0];
+        }
+        let parent_b = parent.as_bytes();
+        let substr_b = substr.as_bytes();
+        if let Some(parent_start) = parent_b.element_offset(&substr_b[0]) {
+            let parent_end = parent_start + substr.len();
+            if parent_end <= parent.len() {
+                &parent[parent_start..parent_end]
+            } else {
+                panic!("provided str is not fully contained in source");
+            }
+        } else {
+            panic!("provided str is not a substring of source");
+        }
+    }
+}
+
+// From<&str> and From<String> intentionally not implemented since the semantics are ambiguous
+
+impl Debug for ArcSubstring {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        Debug::fmt(self.as_str(), f)
+    }
+}
+
+impl PartialEq<&str> for ArcSubstring {
+    fn eq(&self, other: &&str) -> bool {
+        self.as_str() == *other
+    }
+}
+
+impl Deref for ArcSubstring {
+    type Target = str;
+
+    fn deref(&self) -> &Self::Target {
+        self.as_str()
+    }
+}
+
+impl AsRef<str> for ArcSubstring {
+    fn as_ref(&self) -> &str {
+        self.as_str()
+    }
+}
+
+impl Hash for ArcSubstring {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        self.as_str().hash(state);
+    }
+}
+
+impl PartialEq for ArcSubstring {
+    fn eq(&self, other: &Self) -> bool {
+        self.as_str() == other.as_str()
+    }
+}
+
+impl Eq for ArcSubstring {}
 
 /// A container that holds either a single element or a `Vec`.
 ///
@@ -82,12 +182,13 @@ impl<T> MaybeVec<T> {
     }
 }
 
+pub type RevisionSubstr = Yoke<Cow<'static, str>, Arc<String>>;
+
 #[derive(Clone)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct RevisionImmutables {
     pub id: i32,
-    pub length_lowercase: usize, /* text length when lowercased, in bytes (for `test` compile target this is the number of unicode codepoints, to match the python implementation) */
-    pub text_lowercase: String,  /* lowercased text of revision */
+    pub length_lowercase: usize, /* text length when lowercased, in unicode codepoints */
+    pub text_lowercase: ArcSubstring, /* lowercased text of revision */
 }
 
 impl RevisionImmutables {
@@ -95,7 +196,7 @@ impl RevisionImmutables {
         Self {
             id: 0,
             length_lowercase: 0,
-            text_lowercase: String::new(),
+            text_lowercase: ArcSubstring::new_source(Arc::default()),
         }
     }
 
@@ -107,44 +208,31 @@ impl RevisionImmutables {
         revision: &Revision,
         analysis_options: PageAnalysisOptions,
     ) -> Self {
+        let (length_lowercase, text_lowercase) = match revision.text {
+            Text::Normal(ref t) => utils::to_lowercase(t, analysis_options),
+            Text::Deleted => (0, String::new()),
+        };
+
+        let text_lowercase = ArcSubstring::new_source(Arc::new(text_lowercase));
+
         Self {
             id: revision.id,
             // python's `len` function returns the number of unicode codepoints for a string,
             // so when testing against the python implementation we need to match that behavior to get identical results
-            length_lowercase: revision.text.as_str().chars().count(),
-            text_lowercase: match revision.text {
-                Text::Normal(ref t) => utils::to_lowercase(t, analysis_options),
-                Text::Deleted => String::new(),
-            },
+            length_lowercase,
+            text_lowercase,
         }
     }
 }
 
 #[derive(Clone)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize))]
 pub struct ParagraphImmutables {
-    #[cfg_attr(feature = "serde", serde(skip))]
     pub(crate) hash_value: blake3::Hash,
-    pub value: String,
-}
-
-#[cfg(feature = "serde")]
-impl<'de> serde::Deserialize<'de> for ParagraphImmutables {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-    where
-        D: serde::Deserializer<'de>,
-    {
-        #[derive(serde::Deserialize)]
-        struct Helper {
-            value: String,
-        }
-        let helper = Helper::deserialize(deserializer)?;
-        Ok(Self::new(helper.value))
-    }
+    pub value: ArcSubstring,
 }
 
 impl ParagraphImmutables {
-    pub fn new(value: String) -> Self {
+    pub fn new(value: ArcSubstring) -> Self {
         let hash_value = blake3::hash(value.as_bytes());
         Self { hash_value, value }
     }
@@ -156,30 +244,13 @@ impl ParagraphImmutables {
 }
 
 #[derive(Clone)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize))]
 pub struct SentenceImmutables {
-    #[cfg_attr(feature = "serde", serde(skip))]
     pub(crate) hash_value: blake3::Hash,
-    pub value: String,
-}
-
-#[cfg(feature = "serde")]
-impl<'de> serde::Deserialize<'de> for SentenceImmutables {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-    where
-        D: serde::Deserializer<'de>,
-    {
-        #[derive(serde::Deserialize)]
-        struct Helper {
-            value: String,
-        }
-        let helper = Helper::deserialize(deserializer)?;
-        Ok(Self::new(helper.value))
-    }
+    pub value: ArcSubstring,
 }
 
 impl SentenceImmutables {
-    pub fn new(value: String) -> Self {
+    pub fn new(value: ArcSubstring) -> Self {
         let hash_value = blake3::hash(value.as_bytes());
         Self { hash_value, value }
     }
@@ -190,13 +261,12 @@ impl SentenceImmutables {
 }
 
 #[derive(Clone)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct WordImmutables {
-    pub value: CompactString,
+    pub value: ArcSubstring,
 }
 
 impl WordImmutables {
-    pub fn new(value: CompactString) -> Self {
+    pub fn new(value: ArcSubstring) -> Self {
         Self { value }
     }
 }
@@ -509,7 +579,7 @@ pub trait Pointer: Clone {
     type Data;
 
     fn index(&self) -> usize;
-    fn value(&self) -> &str;
+    fn value(&self) -> &ArcSubstring;
     fn data<'a>(&self, analysis: &'a PageAnalysis) -> &'a Self::Data;
     fn data_mut<'a>(&self, analysis: &'a mut PageAnalysis) -> &'a mut Self::Data;
 }
@@ -521,7 +591,7 @@ impl Pointer for RevisionPointer {
         self.0
     }
 
-    fn value(&self) -> &str {
+    fn value(&self) -> &ArcSubstring {
         &self.text_lowercase
     }
 
@@ -541,7 +611,7 @@ impl Pointer for ParagraphPointer {
         self.0
     }
 
-    fn value(&self) -> &str {
+    fn value(&self) -> &ArcSubstring {
         &self.value
     }
 
@@ -561,7 +631,7 @@ impl Pointer for SentencePointer {
         self.0
     }
 
-    fn value(&self) -> &str {
+    fn value(&self) -> &ArcSubstring {
         &self.value
     }
 
@@ -581,7 +651,7 @@ impl Pointer for WordPointer {
         self.0
     }
 
-    fn value(&self) -> &str {
+    fn value(&self) -> &ArcSubstring {
         &self.1.value
     }
 

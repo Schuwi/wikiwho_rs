@@ -68,7 +68,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             let origin_revision_xml = &revisions_by_id[&token_analysis.origin_revision.id];
             println!(
                 "'{}' by '{}'",
-                token.value,
+                token.value.as_str(),
                 origin_revision_xml.contributor.username
             );
         }

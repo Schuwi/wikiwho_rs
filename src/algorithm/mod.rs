@@ -1,5 +1,7 @@
 // SPDX-License-Identifier: MIT AND MPL-2.0
 mod types;
+use std::{borrow::Cow, collections::HashMap};
+
 pub use types::*;
 
 #[cfg(feature = "serde")]
@@ -69,7 +71,7 @@ trait ParasentPointer: Sized + Pointer {
     fn allocate_new_in_parent(
         analysis: &mut PageAnalysis,
         parent: &Self::ParentPointer,
-        text: String,
+        text: ArcSubstring,
     ) -> Self;
 
     fn iterate_words(
@@ -90,10 +92,10 @@ trait ParasentPointer: Sized + Pointer {
     fn find_in_any_previous_revision(analysis: &mut PageAnalysis, hash: &blake3::Hash)
         -> Vec<Self>;
 
-    fn split_into_parasents(
-        parasent_text: &str,
+    fn split_into_parasents<'a>(
+        parasent_text: &'a str,
         scratch_buffers: (&mut String, &mut String),
-    ) -> Vec<String>;
+    ) -> Vec<Cow<'a, str>>;
 
     fn mark_all_children_matched(&self, analysis: &mut PageAnalysis);
 
@@ -108,7 +110,7 @@ impl ParasentPointer for ParagraphPointer {
     fn allocate_new_in_parent(
         analysis: &mut PageAnalysis,
         parent: &RevisionPointer,
-        text: String,
+        text: ArcSubstring,
     ) -> Self {
         let paragraph_pointer = analysis.new_paragraph(ParagraphImmutables::new(text));
 
@@ -143,10 +145,10 @@ impl ParasentPointer for ParagraphPointer {
         result
     }
 
-    fn split_into_parasents(
-        revision_text: &str,
+    fn split_into_parasents<'a>(
+        revision_text: &'a str,
         scratch_buffers: (&mut String, &mut String),
-    ) -> Vec<String> {
+    ) -> Vec<Cow<'a, str>> {
         // Split the text of the current revision into paragraphs.
         let paragraphs = split_into_paragraphs(revision_text, scratch_buffers);
         paragraphs
@@ -220,7 +222,7 @@ impl ParasentPointer for SentencePointer {
     fn allocate_new_in_parent(
         analysis: &mut PageAnalysis,
         parent: &ParagraphPointer,
-        text: String,
+        text: ArcSubstring,
     ) -> Self {
         let sentence_pointer = analysis.new_sentence(SentenceImmutables::new(text));
 
@@ -255,17 +257,24 @@ impl ParasentPointer for SentencePointer {
         result
     }
 
-    fn split_into_parasents(
-        paragraph_text: &str,
+    fn split_into_parasents<'a>(
+        paragraph_text: &'a str,
         scratch_buffers: (&mut String, &mut String),
-    ) -> Vec<String> {
+    ) -> Vec<Cow<'a, str>> {
         // Split the current paragraph into sentences.
         let sentences = split_into_sentences(paragraph_text, scratch_buffers);
         sentences
             .into_iter()
             .map(trim_in_place)
             .filter(|s| !s.is_empty()) /* don't track empty sentences */
-            .map(|s| split_into_tokens(&s).join(" ")) /* here whitespaces in the sentence are cleaned */
+            .map(|s| {
+                let cleaned_string = split_into_tokens(&s).join(" ");
+                if cleaned_string != s {
+                    Cow::Owned(cleaned_string)
+                } else {
+                    s
+                }
+            }) /* here whitespaces in the sentence are cleaned */
             .collect()
     }
 
@@ -767,8 +776,13 @@ impl PageAnalysis {
                     // add to the list of unmatched paragraphs/sentences for future matching
 
                     // Allocate a new paragraph/sentence and create a pointer to it.
-                    let paragraph_pointer =
-                        P::allocate_new_in_parent(self, parasent_curr_pointer, parasent_text);
+                    let paragraph_pointer = P::allocate_new_in_parent(
+                        self,
+                        parasent_curr_pointer,
+                        parasent_curr_pointer
+                            .value()
+                            .reattach_substring(parasent_text),
+                    );
                     unmatched_parasents_curr.push(paragraph_pointer);
                 }
             }
@@ -816,15 +830,18 @@ impl PageAnalysis {
         let mut matched_words_prev = Vec::new();
         let mut unmatched_words_prev = Vec::new();
 
+        let mut token_to_revsubstr = HashMap::new();
+
         // Split sentences into words.
         let mut text_prev = Vec::new();
         for sentence_prev_pointer in unmatched_sentences_prev {
             let sentence_prev = &self.sentences[sentence_prev_pointer.0];
             for word_prev_pointer in &sentence_prev.words_ordered {
                 if !self.word_analyses[word_prev_pointer.0].matched_in_current {
-                    let interned = interner.intern(word_prev_pointer.value().to_string());
+                    let interned = interner.intern(word_prev_pointer.value().clone());
                     text_prev.push(interned);
                     unmatched_words_prev.push((interned, word_prev_pointer.clone()));
+                    token_to_revsubstr.insert(interned, word_prev_pointer.value());
                 }
             }
         }
@@ -837,7 +854,9 @@ impl PageAnalysis {
                 .value()
                 //.split_whitespace() // DU SCHLINGEL!!! :D
                 .split(' ')
-                .map(|s| interner.intern(s.to_string()))
+                .map(|s| {
+                    interner.intern(sentence_curr_pointer.value().reattach_substring(s.into()))
+                })
                 .collect();
             text_curr.extend_from_slice(words.as_slice());
             unmatched_sentence_curr_splitted.push(words); /* index corresponds to index in unmatched_words_prev */
@@ -858,11 +877,11 @@ impl PageAnalysis {
 
         fn allocate_new_word(
             analysis: &mut PageAnalysis,
-            word: &str,
+            word: ArcSubstring,
             sentence_pointer: &SentencePointer,
         ) {
             let word_pointer = analysis.new_word(
-                WordImmutables::new(word.into()),
+                WordImmutables::new(word),
                 WordAnalysis::new(&analysis.current_revision),
             );
 
@@ -877,7 +896,7 @@ impl PageAnalysis {
         if text_prev.is_empty() {
             for (i, sentence_curr_pointer) in unmatched_sentences_curr.iter().enumerate() {
                 for word_interned in unmatched_sentence_curr_splitted[i].iter() {
-                    allocate_new_word(self, &interner[*word_interned], sentence_curr_pointer);
+                    allocate_new_word(self, interner[*word_interned].clone(), sentence_curr_pointer);
                 }
             }
             return (matched_words_prev, false);
@@ -944,7 +963,7 @@ impl PageAnalysis {
                                 // a new added word
                                 curr_matched = true;
 
-                                allocate_new_word(self, &interner[*word_interned], sentence_curr);
+                                allocate_new_word(self, interner[*word_interned].clone(), sentence_curr);
 
                                 *change = None;
                             }
@@ -958,7 +977,7 @@ impl PageAnalysis {
                 if !curr_matched {
                     // word was not found in the diff
                     // apparently we are adding it as a new one
-                    allocate_new_word(self, &interner[*word_interned], sentence_curr);
+                    allocate_new_word(self, interner[*word_interned].clone(), sentence_curr);
                 }
             }
         }

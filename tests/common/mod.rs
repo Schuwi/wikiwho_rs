@@ -299,10 +299,11 @@ pub mod output_structs {
         types::{PyBytes, PyDict, PyList, PyString},
         FromPyObject,
     };
+    use std::sync::Arc;
     use wikiwho::algorithm::{
-        PageAnalysis, ParagraphImmutables, ParagraphPointer, RevisionAnalysis, RevisionImmutables,
-        RevisionPointer, SentenceImmutables, SentencePointer, WordAnalysis, WordImmutables,
-        WordPointer,
+        ArcSubstring, PageAnalysis, ParagraphImmutables, ParagraphPointer, RevisionAnalysis,
+        RevisionImmutables, RevisionPointer, SentenceImmutables, SentencePointer, WordAnalysis,
+        WordImmutables, WordPointer,
     };
 
     #[pyfunction]
@@ -370,7 +371,7 @@ pub mod output_structs {
             py_wikiwho.paragraphs_ht.bind(py),
             |py_paragraph_id, py_paragraph: PyParagraph| {
                 let pointer = result.new_paragraph(ParagraphImmutables::new(
-                    py_paragraph.value.to_str(py)?.into(),
+                    ArcSubstring::new_source(Arc::new(py_paragraph.value.to_str(py)?.to_string())),
                 ));
 
                 paragraph_id_pointers.insert(py_paragraph_id, pointer);
@@ -382,7 +383,7 @@ pub mod output_structs {
             py_wikiwho.sentences_ht.bind(py),
             |py_sentence_id, py_sentence: PySentence| {
                 let pointer = result.new_sentence(SentenceImmutables::new(
-                    py_sentence.value.to_str(py)?.into(),
+                    ArcSubstring::new_source(Arc::new(py_sentence.value.to_str(py)?.to_string())),
                 ));
 
                 sentence_id_pointers.insert(py_sentence_id, pointer);
@@ -392,7 +393,7 @@ pub mod output_structs {
 
         for py_token_obj in py_wikiwho.tokens.bind(py).iter() {
             let py_token: PyWord = py_token_obj.extract()?;
-            let word_data = WordImmutables::new(py_token.value.to_str(py)?.into());
+            let word_data = WordImmutables::new(ArcSubstring::new_source(Arc::new(py_token.value.to_str(py)?.to_string())));
             let mut word_analysis = WordAnalysis::new(&revision_pointers[&py_token.origin_rev_id]);
 
             // Let's already populate `WordAnalysis` while we're at it

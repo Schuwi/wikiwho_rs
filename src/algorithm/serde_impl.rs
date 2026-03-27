@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MPL-2.0
-use std::{collections::HashMap, sync::Arc};
+use std::{collections::HashMap, ops::Range, sync::Arc};
 
 use rustc_hash::FxHashMap;
 
-use crate::algorithm::ParagraphPointer;
+use crate::algorithm::{ArcSubstring, ParagraphPointer};
 
 use super::{
     PageAnalysis, PageAnalysisInternals, ParagraphAnalysis, ParagraphImmutables, RevisionAnalysis,
@@ -14,6 +14,19 @@ use super::{
 // ---------------------------------------------------------------------------
 // Intermediate serialized types — not exported, only used for serde conversion
 // ---------------------------------------------------------------------------
+
+#[derive(serde::Serialize, serde::Deserialize)]
+struct SerializedArcSubstring {
+    source_index: usize,
+    source_range: Range<usize>,
+}
+
+#[derive(serde::Serialize, serde::Deserialize)]
+struct SerializedRevisionImmutables {
+    id: i32,
+    length_lowercase: usize,
+    text_lowercase: SerializedArcSubstring,
+}
 
 #[derive(serde::Serialize, serde::Deserialize)]
 struct SerializedWordAnalysis {
@@ -41,11 +54,12 @@ struct SerializedRevisionAnalysis {
 
 #[derive(serde::Serialize, serde::Deserialize)]
 struct SerializedPageAnalysis {
+    source_strings: Vec<String>,
     // Immutables arrays first — serialised as plain values, not Arc wrappers
-    revision_immutables: Vec<RevisionImmutables>,
-    paragraph_immutables: Vec<ParagraphImmutables>,
-    sentence_immutables: Vec<SentenceImmutables>,
-    word_immutables: Vec<super::WordImmutables>,
+    revision_immutables: Vec<SerializedRevisionImmutables>,
+    paragraph_immutables: Vec<SerializedArcSubstring>,
+    sentence_immutables: Vec<SerializedArcSubstring>,
+    word_immutables: Vec<SerializedArcSubstring>,
     // Analysis arrays with usize pointer indices
     revisions: Vec<SerializedRevisionAnalysis>,
     paragraphs: Vec<SerializedParagraphAnalysis>,
@@ -65,27 +79,72 @@ struct SerializedPageAnalysis {
 
 impl serde::Serialize for PageAnalysis {
     fn serialize<S: serde::Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        let mut source_strings = Vec::new();
+
+        let mut arc_string_lookup = HashMap::new();
+        let mut arc_index = |base_arc: &Arc<String>| {
+            *arc_string_lookup
+                .entry(Arc::as_ptr(base_arc))
+                .or_insert_with(|| {
+                    let index = source_strings.len();
+                    source_strings.push((**base_arc).clone());
+                    index
+                })
+        };
+        let mut serialize_arc_substr = |arc_substr: &ArcSubstring| {
+            let index = arc_index(arc_substr.base_string());
+
+            let base_bytestr = arc_substr.base_string().as_bytes();
+            let substr_bytestr = arc_substr.as_str().as_bytes();
+
+            let (substr_start, substr_end) = if substr_bytestr.is_empty() {
+                (0, 0)
+            } else {
+                let start = base_bytestr
+                    .element_offset(&substr_bytestr[0])
+                    .expect(
+                        "ArcSubstring::as_str to be a reference inside ArcSubstring::base_string",
+                    );
+                (start, start + substr_bytestr.len())
+            };
+
+            SerializedArcSubstring {
+                source_index: index,
+                source_range: substr_start..substr_end,
+            }
+        };
+
+        let revision_immutables = self
+            .revision_immutables
+            .iter()
+            .map(|rev| SerializedRevisionImmutables {
+                id: rev.id,
+                length_lowercase: rev.length_lowercase,
+                text_lowercase: serialize_arc_substr(&rev.text_lowercase),
+            })
+            .collect();
+        let paragraph_immutables = self
+            .paragraph_immutables
+            .iter()
+            .map(|e| serialize_arc_substr(&e.value))
+            .collect();
+        let sentence_immutables = self
+            .sentence_immutables
+            .iter()
+            .map(|e| serialize_arc_substr(&e.value))
+            .collect();
+        let word_immutables = self
+            .word_immutables
+            .iter()
+            .map(|e| serialize_arc_substr(&e.value))
+            .collect();
+
         let serialized = SerializedPageAnalysis {
-            revision_immutables: self
-                .revision_immutables
-                .iter()
-                .map(|arc| (**arc).clone())
-                .collect(),
-            paragraph_immutables: self
-                .paragraph_immutables
-                .iter()
-                .map(|arc| (**arc).clone())
-                .collect(),
-            sentence_immutables: self
-                .sentence_immutables
-                .iter()
-                .map(|arc| (**arc).clone())
-                .collect(),
-            word_immutables: self
-                .word_immutables
-                .iter()
-                .map(|arc| (**arc).clone())
-                .collect(),
+            source_strings,
+            revision_immutables,
+            paragraph_immutables,
+            sentence_immutables,
+            word_immutables,
             revisions: self
                 .revisions
                 .iter()
@@ -139,18 +198,57 @@ impl serde::Serialize for PageAnalysis {
 impl<'de> serde::Deserialize<'de> for PageAnalysis {
     fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
         let s = SerializedPageAnalysis::deserialize(deserializer)?;
+        let source_strings: Vec<Arc<String>> = s.source_strings.into_iter().map(Arc::new).collect();
+
+        let deserialize_substr = |serial_substr: SerializedArcSubstring| {
+            if let Some(source_string) = source_strings.get(serial_substr.source_index) {
+                if let Some(substr) = source_string.get(serial_substr.source_range) {
+                    Ok(ArcSubstring::new_substr(source_string.clone(), substr))
+                } else {
+                    Err(serde::de::Error::custom(format!(
+                        "substring range {} out of bounds (source len={}) or not on character boundary",
+                        serial_substr.source_index,
+                        source_strings.len()
+                    )))
+                }
+            } else {
+                Err(serde::de::Error::custom(format!(
+                    "source string index {} out of bounds (len={})",
+                    serial_substr.source_index,
+                    source_strings.len()
+                )))
+            }
+        };
 
         // Build Arc arrays from the deserialized plain values.
         // ParagraphImmutables and SentenceImmutables have custom Deserialize impls
         // that reconstruct blake3::Hash from `value`, so these Arcs are fully valid.
-        let revision_arcs: Vec<Arc<RevisionImmutables>> =
-            s.revision_immutables.into_iter().map(Arc::new).collect();
-        let paragraph_arcs: Vec<Arc<ParagraphImmutables>> =
-            s.paragraph_immutables.into_iter().map(Arc::new).collect();
-        let sentence_arcs: Vec<Arc<SentenceImmutables>> =
-            s.sentence_immutables.into_iter().map(Arc::new).collect();
-        let word_arcs: Vec<Arc<WordImmutables>> =
-            s.word_immutables.into_iter().map(Arc::new).collect();
+        let revision_arcs: Vec<Arc<RevisionImmutables>> = s
+            .revision_immutables
+            .into_iter()
+            .map(|rev| {
+                Ok(Arc::new(RevisionImmutables {
+                    id: rev.id,
+                    length_lowercase: rev.length_lowercase,
+                    text_lowercase: deserialize_substr(rev.text_lowercase)?,
+                }))
+            })
+            .collect::<Result<Vec<_>, D::Error>>()?;
+        let paragraph_arcs: Vec<Arc<ParagraphImmutables>> = s
+            .paragraph_immutables
+            .into_iter()
+            .map(|s| Ok(Arc::new(ParagraphImmutables::new(deserialize_substr(s)?))))
+            .collect::<Result<Vec<_>, D::Error>>()?;
+        let sentence_arcs: Vec<Arc<SentenceImmutables>> = s
+            .sentence_immutables
+            .into_iter()
+            .map(|s| Ok(Arc::new(SentenceImmutables::new(deserialize_substr(s)?))))
+            .collect::<Result<Vec<_>, D::Error>>()?;
+        let word_arcs: Vec<Arc<WordImmutables>> = s
+            .word_immutables
+            .into_iter()
+            .map(|s| Ok(Arc::new(WordImmutables::new(deserialize_substr(s)?))))
+            .collect::<Result<Vec<_>, D::Error>>()?;
 
         // Helper closures — validate index bounds and reconstruct pointers.
         // All pointers for the same index share the single Arc heap allocation.
@@ -350,8 +448,10 @@ mod tests {
         let rev1_ptr = pa.new_revision(rev1_imm);
         let rev2_ptr = pa.new_revision(rev2_imm);
 
-        let par_ptr = pa.new_paragraph(ParagraphImmutables::new("Hello world.".to_string()));
-        let sent_ptr = pa.new_sentence(SentenceImmutables::new("Hello world.".to_string()));
+        let par_ptr =
+            pa.new_paragraph(ParagraphImmutables::new(ArcSubstring::new_source(Arc::new("Hello world.".to_string()))));
+        let sent_ptr =
+            pa.new_sentence(SentenceImmutables::new(ArcSubstring::new_source(Arc::new("Hello world.".to_string()))));
 
         let word0 = WordAnalysis {
             origin_revision: rev1_ptr.clone(),
@@ -360,7 +460,7 @@ mod tests {
             inbound: vec![rev2_ptr.clone()],
             outbound: vec![],
         };
-        let word0_ptr = pa.new_word(WordImmutables::new(CompactString::from("hello")), word0);
+        let word0_ptr = pa.new_word(WordImmutables::new(ArcSubstring::new_source(Arc::new("hello".to_string()))), word0);
 
         let word1 = WordAnalysis {
             origin_revision: rev1_ptr.clone(),
@@ -369,7 +469,7 @@ mod tests {
             inbound: vec![],
             outbound: vec![rev2_ptr.clone()],
         };
-        let word1_ptr = pa.new_word(WordImmutables::new(CompactString::from("world")), word1);
+        let word1_ptr = pa.new_word(WordImmutables::new(ArcSubstring::new_source(Arc::new("world".to_string()))), word1);
 
         pa.sentences[sent_ptr.0].words_ordered = vec![word0_ptr.clone(), word1_ptr.clone()];
         pa.paragraphs[par_ptr.0].sentences_ordered = vec![sent_ptr];

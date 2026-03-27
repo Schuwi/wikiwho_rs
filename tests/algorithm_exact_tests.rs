@@ -485,6 +485,32 @@ fn known_bad_example_hallo() {
 }
 
 #[test]
+// expensive test
+#[ignore]
+fn big_history_wunschliste() {
+    let reader = common::open_test_dump();
+    // Wiktionary:Wunschliste
+    let page: Page = common::find_page_by_title_and_ns(reader, "Wunschliste", 4)
+        .unwrap()
+        .unwrap();
+
+    compare_algorithm_python(&page).unwrap();
+}
+
+#[test]
+// expensive test
+#[ignore]
+fn big_history_teestube() {
+    let reader = common::open_test_dump();
+    // Wiktionary:Teestube
+    let page: Page = common::find_page_by_title_and_ns(reader, "Teestube", 4)
+        .unwrap()
+        .unwrap();
+
+    compare_algorithm_python(&page).unwrap();
+}
+
+#[test]
 fn random_pages_100() {
     let reader1 = common::open_test_dump();
     let reader2 = common::open_test_dump();
@@ -496,7 +522,7 @@ fn random_pages_100() {
 }
 
 #[test]
-// this test takes quite some time and especially a LOT of memory (~30GB), could be optimized further if needed
+// this test takes quite some time and quite a lot of memory (~25GB); could be optimized further if needed
 #[ignore]
 fn first_1000_pages_mt() {
     const PAGE_COUNT: usize = 1000;

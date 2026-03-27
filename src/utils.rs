@@ -5,7 +5,7 @@ use imara_diff::{
 };
 use regex::Regex;
 
-use std::fmt::Debug;
+use std::{borrow::Cow, fmt::Debug, sync::Arc};
 
 pub(crate) struct DebugStringEllipsis<'a>(pub &'a str, pub usize);
 
@@ -39,11 +39,11 @@ pub(crate) enum RevisionHash {
 /// * `scratch_buffers` - A tuple containing two scratch buffers to use for temporary storage.
 ///   They must be empty and will again be empty after the function returns.
 ///   They should be reused across multiple calls to this function.
-pub fn split_into_paragraphs(
-    text: &str,
+pub fn split_into_paragraphs<'a>(
+    text: &'a str,
     #[allow(unused)] // Only used when `optimized-str` feature active
     scratch_buffers: (&mut String, &mut String),
-) -> Vec<String> {
+) -> Vec<Cow<'a, str>> {
     #[cfg(feature = "optimized-str")]
     {
         crate::optimized_str::split_into_paragraphs_optimized(text, scratch_buffers)
@@ -55,7 +55,9 @@ pub fn split_into_paragraphs(
 }
 
 #[doc(hidden)] /* only public for benchmarking */
-pub fn split_into_paragraphs_naive(text: &str) -> Vec<String> {
+pub fn split_into_paragraphs_naive(text: &str) -> Vec<Cow<'_, str>> {
+    let orig_text = text;
+
     let text = text.replace("\r\n", "\n").replace("\r", "\n");
 
     let text = text
@@ -69,14 +71,16 @@ pub fn split_into_paragraphs_naive(text: &str) -> Vec<String> {
     let text = text.replace("{|", "\n\n{|").replace("|}", "|}\n\n");
     let text = text.replace("|-\n", "\n\n|-\n");
 
-    text.split("\n\n").map(|s| s.to_string()).collect()
+    text.split("\n\n")
+        .reborrow_semantic_substrings(orig_text)
+        .collect()
 }
 
-pub fn split_into_sentences(
-    text: &str,
+pub fn split_into_sentences<'a>(
+    text: &'a str,
     #[allow(unused)] // Only used when `optimized-str` feature active
     scratch_buffers: (&mut String, &mut String),
-) -> Vec<String> {
+) -> Vec<Cow<'a, str>> {
     #[cfg(feature = "optimized-str")]
     {
         crate::optimized_str::split_into_sentences_optimized(text, scratch_buffers)
@@ -88,11 +92,13 @@ pub fn split_into_sentences(
 }
 
 #[doc(hidden)] /* only public for benchmarking */
-pub fn split_into_sentences_naive(text: &str) -> Vec<String> {
+pub fn split_into_sentences_naive(text: &str) -> Vec<Cow<'_, str>> {
     static REGEX_DOT: LazyLock<Regex> =
         LazyLock::new(|| Regex::new(r"([^\s\.=][^\s\.=][^\s\.=]\.) ").unwrap());
     static REGEX_URL: LazyLock<Regex> =
         LazyLock::new(|| Regex::new(r"(http.*?://.*?[ \|<>\n\r])").unwrap());
+
+    let orig_text = text;
 
     let text = text.replace("\n", "\n@@@@");
     let text = REGEX_DOT.replace_all(&text, "$1@@@@");
@@ -112,10 +118,12 @@ pub fn split_into_sentences_naive(text: &str) -> Vec<String> {
         text = text.replace("@@@@@@@@", "@@@@");
     }
 
-    text.split("@@@@").map(|s| s.to_string()).collect()
+    text.split("@@@@")
+        .reborrow_semantic_substrings(orig_text)
+        .collect()
 }
 
-pub fn split_into_tokens(text: &str) -> Vec<String> {
+pub fn split_into_tokens(text: &str) -> Vec<Cow<'_, str>> {
     #[cfg(feature = "optimized-str")]
     {
         crate::optimized_str::split_into_tokens_corasick(text)
@@ -127,7 +135,9 @@ pub fn split_into_tokens(text: &str) -> Vec<String> {
 }
 
 #[doc(hidden)] /* only public for benchmarking */
-pub fn split_into_tokens_naive(text: &str) -> Vec<String> {
+pub fn split_into_tokens_naive(text: &str) -> Vec<Cow<'_, str>> {
+    let orig_text = text;
+
     let text = text
         .replace("|", "||ææææ||")
         .replace("\n", "||")
@@ -159,40 +169,53 @@ pub fn split_into_tokens_naive(text: &str) -> Vec<String> {
         text = text.replace("||||", "||");
     }
 
-    text.split("||")
+    let tokens = text
+        .split("||")
         .filter(|&s| !s.is_empty())
-        .map(|w| {
-            if w == "ææææ" {
-                "|".to_string()
-            } else {
-                w.to_string()
-            }
-        })
-        .collect()
+        .map(|w| if w == "ææææ" { "|" } else { w })
+        .reborrow_semantic_substrings(orig_text)
+        .collect();
+
+    tokens
 }
 
-pub fn to_lowercase(input: &str, #[allow(unused)] analysis_options: PageAnalysisOptions) -> String {
+pub fn to_lowercase(
+    input: &str,
+    #[allow(unused)] analysis_options: PageAnalysisOptions,
+) -> (usize, String) {
     #[cfg(feature = "optimized-lowercase")]
     {
         if analysis_options.optimize_non_ascii {
             to_lowercase_opt(input)
         } else {
-            input.to_lowercase()
+            let lowercase = input.to_lowercase();
+            (lowercase.chars().count(), lowercase)
         }
     }
     #[cfg(not(feature = "optimized-lowercase"))]
     {
         // for languages that have very little unicode (so basically: english), this is probably faster
-        input.to_lowercase()
+        let lowercase = input.to_lowercase();
+        (lowercase.chars().count(), lowercase)
     }
 }
 
 #[doc(hidden)] /* only public for benchmarking */
 #[cfg(feature = "optimized-lowercase")]
-pub fn to_lowercase_opt(input: &str) -> String {
+pub fn to_lowercase_opt(input: &str) -> (usize, String) {
     let mut result = String::with_capacity(input.len());
+    let mut char_count = 0;
+
     for c in input.chars() {
-        match unicode_case_mapping::to_lowercase(c) {
+        let lowercased = unicode_case_mapping::to_lowercase(c);
+
+        if lowercased[1] > 0 {
+            char_count += 2;
+        } else {
+            char_count += 1;
+        }
+
+        match lowercased {
             [0, 0] => result.push(c),
             [l, 0] => result.push(char::from_u32(l).unwrap()),
             [l, l2] => {
@@ -201,34 +224,40 @@ pub fn to_lowercase_opt(input: &str) -> String {
             }
         }
     }
-    result
+
+    (char_count, result)
 }
 
 use std::{collections::HashMap, hash::Hash, ops::Range, sync::LazyLock};
 
 use crate::{
-    algorithm::{PageAnalysis, PageAnalysisOptions, RevisionPointer, WordPointer},
+    algorithm::{ArcSubstring, PageAnalysis, PageAnalysisOptions, RevisionPointer, WordPointer},
     dump_parser::Sha1Hash,
 };
 
-pub fn compute_avg_word_freq(token_list: &[Token], interner: &mut Interner<String>) -> f64 {
+pub fn compute_avg_word_freq(token_list: &[Token], interner: &mut Interner<ArcSubstring>) -> f64 {
+    static REMOVE_LIST: LazyLock<Vec<ArcSubstring>> = LazyLock::new(|| {
+        let remove_list = [
+            "<", ">", "tr", "td", "[", "]", "\"", "*", "==", "{", "}", "|", "-",
+        ];
+
+        remove_list
+            .iter()
+            .map(|t_str| ArcSubstring::new_source(Arc::new(t_str.to_string())))
+            .collect()
+    });
+
     let mut counter: HashMap<Token, u64> = HashMap::new();
 
-    for token in token_list.iter() {
-        let count = counter.get_mut(token);
-        if let Some(count) = count {
-            *count += 1;
-        } else {
-            counter.insert(*token, 1);
-        }
+    for token in token_list {
+        counter
+            .entry(*token)
+            .and_modify(|count| *count += 1)
+            .or_insert(1);
     }
 
-    let remove_list = [
-        "<", ">", "tr", "td", "[", "]", "\"", "*", "==", "{", "}", "|", "-",
-    ];
-
-    for token in remove_list {
-        let token = interner.intern(token.to_string());
+    for token in REMOVE_LIST.iter() {
+        let token = interner.intern(token.clone());
         counter.remove(&token);
     }
 
@@ -252,10 +281,15 @@ fn trim_start_in_place(s: &mut String) {
     s.replace_range(..(s.len() - trimmed.len()), "");
 }
 
-pub fn trim_in_place(mut input: String) -> String {
-    trim_end_in_place(&mut input);
-    trim_start_in_place(&mut input);
-    input
+pub fn trim_in_place(input: Cow<'_, str>) -> Cow<'_, str> {
+    match input {
+        Cow::Owned(mut owned_str) => {
+            trim_end_in_place(&mut owned_str);
+            trim_start_in_place(&mut owned_str);
+            Cow::Owned(owned_str)
+        }
+        Cow::Borrowed(str_slice) => Cow::Borrowed(str_slice.trim()),
+    }
 }
 
 pub fn iterate_revision_tokens<'a>(
@@ -273,6 +307,37 @@ pub fn iterate_revision_tokens<'a>(
                 .iter()
                 .flat_map(move |sentence| analysis[sentence].words_ordered.iter())
         })
+}
+
+pub trait SemanticSubstringIterExt<'b, I: Iterator<Item = &'b str> + 'b> {
+    fn reborrow_semantic_substrings<'a: 'b>(
+        self,
+        source_str: &'a str,
+    ) -> std::iter::Map<I, impl FnMut(&'b str) -> Cow<'a, str>>;
+}
+
+impl<'b, I> SemanticSubstringIterExt<'b, I> for I
+where
+    I: Iterator<Item = &'b str> + 'b,
+{
+    // parts should be ordered, non-overlapping substrings of `source_str` (by value),
+    // otherwise falls back to allocation (String) for substrings not found in source
+    fn reborrow_semantic_substrings<'a: 'b>(
+        self,
+        source_str: &'a str,
+    ) -> std::iter::Map<I, impl FnMut(&'b str) -> Cow<'a, str>> {
+        let mut remaining_source_str = source_str;
+
+        self.map(move |part| {
+            if let Some(index) = remaining_source_str.find(&part) {
+                let borrowed_part = &remaining_source_str[index..index + part.len()];
+                remaining_source_str = &remaining_source_str[index + part.len()..];
+                Cow::Borrowed(borrowed_part)
+            } else {
+                Cow::Owned(part.to_string())
+            }
+        })
+    }
 }
 
 pub(crate) enum ChangeTag {
@@ -325,7 +390,7 @@ pub(crate) fn imara_diff(
 pub(crate) fn python_diff(
     old: &[Token],
     new: &[Token],
-    interner: &mut Interner<String>,
+    interner: &mut Interner<ArcSubstring>,
 ) -> Vec<Option<(ChangeTag, Token)>> {
     use pyo3::{
         prelude::*,
@@ -337,8 +402,11 @@ pub(crate) fn python_diff(
         let difflib = py.import_bound("difflib").unwrap();
         let differ = difflib.getattr("Differ").unwrap().call0().unwrap();
 
-        let old = PyList::new_bound(py, old.iter().map(|&token| &interner[token]));
-        let new = PyList::new_bound(py, new.iter().map(|&token| &interner[token]));
+        // we can't just use the token indices converted to string instead of the literal text
+        // if we want to reproduce the original behavior because the diff algorithm
+        // is content-aware due to a "junk" metric
+        let old = PyList::new_bound(py, old.iter().map(|&token| interner[token].as_str()));
+        let new = PyList::new_bound(py, new.iter().map(|&token| interner[token].as_str()));
 
         let diff = differ.call_method1("compare", (old, new)).unwrap();
         let diff = builtins
@@ -348,6 +416,7 @@ pub(crate) fn python_diff(
             .unwrap();
 
         let mut result = Vec::new();
+        let mut temporary_source = Arc::new(String::new());
         for item in diff.iter() {
             let diff_item = item.downcast::<PyString>().unwrap();
             let diff_item = diff_item.to_str().unwrap();
@@ -360,7 +429,15 @@ pub(crate) fn python_diff(
             };
 
             if let Some(tag) = tag {
-                let value = interner.intern(diff_item[2..].to_string());
+                let literal_token_buf = Arc::make_mut(&mut temporary_source);
+                literal_token_buf.clear();
+                literal_token_buf.push_str(&diff_item[2..]);
+                // all of these token literals should already be interned, so the `ArcSubstring`
+                // and thus the `temporary_source.clone()` should be dropped once `intern` returns,
+                // making "our" `temporary_source` the only copy again,
+                // which means `make_mut` can reuse the allocation next iteration
+                // (we need this workaround since we can't tell the interner to just look up a &str)
+                let value = interner.intern(ArcSubstring::new_source(temporary_source.clone()));
                 result.push(Some((tag, value)));
             }
         }

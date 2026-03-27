@@ -1,7 +1,9 @@
 use aho_corasick::{AhoCorasick, AhoCorasickBuilder, PatternID};
 use memchr::memmem;
 use regex::Regex;
-use std::sync::LazyLock;
+use std::{borrow::Cow, sync::LazyLock};
+
+use crate::utils::SemanticSubstringIterExt;
 
 const fn const_str_equals(a: &str, b: &str) -> bool {
     let mut i = 0;
@@ -137,10 +139,11 @@ fn regex_replace_opt<R: regex::Replacer>(
 }
 
 #[doc(hidden)] /* only public for benchmarking */
-pub fn split_into_paragraphs_optimized(
-    text: &str,
+pub fn split_into_paragraphs_optimized<'a>(
+    text: &'a str,
     scratch_buffers: (&mut String, &mut String),
-) -> Vec<String> {
+) -> Vec<Cow<'a, str>> {
+    let orig_text = text;
     scratch_buffers.0.push_str(text);
 
     let (text, scratch_buffer) = (
@@ -165,7 +168,10 @@ pub fn split_into_paragraphs_optimized(
 
     let (text, scratch_buffer) = str_replace_opt(text, finder!("|-\n"), "\n\n|-\n", scratch_buffer);
 
-    let result = text.split("\n\n").map(|s| s.to_string()).collect();
+    let result = text
+        .split("\n\n")
+        .reborrow_semantic_substrings(orig_text)
+        .collect();
 
     let mut text = text;
     text.clear();
@@ -178,10 +184,12 @@ pub fn split_into_paragraphs_optimized(
 }
 
 #[doc(hidden)] /* only public for benchmarking */
-pub fn split_into_sentences_optimized(
-    text: &str,
+pub fn split_into_sentences_optimized<'a>(
+    text: &'a str,
     scratch_buffers: (&mut String, &mut String),
-) -> Vec<String> {
+) -> Vec<Cow<'a, str>> {
+    let orig_text = text;
+
     static REGEX_DOT: LazyLock<Regex> =
         LazyLock::new(|| Regex::new(r"([^\s\.=][^\s\.=][^\s\.=]\.) ").unwrap());
     static REGEX_URL: LazyLock<Regex> =
@@ -225,7 +233,10 @@ pub fn split_into_sentences_optimized(
         );
     }
 
-    let result = text.split("@@@@").map(|s| s.to_string()).collect();
+    let result = text
+        .split("@@@@")
+        .reborrow_semantic_substrings(orig_text)
+        .collect();
 
     text.clear();
     // scratch_buffer is already empty
@@ -238,7 +249,7 @@ pub fn split_into_sentences_optimized(
 
 #[doc(hidden)] /* only public for benchmarking */
 #[cfg(feature = "optimized-str")]
-pub fn split_into_tokens_corasick(text: &str) -> Vec<String> {
+pub fn split_into_tokens_corasick(text: &str) -> Vec<Cow<'_, str>> {
     // used to determine whether a match is a separator or a symbol
     const FIRST_SYMBOL: PatternID = PatternID::new_unchecked(2);
     const PATTERNS: &[&str] = &[
@@ -278,15 +289,15 @@ pub fn split_into_tokens_corasick(text: &str) -> Vec<String> {
         // check if there is text between the last match and the current match
         if start > last_end {
             // collect text between symbols/separators (i.e. words)
-            let token = text[last_end..start].to_string();
-            result.push(token);
+            let token = &text[last_end..start];
+            result.push(Cow::Borrowed(token));
         }
 
         let token = &text[start..end];
         // ignore separators
         if m.pattern() >= FIRST_SYMBOL {
             // collect symbols
-            result.push(token.to_string());
+            result.push(Cow::Borrowed(token));
         }
 
         last_end = end;
@@ -294,8 +305,8 @@ pub fn split_into_tokens_corasick(text: &str) -> Vec<String> {
 
     if last_end < text.len() {
         // collect remaining text (last word)
-        let token = text[last_end..].to_string();
-        result.push(token);
+        let token = &text[last_end..];
+        result.push(Cow::Borrowed(token));
     }
 
     result
