@@ -54,7 +54,8 @@ struct SerializedRevisionAnalysis {
 
 #[derive(serde::Serialize, serde::Deserialize)]
 struct SerializedPageAnalysis {
-    source_strings: Vec<String>,
+    #[serde(with = "vec_arc_string")]
+    source_strings: Vec<Arc<String>>,
     // Immutables arrays first — serialised as plain values, not Arc wrappers
     revision_immutables: Vec<SerializedRevisionImmutables>,
     paragraph_immutables: Vec<SerializedArcSubstring>,
@@ -73,6 +74,19 @@ struct SerializedPageAnalysis {
     current_revision: usize,
 }
 
+mod vec_arc_string {
+    use std::sync::Arc;
+
+    pub fn serialize<S: serde::Serializer>(obj: &Vec<Arc<String>>, serializer: S) -> Result<S::Ok, S::Error> {
+        serializer.collect_seq(obj.iter().map(|s| s.as_str()))
+    }
+
+    pub fn deserialize<'de, D: serde::Deserializer<'de>>(deserializer: D) -> Result<Vec<Arc<String>>, D::Error> {
+        let strings: Vec<String> = serde::Deserialize::deserialize(deserializer)?;
+        Ok(strings.into_iter().map(|s| Arc::new(s)).collect())
+    }
+}
+
 // ---------------------------------------------------------------------------
 // Serialize
 // ---------------------------------------------------------------------------
@@ -87,7 +101,7 @@ impl serde::Serialize for PageAnalysis {
                 .entry(Arc::as_ptr(base_arc))
                 .or_insert_with(|| {
                     let index = source_strings.len();
-                    source_strings.push((**base_arc).clone());
+                    source_strings.push(base_arc.clone());
                     index
                 })
         };
@@ -196,8 +210,8 @@ impl serde::Serialize for PageAnalysis {
 impl<'de> serde::Deserialize<'de> for PageAnalysis {
     fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
         let s = SerializedPageAnalysis::deserialize(deserializer)?;
-        let source_strings: Vec<Arc<String>> = s.source_strings.into_iter().map(Arc::new).collect();
-
+        
+        let source_strings = s.source_strings;
         let deserialize_substr = |serial_substr: SerializedArcSubstring| {
             if let Some(source_string) = source_strings.get(serial_substr.source_index) {
                 if let Some(substr) = source_string.get(serial_substr.source_range) {
