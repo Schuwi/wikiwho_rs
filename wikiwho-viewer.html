@@ -1,0 +1,654 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WikiWho Output Viewer</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    .token {
+      border-radius: 2px;
+      cursor: default;
+      display: inline;
+      padding: 0 1px;
+      line-height: 1.8;
+    }
+    .token:hover {
+      outline: 2px solid rgba(0, 0, 0, 0.55);
+      position: relative;
+      z-index: 1;
+    }
+    .token.active {
+      outline: 2px solid #1d4ed8;
+      position: relative;
+      z-index: 2;
+    }
+    #tooltip {
+      position: fixed;
+      pointer-events: none;
+      display: none;
+      z-index: 1000;
+    }
+    .rev-item {
+      cursor: pointer;
+      transition: background 0.1s;
+    }
+    .rev-item:hover {
+      background-color: #f0f4ff;
+    }
+    .rev-item.selected {
+      background-color: #dbeafe;
+    }
+    #age-gradient-bar {
+      height: 14px;
+      border-radius: 4px;
+      background: linear-gradient(to right, rgb(138,180,222), rgb(234,175,95));
+    }
+  </style>
+</head>
+<body class="bg-gray-50 h-screen flex flex-col text-sm text-gray-800 overflow-hidden">
+
+  <!-- Header -->
+  <header class="bg-white border-b px-4 py-2 flex items-center gap-3 shrink-0 shadow-sm">
+    <h1 class="font-bold text-base text-gray-900 shrink-0">WikiWho Viewer</h1>
+    <label class="cursor-pointer bg-blue-600 text-white px-3 py-1 rounded text-xs hover:bg-blue-700 shrink-0">
+      Open file
+      <input type="file" id="file-input" accept=".json,.jsonl" class="hidden">
+    </label>
+    <span class="text-gray-400 text-xs hidden sm:block">or drop a .json / .jsonl file anywhere</span>
+    <div id="stats" class="ml-auto text-xs text-gray-500 hidden whitespace-nowrap"></div>
+  </header>
+
+  <!-- Drop overlay (visible when dragging a file) -->
+  <div id="drop-overlay" class="hidden fixed inset-0 z-50 bg-blue-50/90 flex items-center justify-center border-4 border-dashed border-blue-400 pointer-events-none">
+    <div class="text-blue-600 text-2xl font-semibold">Drop file to load</div>
+  </div>
+
+  <!-- Controls bar (shown after file loaded) -->
+  <div id="controls" class="hidden bg-white border-b px-4 py-2 flex items-center gap-4 shrink-0 flex-wrap">
+    <div id="page-selector" class="hidden items-center gap-2 flex">
+      <span class="text-gray-600 font-medium text-xs">Page:</span>
+      <select id="page-select" class="border rounded px-2 py-1 text-xs bg-white max-w-xs"></select>
+    </div>
+    <div class="flex items-center gap-2">
+      <span class="text-gray-600 font-medium text-xs">Color by:</span>
+      <button id="mode-editor" class="px-2 py-1 rounded text-xs border bg-blue-600 text-white">Editor</button>
+      <button id="mode-age" class="px-2 py-1 rounded text-xs border bg-white text-gray-700 hover:bg-gray-50">Age</button>
+    </div>
+    <button id="clear-highlight" class="hidden text-xs text-blue-600 hover:underline">Clear highlight</button>
+  </div>
+
+  <!-- Main content (shown after file loaded) -->
+  <div id="main" class="hidden flex-1 flex overflow-hidden">
+
+    <!-- Sidebar: revisions + legend -->
+    <aside class="w-60 shrink-0 bg-white border-r flex flex-col overflow-hidden">
+      <div class="px-3 py-2 font-semibold text-gray-600 border-b shrink-0 text-xs uppercase tracking-wide">
+        Revisions
+      </div>
+      <div id="revision-list" class="overflow-y-auto flex-1 divide-y divide-gray-50 text-xs"></div>
+      <div id="legend-container" class="border-t shrink-0">
+        <div id="legend-editor" class="px-3 py-2 text-xs hidden">
+          <div class="font-semibold text-gray-600 mb-1 uppercase tracking-wide text-xs">Top editors</div>
+          <div id="legend-editor-list" class="space-y-1 overflow-y-auto max-h-36"></div>
+          <div id="legend-anon-note" class="hidden mt-1 text-gray-400 italic">* desaturated = anonymous</div>
+        </div>
+        <div id="legend-age" class="px-3 py-2 text-xs hidden">
+          <div class="font-semibold text-gray-600 mb-1 uppercase tracking-wide text-xs">Age (oldest → newest)</div>
+          <div id="age-gradient-bar" class="mb-1"></div>
+          <div class="flex justify-between text-gray-400">
+            <span id="age-min-label"></span>
+            <span id="age-max-label"></span>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Article text area -->
+    <main class="flex-1 overflow-y-auto p-5">
+      <h2 id="article-title" class="text-lg font-bold mb-1 text-gray-900"></h2>
+      <p id="article-meta" class="text-xs text-gray-400 mb-4"></p>
+      <div id="article-text" class="leading-loose font-mono text-sm select-text"></div>
+    </main>
+
+  </div>
+
+  <!-- Empty / landing state -->
+  <div id="empty-state" class="flex-1 flex items-center justify-center">
+    <div class="text-center">
+      <div class="text-6xl mb-4">📄</div>
+      <p class="text-lg font-medium text-gray-700">Drop a WikiWho output file here</p>
+      <p class="text-sm mt-2 text-gray-500">Supports <code class="bg-gray-100 px-1 rounded">.jsonl</code> (default) and <code class="bg-gray-100 px-1 rounded">.json</code> formats</p>
+      <p class="text-xs mt-3 text-gray-400">Generate output with: <code class="bg-gray-100 px-1 rounded text-gray-600">wikiwho-cli input.xml.bz2 &gt; output.jsonl</code></p>
+      <p class="text-xs mt-2 text-gray-400"><b>Note:</b> the <code class="bg-gray-100 px-1 rounded text-gray-600">--format raw</code> output is <span class="font-medium">not supported</span>.</p>
+    </div>
+  </div>
+
+  <!-- Floating token tooltip -->
+  <div id="tooltip" class="bg-white border border-gray-200 rounded-lg shadow-xl px-3 py-2 text-xs max-w-xs space-y-0.5"></div>
+
+  <script>
+  (() => {
+    'use strict';
+
+    // ── State ────────────────────────────────────────────────────────────────
+    let pages = [];
+    let currentPageIdx = 0;
+    let colorMode = 'editor'; // 'editor' | 'age'
+    let selectedRevId = null;
+    let selectedEditor = null;
+    // Map<revId, revObj> for the current page
+    let revMap = new Map();
+    // Map<editor, color> for current page
+    let editorColorCache = new Map();
+    // [minTime, maxTime] as epoch ms for current page
+    let ageRange = [0, 1];
+
+    // ── DOM refs ─────────────────────────────────────────────────────────────
+    const fileInput       = document.getElementById('file-input');
+    const dropOverlay     = document.getElementById('drop-overlay');
+    const controls        = document.getElementById('controls');
+    const mainEl          = document.getElementById('main');
+    const emptyState      = document.getElementById('empty-state');
+    const statsEl         = document.getElementById('stats');
+    const pageSelector    = document.getElementById('page-selector');
+    const pageSelect      = document.getElementById('page-select');
+    const modeEditorBtn   = document.getElementById('mode-editor');
+    const modeAgeBtn      = document.getElementById('mode-age');
+    const clearHighlight  = document.getElementById('clear-highlight');
+    const revisionList    = document.getElementById('revision-list');
+    const legendEditor    = document.getElementById('legend-editor');
+    const legendEditorList = document.getElementById('legend-editor-list');
+    const legendAnonNote  = document.getElementById('legend-anon-note');
+    const legendAge       = document.getElementById('legend-age');
+    const ageMinLabel     = document.getElementById('age-min-label');
+    const ageMaxLabel     = document.getElementById('age-max-label');
+    const articleTitle    = document.getElementById('article-title');
+    const articleMeta     = document.getElementById('article-meta');
+    const articleText     = document.getElementById('article-text');
+    const tooltip         = document.getElementById('tooltip');
+
+    // ── Color helpers ─────────────────────────────────────────────────────────
+
+    function hashStr(str) {
+      let h = 0;
+      for (let i = 0; i < str.length; i++) {
+        h = Math.imul(31, h) + str.charCodeAt(i) | 0;
+      }
+      return Math.abs(h);
+    }
+
+    // Deterministic HSL color for an editor string.
+    // Registered users: vivid. Anonymous (0|…): muted.
+    function editorColor(editor) {
+      const isAnon = editor.startsWith('0|');
+      // Use golden angle multiplier for good hue spread
+      const hue = (hashStr(editor) * 137.508) % 360;
+      return isAnon
+        ? `hsl(${hue.toFixed(0)}, 28%, 78%)`
+        : `hsl(${hue.toFixed(0)}, 62%, 73%)`;
+    }
+
+    // Color interpolated in RGB between soft blue (oldest) and warm amber (newest).
+    // RGB interpolation produces a neutral gray midpoint rather than vivid green.
+    function ageColor(t) {
+      const r = Math.round(138 + t * 96);  // 138 → 234
+      const g = Math.round(180 - t *  5);  // 180 → 175
+      const b = Math.round(222 - t * 127); // 222 → 95
+      return `rgb(${r},${g},${b})`;
+    }
+
+    // ── Editor label helpers ──────────────────────────────────────────────────
+
+    function editorLabel(editor) {
+      if (editor.startsWith('0|')) return editor.slice(2) || 'Anonymous';
+      return `User ${editor}`;
+    }
+
+    function isAnon(editor) {
+      return editor.startsWith('0|');
+    }
+
+    // ── File parsing ──────────────────────────────────────────────────────────
+
+    function parseContent(text) {
+      const trimmed = text.trimStart();
+      if (trimmed.startsWith('[')) {
+        // JSON array format
+        return JSON.parse(trimmed);
+      } else {
+        // JSONL: one object per non-empty line
+        return trimmed
+          .split('\n')
+          .map(l => l.trim())
+          .filter(l => l.length > 0)
+          .map(l => JSON.parse(l));
+      }
+    }
+
+    function loadText(text) {
+      pages = parseContent(text);
+      if (pages.length === 0) {
+        alert('No pages found in file.');
+        return;
+      }
+
+      // Populate page selector
+      pageSelect.innerHTML = '';
+      if (pages.length > 1) {
+        pages.forEach((p, i) => {
+          const opt = document.createElement('option');
+          opt.value = i;
+          opt.textContent = `${i + 1}. ${p.article_title || '(untitled)'}`;
+          pageSelect.appendChild(opt);
+        });
+        pageSelector.classList.remove('hidden');
+        pageSelector.classList.add('flex');
+      } else {
+        pageSelector.classList.add('hidden');
+        pageSelector.classList.remove('flex');
+      }
+
+      currentPageIdx = 0;
+      renderPage(0);
+
+      // Show UI
+      emptyState.classList.add('hidden');
+      controls.classList.remove('hidden');
+      mainEl.classList.remove('hidden');
+      mainEl.classList.add('flex');
+
+      statsEl.textContent = `${pages.length} page${pages.length > 1 ? 's' : ''} loaded`;
+      statsEl.classList.remove('hidden');
+    }
+
+    // ── Rendering ─────────────────────────────────────────────────────────────
+
+    function renderPage(idx) {
+      currentPageIdx = idx;
+      selectedRevId = null;
+      selectedEditor = null;
+      clearHighlight.classList.add('hidden');
+      editorColorCache.clear();
+
+      const page = pages[idx];
+
+      // Build revision map
+      revMap = new Map();
+      const spamSet = new Set(page.spam_ids || []);
+      (page.revisions || []).forEach(r => revMap.set(r.id, r));
+
+      // Compute age range from revision timestamps
+      const times = (page.revisions || [])
+        .map(r => new Date(r.timestamp).getTime())
+        .filter(t => !isNaN(t));
+      ageRange = times.length > 0
+        ? [Math.min(...times), Math.max(...times)]
+        : [0, 1];
+
+      // Compute per-editor token counts for legend
+      const editorTokenCount = new Map();
+      (page.all_tokens || []).forEach(t => {
+        editorTokenCount.set(t.editor, (editorTokenCount.get(t.editor) || 0) + 1);
+      });
+
+      // Pre-populate editor color cache
+      editorTokenCount.forEach((_, ed) => {
+        editorColorCache.set(ed, editorColor(ed));
+      });
+
+      // Article header
+      articleTitle.textContent = page.article_title || '(untitled)';
+      const ns = page.namespace !== undefined ? `Namespace ${page.namespace}` : '';
+      const tc = `${(page.all_tokens || []).length} tokens`;
+      const rc = `${(page.revisions || []).length} revisions`;
+      const ec = `${editorTokenCount.size} editors`;
+      articleMeta.textContent = [ns, tc, rc, ec].filter(Boolean).join(' · ');
+
+      // Render revision sidebar
+      renderRevisionList(page, spamSet);
+
+      // Render tokens
+      renderTokens(page, spamSet);
+
+      // Render legend
+      renderLegend(editorTokenCount);
+    }
+
+    function renderRevisionList(page, spamSet) {
+      revisionList.innerHTML = '';
+      const revs = [...(page.revisions || [])].sort((a, b) =>
+        new Date(a.timestamp) - new Date(b.timestamp)
+      );
+
+      const frag = document.createDocumentFragment();
+      revs.forEach(rev => {
+        const item = document.createElement('div');
+        item.className = 'rev-item px-3 py-2';
+        item.dataset.revId = rev.id;
+
+        const date = new Date(rev.timestamp);
+        const dateStr = date.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
+        const timeStr = date.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
+        const spam = spamSet.has(rev.id);
+        const anonClass = isAnon(rev.editor) ? 'text-gray-400' : 'text-gray-700';
+
+        item.innerHTML = `
+          <div class="flex items-start justify-between gap-1">
+            <span class="font-mono text-gray-400">#${rev.id}</span>
+            ${spam ? '<span class="bg-red-100 text-red-600 px-1 rounded text-xs">spam</span>' : ''}
+          </div>
+          <div class="text-gray-500 mt-0.5">${dateStr} ${timeStr}</div>
+          <div class="${anonClass} truncate mt-0.5" title="${escapeHtml(editorLabel(rev.editor))}">${escapeHtml(editorLabel(rev.editor))}</div>
+        `;
+
+        // Color dot matching editor color
+        const dot = document.createElement('div');
+        dot.style.cssText = `width:8px;height:8px;border-radius:50%;background:${editorColorCache.get(rev.editor) || '#ccc'};display:inline-block;margin-right:4px;margin-top:3px;flex-shrink:0;`;
+        item.insertBefore(dot, item.firstChild);
+
+        item.addEventListener('click', () => toggleRevisionHighlight(rev.id));
+        frag.appendChild(item);
+      });
+      revisionList.appendChild(frag);
+    }
+
+    function renderTokens(page, spamSet) {
+      articleText.innerHTML = '';
+      const tokens = page.all_tokens || [];
+      if (tokens.length === 0) {
+        articleText.textContent = '(no tokens)';
+        return;
+      }
+
+      const frag = document.createDocumentFragment();
+      tokens.forEach(tok => {
+        const span = document.createElement('span');
+        span.className = 'token';
+        span.dataset.tokenId  = tok.token_id;
+        span.dataset.oRevId   = tok.o_rev_id;
+        span.dataset.editor   = tok.editor;
+        span.dataset.inCount  = (tok.in  || []).length;
+        span.dataset.outCount = (tok.out || []).length;
+        span.textContent = tok.str;
+        applyTokenColor(span);
+        frag.appendChild(span);
+        frag.appendChild(document.createTextNode(' '));
+      });
+      articleText.appendChild(frag);
+
+      // Tooltip events on the container (event delegation)
+      articleText.addEventListener('mouseover', onTokenMouseOver);
+      articleText.addEventListener('mouseout', onTokenMouseOut);
+      articleText.addEventListener('mousemove', onTokenMouseMove);
+    }
+
+    function applyTokenColor(span) {
+      const editor  = span.dataset.editor;
+      const oRevId  = parseInt(span.dataset.oRevId, 10);
+
+      if (colorMode === 'editor') {
+        span.style.background = editorColorCache.get(editor) || '#e5e7eb';
+      } else {
+        const rev = revMap.get(oRevId);
+        if (rev) {
+          const t = ageRange[1] > ageRange[0]
+            ? (new Date(rev.timestamp).getTime() - ageRange[0]) / (ageRange[1] - ageRange[0])
+            : 0.5;
+          span.style.background = ageColor(Math.max(0, Math.min(1, t)));
+        } else {
+          span.style.background = '#e5e7eb';
+        }
+      }
+    }
+
+    function updateAllTokenColors() {
+      articleText.querySelectorAll('.token').forEach(applyTokenColor);
+    }
+
+    // ── Legend ────────────────────────────────────────────────────────────────
+
+    function renderLegend(editorTokenCount) {
+      if (colorMode === 'editor') {
+        legendAge.classList.add('hidden');
+        legendEditor.classList.remove('hidden');
+
+        // Sort editors by token count descending, show top 15
+        const sorted = [...editorTokenCount.entries()]
+          .sort((a, b) => b[1] - a[1])
+          .slice(0, 15);
+
+        legendEditorList.innerHTML = '';
+        let hasAnon = false;
+        sorted.forEach(([ed, count]) => {
+          if (isAnon(ed)) hasAnon = true;
+          const row = document.createElement('div');
+          row.className = 'flex items-center gap-1.5 cursor-pointer rounded px-1 hover:bg-gray-100';
+          row.dataset.editor = ed;
+          const swatch = document.createElement('span');
+          swatch.style.cssText = `display:inline-block;width:10px;height:10px;border-radius:2px;background:${editorColorCache.get(ed) || '#ccc'};flex-shrink:0;`;
+          const label = document.createElement('span');
+          label.className = 'truncate text-gray-700';
+          label.title = editorLabel(ed);
+          label.textContent = editorLabel(ed);
+          const cnt = document.createElement('span');
+          cnt.className = 'ml-auto text-gray-400 shrink-0';
+          cnt.textContent = count;
+          row.appendChild(swatch);
+          row.appendChild(label);
+          row.appendChild(cnt);
+          row.addEventListener('click', () => toggleEditorHighlight(ed));
+          legendEditorList.appendChild(row);
+        });
+
+        if (hasAnon) {
+          legendAnonNote.classList.remove('hidden');
+        } else {
+          legendAnonNote.classList.add('hidden');
+        }
+
+      } else {
+        legendEditor.classList.add('hidden');
+        legendAge.classList.remove('hidden');
+
+        const fmt = (ts) => new Date(ts).toLocaleDateString(undefined, { year: 'numeric', month: 'short' });
+        ageMinLabel.textContent = ageRange[0] ? fmt(ageRange[0]) : '—';
+        ageMaxLabel.textContent = ageRange[1] ? fmt(ageRange[1]) : '—';
+      }
+    }
+
+    // ── Highlight by revision or editor ──────────────────────────────────────
+
+    function clearAllHighlights() {
+      selectedRevId = null;
+      selectedEditor = null;
+      clearHighlight.classList.add('hidden');
+      revisionList.querySelectorAll('.rev-item').forEach(el => el.classList.remove('selected'));
+      legendEditorList.querySelectorAll('[data-editor]').forEach(el => el.classList.remove('bg-blue-100'));
+      articleText.querySelectorAll('.token.active').forEach(el => el.classList.remove('active'));
+    }
+
+    function toggleRevisionHighlight(revId) {
+      if (selectedRevId === revId) { clearAllHighlights(); return; }
+      clearAllHighlights();
+      selectedRevId = revId;
+      clearHighlight.classList.remove('hidden');
+
+      revisionList.querySelectorAll('.rev-item').forEach(el => {
+        el.classList.toggle('selected', parseInt(el.dataset.revId, 10) === revId);
+      });
+      articleText.querySelectorAll('.token').forEach(span => {
+        span.classList.toggle('active', parseInt(span.dataset.oRevId, 10) === revId);
+      });
+
+      const first = articleText.querySelector('.token.active');
+      if (first) first.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+
+    function toggleEditorHighlight(editor) {
+      if (selectedEditor === editor) { clearAllHighlights(); return; }
+      clearAllHighlights();
+      selectedEditor = editor;
+      clearHighlight.classList.remove('hidden');
+
+      legendEditorList.querySelectorAll('[data-editor]').forEach(el => {
+        el.classList.toggle('bg-blue-100', el.dataset.editor === editor);
+      });
+      articleText.querySelectorAll('.token').forEach(span => {
+        span.classList.toggle('active', span.dataset.editor === editor);
+      });
+
+      const first = articleText.querySelector('.token.active');
+      if (first) first.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+
+    // ── Tooltip ───────────────────────────────────────────────────────────────
+
+    let tooltipTarget = null;
+
+    function onTokenMouseOver(e) {
+      const span = e.target.closest('.token');
+      if (!span) return;
+      tooltipTarget = span;
+      showTooltip(span);
+    }
+
+    function onTokenMouseOut(e) {
+      const span = e.target.closest('.token');
+      if (!span) return;
+      tooltipTarget = null;
+      tooltip.style.display = 'none';
+    }
+
+    function onTokenMouseMove(e) {
+      if (!tooltipTarget) return;
+      positionTooltip(e.clientX, e.clientY);
+    }
+
+    function showTooltip(span) {
+      const oRevId  = parseInt(span.dataset.oRevId, 10);
+      const editor  = span.dataset.editor;
+      const inCnt   = span.dataset.inCount;
+      const outCnt  = span.dataset.outCount;
+      const rev     = revMap.get(oRevId);
+      const dateStr = rev ? new Date(rev.timestamp).toLocaleString() : '—';
+      const tokenText = span.textContent;
+
+      tooltip.innerHTML = `
+        <div class="font-mono font-bold text-gray-900 text-sm mb-1 break-all">${escapeHtml(tokenText)}</div>
+        <div class="space-y-0.5 text-gray-600">
+          <div><span class="text-gray-400">Token ID:</span> ${span.dataset.tokenId}</div>
+          <div><span class="text-gray-400">Origin rev:</span> <span class="font-mono">${oRevId}</span></div>
+          <div><span class="text-gray-400">Date:</span> ${escapeHtml(dateStr)}</div>
+          <div><span class="text-gray-400">Editor:</span> <span class="${isAnon(editor) ? 'text-gray-500 italic' : ''}">${escapeHtml(editorLabel(editor))}</span></div>
+          <div class="flex gap-3 mt-1">
+            <span title="Times deleted"><span class="text-red-400">↓</span> ${outCnt} deletion${outCnt == 1 ? '' : 's'}</span>
+            <span title="Times restored"><span class="text-green-500">↑</span> ${inCnt} restoration${inCnt == 1 ? '' : 's'}</span>
+          </div>
+        </div>
+      `;
+      tooltip.style.display = 'block';
+    }
+
+    function positionTooltip(cx, cy) {
+      const tw = tooltip.offsetWidth;
+      const th = tooltip.offsetHeight;
+      const margin = 14;
+      let x = cx + margin;
+      let y = cy + margin;
+      if (x + tw > window.innerWidth - 8)  x = cx - tw - margin;
+      if (y + th > window.innerHeight - 8) y = cy - th - margin;
+      tooltip.style.left = `${x}px`;
+      tooltip.style.top  = `${y}px`;
+    }
+
+    // ── Utilities ─────────────────────────────────────────────────────────────
+
+    function escapeHtml(str) {
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    }
+
+    // ── Event wiring ──────────────────────────────────────────────────────────
+
+    // File input
+    fileInput.addEventListener('change', e => {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = ev => {
+        try { loadText(ev.target.result); }
+        catch (err) { alert(`Failed to parse file: ${err.message}`); }
+      };
+      reader.readAsText(file);
+      fileInput.value = '';
+    });
+
+    // Drag and drop onto entire document
+    document.addEventListener('dragenter', e => {
+      if (e.dataTransfer.types.includes('Files')) {
+        dropOverlay.classList.remove('hidden');
+      }
+    });
+    document.addEventListener('dragleave', e => {
+      if (e.relatedTarget === null) dropOverlay.classList.add('hidden');
+    });
+    document.addEventListener('dragover', e => e.preventDefault());
+    document.addEventListener('drop', e => {
+      e.preventDefault();
+      dropOverlay.classList.add('hidden');
+      const file = e.dataTransfer.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = ev => {
+        try { loadText(ev.target.result); }
+        catch (err) { alert(`Failed to parse file: ${err.message}`); }
+      };
+      reader.readAsText(file);
+    });
+
+    // Page selector
+    pageSelect.addEventListener('change', () => {
+      clearAllHighlights();
+      renderPage(parseInt(pageSelect.value, 10));
+    });
+
+    // Color mode buttons
+    modeEditorBtn.addEventListener('click', () => {
+      if (colorMode === 'editor') return;
+      colorMode = 'editor';
+      modeEditorBtn.className = 'px-2 py-1 rounded text-xs border bg-blue-600 text-white';
+      modeAgeBtn.className    = 'px-2 py-1 rounded text-xs border bg-white text-gray-700 hover:bg-gray-50';
+      updateAllTokenColors();
+      const page = pages[currentPageIdx];
+      const editorTokenCount = new Map();
+      (page.all_tokens || []).forEach(t => {
+        editorTokenCount.set(t.editor, (editorTokenCount.get(t.editor) || 0) + 1);
+      });
+      renderLegend(editorTokenCount);
+    });
+
+    modeAgeBtn.addEventListener('click', () => {
+      if (colorMode === 'age') return;
+      colorMode = 'age';
+      modeAgeBtn.className    = 'px-2 py-1 rounded text-xs border bg-blue-600 text-white';
+      modeEditorBtn.className = 'px-2 py-1 rounded text-xs border bg-white text-gray-700 hover:bg-gray-50';
+      updateAllTokenColors();
+      const page = pages[currentPageIdx];
+      const editorTokenCount = new Map();
+      (page.all_tokens || []).forEach(t => {
+        editorTokenCount.set(t.editor, (editorTokenCount.get(t.editor) || 0) + 1);
+      });
+      renderLegend(editorTokenCount);
+    });
+
+    // Clear highlight button
+    clearHighlight.addEventListener('click', clearAllHighlights);
+
+  })();
+  </script>
+</body>
+</html>
