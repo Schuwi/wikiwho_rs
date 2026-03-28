@@ -1,7 +1,9 @@
+use std::borrow::Borrow;
 // SPDX-License-Identifier: MPL-2.0
 use std::collections::{BTreeMap, HashMap};
 use std::io::{self, BufRead, BufReader, BufWriter, Write};
 use std::process::ExitCode;
+use std::rc::Rc;
 use std::sync::Mutex;
 
 use wikiwho::algorithm::PageAnalysis;
@@ -191,6 +193,34 @@ fn run() -> Result<(), Box<dyn std::error::Error>> {
     }
 }
 
+struct RevisionIterHelper<'a>(Rc<&'a mut Revision>);
+
+impl<'a> Borrow<Revision> for RevisionIterHelper<'a> {
+    fn borrow(&self) -> &Revision {
+        &self.0
+    }
+}
+
+fn text_deleting_iterator(
+    revisions: &mut [Revision],
+) -> impl Iterator<Item = RevisionIterHelper<'_>> {
+    revisions.iter_mut().scan(None, |state, rev| {
+        let this_rev = Rc::new(rev);
+        let last_rev = std::mem::replace(state, Some(this_rev.clone()));
+        if let Some(last_rev) = last_rev {
+            if let Some(last_rev) = Rc::into_inner(last_rev) {
+                // we don't use the text again, so we might as well drop the original to save memory
+                last_rev.text = wikiwho::dump_parser::Text::Deleted;
+            } else {
+                // this is just an optimization so if it fails that does not impact correctness
+                // but we want to be alerted to this during debugging
+                debug_assert!(false, "Revision was not dropped by analyse_page after processing, can't free old text");
+            }
+        }
+        Some(RevisionIterHelper(this_rev))
+    })
+}
+
 /// Single-threaded processing (original path, used when -j 1).
 fn process_single(
     reader: Box<dyn BufRead + Send>,
@@ -214,7 +244,7 @@ fn process_single(
         write!(writer, "[")?;
     }
 
-    while let Some(page) = parser
+    while let Some(mut page) = parser
         .parse_page()
         .map_err(|e| format!("XML parse error: {e:?}"))?
     {
@@ -226,7 +256,8 @@ fn process_single(
             break; // page limit reached
         }
 
-        let analysis = match PageAnalysis::analyse_page(&page.revisions) {
+        let analysis = match PageAnalysis::analyse_page(text_deleting_iterator(&mut page.revisions))
+        {
             Ok(a) => a,
             Err(e) => {
                 if !quiet {
@@ -302,11 +333,14 @@ fn process_parallel(
             s.spawn(move || {
                 loop {
                     let item = work_rx.lock().unwrap().recv();
-                    let (seq, page) = match item {
+                    let (seq, mut page) = match item {
                         Ok(v) => v,
                         Err(_) => break, // channel closed, no more work
                     };
-                    let result = match PageAnalysis::analyse_page(&page.revisions) {
+
+                    let result = match PageAnalysis::analyse_page(text_deleting_iterator(
+                        &mut page.revisions,
+                    )) {
                         Ok(analysis) => AnalysisResult::Ok(page, analysis),
                         Err(e) => AnalysisResult::Skipped(page.title.to_string(), e.to_string()),
                     };
@@ -374,7 +408,8 @@ fn process_parallel(
                     }
                     AnalysisResult::Ok(page, analysis) => {
                         let page_title = page.title.clone();
-                        write_page_result(&mut writer, page, &analysis, format, page_count).unwrap();
+                        write_page_result(&mut writer, page, &analysis, format, page_count)
+                            .unwrap();
                         page_count += 1;
                         if !quiet && page_count % 100 == 0 {
                             eprintln!("Processed {page_count} pages (latest: {})", page_title);
