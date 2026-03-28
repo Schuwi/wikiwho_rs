@@ -4,10 +4,12 @@ use std::collections::{BTreeMap, HashMap};
 use std::io::{self, BufRead, BufReader, BufWriter, Write};
 use std::process::ExitCode;
 use std::rc::Rc;
+use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::Mutex;
+use std::time::{Duration, Instant};
 
 use wikiwho::algorithm::PageAnalysis;
-use wikiwho::dump_parser::{Contributor, DumpParser, Page, Revision};
+use wikiwho::dump_parser::{Contributor, DumpParser, Namespace, Page, Revision};
 use wikiwho::utils::iterate_revision_tokens;
 
 fn format_editor(contributor: &Contributor) -> String {
@@ -193,6 +195,222 @@ fn run() -> Result<(), Box<dyn std::error::Error>> {
     }
 }
 
+// ---------------------------------------------------------------------------
+// Formatting helpers
+// ---------------------------------------------------------------------------
+
+fn format_duration(d: Duration) -> String {
+    let secs = d.as_secs();
+    if secs < 10 {
+        format!("{}.{}s", secs, d.subsec_millis() / 100)
+    } else if secs < 60 {
+        format!("{secs}s")
+    } else if secs < 3600 {
+        format!("{}m {:02}s", secs / 60, secs % 60)
+    } else {
+        format!("{}h {:02}m", secs / 3600, (secs % 3600) / 60)
+    }
+}
+
+fn format_bytes(bytes: u64) -> String {
+    const KIB: f64 = 1024.0;
+    const MIB: f64 = 1024.0 * KIB;
+    const GIB: f64 = 1024.0 * MIB;
+    const TIB: f64 = 1024.0 * GIB;
+    let b = bytes as f64;
+    if b >= TIB {
+        format!("{:.1} TiB", b / TIB)
+    } else if b >= GIB {
+        format!("{:.1} GiB", b / GIB)
+    } else if b >= MIB {
+        format!("{:.1} MiB", b / MIB)
+    } else if b >= KIB {
+        format!("{:.0} KiB", b / KIB)
+    } else {
+        format!("{bytes} B")
+    }
+}
+
+fn format_count(n: u64) -> String {
+    let s = n.to_string();
+    let mut result = String::with_capacity(s.len() + s.len() / 3);
+    for (i, c) in s.chars().enumerate() {
+        if i > 0 && (s.len() - i) % 3 == 0 {
+            result.push(',');
+        }
+        result.push(c);
+    }
+    result
+}
+
+// ---------------------------------------------------------------------------
+// Progress reporting
+// ---------------------------------------------------------------------------
+
+const REPORT_INTERVAL_MS: u64 = 2_000;
+
+struct ProgressReporter {
+    quiet: bool,
+    start: Instant,
+    last_status_ms: AtomicU64,
+    namespaces: HashMap<i32, Namespace>,
+
+    parsed_pages: AtomicU64,
+    parsed_text_bytes: AtomicU64,
+    parsed_revisions: AtomicU64,
+    analysed_pages: AtomicU64,
+    skipped_pages: AtomicU64,
+    written_pages: AtomicU64,
+}
+
+impl ProgressReporter {
+    fn new(quiet: bool, namespaces: HashMap<i32, Namespace>) -> Self {
+        Self {
+            quiet,
+            start: Instant::now(),
+            last_status_ms: AtomicU64::new(0),
+            namespaces,
+            parsed_pages: AtomicU64::new(0),
+            parsed_text_bytes: AtomicU64::new(0),
+            parsed_revisions: AtomicU64::new(0),
+            analysed_pages: AtomicU64::new(0),
+            skipped_pages: AtomicU64::new(0),
+            written_pages: AtomicU64::new(0),
+        }
+    }
+
+    /// Record a parsed page. Warns on stderr about very large pages (>1 GiB).
+    fn page_parsed(&self, page: &Page) {
+        let total_text_bytes: usize = page
+            .revisions
+            .iter()
+            .map(|rev| rev.text.as_str().len())
+            .sum();
+        let num_revisions = page.revisions.len() as u64;
+
+        if !self.quiet && total_text_bytes > 1024 * 1024 * 1024 {
+            self.warn_big_page(page, total_text_bytes);
+        }
+
+        self.parsed_text_bytes
+            .fetch_add(total_text_bytes as u64, Ordering::Relaxed);
+        self.parsed_revisions
+            .fetch_add(num_revisions, Ordering::Relaxed);
+        self.parsed_pages.fetch_add(1, Ordering::Relaxed);
+    }
+
+    fn warn_big_page(&self, page: &Page, total_text_bytes: usize) {
+        let parsed = self.parsed_pages.load(Ordering::Relaxed);
+        let ns_name = self
+            .namespaces
+            .get(&page.namespace)
+            .map(|ns| match ns {
+                Namespace::Default => "[Default]".to_string(),
+                Namespace::Named(name) => format!("'{name}'"),
+            })
+            .unwrap_or_else(|| "[Unknown]".to_string());
+
+        let avg_info = if parsed > 0 {
+            let avg_bytes = self.parsed_text_bytes.load(Ordering::Relaxed) as f64 / parsed as f64;
+            let avg_revs = self.parsed_revisions.load(Ordering::Relaxed) as f64 / parsed as f64;
+            format!(
+                " (avg: {}, {:.1} revs over {} pages)",
+                format_bytes(avg_bytes as u64),
+                avg_revs,
+                format_count(parsed),
+            )
+        } else {
+            String::new()
+        };
+
+        eprintln!(
+            "  Warning: big page '{}' (ns {} {}): {}, {} revisions{}",
+            page.title,
+            page.namespace,
+            ns_name,
+            format_bytes(total_text_bytes as u64),
+            format_count(page.revisions.len() as u64),
+            avg_info,
+        );
+    }
+
+    fn page_analysed(&self) {
+        self.analysed_pages.fetch_add(1, Ordering::Relaxed);
+    }
+
+    fn page_skipped(&self, title: &str, err: &str) {
+        self.skipped_pages.fetch_add(1, Ordering::Relaxed);
+        if !self.quiet {
+            eprintln!("  Warning: skipping '{title}': {err}");
+        }
+    }
+
+    /// Record a written page. Prints a periodic status line (~every 2s).
+    fn page_written(&self) {
+        let written = self.written_pages.fetch_add(1, Ordering::Relaxed) + 1;
+        if self.quiet {
+            return;
+        }
+
+        let elapsed_ms = self.start.elapsed().as_millis() as u64;
+        let last = self.last_status_ms.load(Ordering::Relaxed);
+        if elapsed_ms.saturating_sub(last) >= REPORT_INTERVAL_MS {
+            self.last_status_ms.store(elapsed_ms, Ordering::Relaxed);
+            self.print_status(written);
+        }
+    }
+
+    fn print_status(&self, written: u64) {
+        let elapsed = self.start.elapsed();
+        let rate = written as f64 / elapsed.as_secs_f64().max(0.001);
+        let parsed_bytes = self.parsed_text_bytes.load(Ordering::Relaxed);
+        let skipped = self.skipped_pages.load(Ordering::Relaxed);
+
+        let skip_part = if skipped > 0 {
+            format!(", {} skipped", format_count(skipped))
+        } else {
+            String::new()
+        };
+
+        eprintln!(
+            "  [{}] {} pages written ({:.0}/s), {} parsed{}",
+            format_duration(elapsed),
+            format_count(written),
+            rate,
+            format_bytes(parsed_bytes),
+            skip_part,
+        );
+    }
+
+    fn finish(&self) {
+        if self.quiet {
+            return;
+        }
+        let elapsed = self.start.elapsed();
+        let written = self.written_pages.load(Ordering::Relaxed);
+        let rate = written as f64 / elapsed.as_secs_f64().max(0.001);
+        let parsed_bytes = self.parsed_text_bytes.load(Ordering::Relaxed);
+        let revisions = self.parsed_revisions.load(Ordering::Relaxed);
+        let skipped = self.skipped_pages.load(Ordering::Relaxed);
+
+        let skip_part = if skipped > 0 {
+            format!(", {} skipped", format_count(skipped))
+        } else {
+            String::new()
+        };
+
+        eprintln!(
+            "  Done in {}: {} pages written ({:.0}/s), {} parsed, {} revisions{}",
+            format_duration(elapsed),
+            format_count(written),
+            rate,
+            format_bytes(parsed_bytes),
+            format_count(revisions),
+            skip_part,
+        );
+    }
+}
+
 struct RevisionIterHelper<'a>(Rc<&'a mut Revision>);
 
 impl<'a> Borrow<Revision> for RevisionIterHelper<'a> {
@@ -232,10 +450,10 @@ fn process_single(
 ) -> Result<(), Box<dyn std::error::Error>> {
     let mut parser =
         DumpParser::new(reader).map_err(|e| format!("failed to initialize parser: {e:?}"))?;
+    let reporter = ProgressReporter::new(quiet, parser.site_info().namespaces.clone());
 
     if !quiet {
-        let info = parser.site_info();
-        eprintln!("Database: {}", info.dbname);
+        eprintln!("Database: {}", parser.site_info().dbname);
     }
 
     let mut page_count: u64 = 0;
@@ -253,27 +471,24 @@ fn process_single(
         }
 
         if page_limit.map(|n| page_count >= n).unwrap_or(false) {
-            break; // page limit reached
+            break;
         }
+
+        reporter.page_parsed(&page);
 
         let analysis = match PageAnalysis::analyse_page(text_deleting_iterator(&mut page.revisions))
         {
             Ok(a) => a,
             Err(e) => {
-                if !quiet {
-                    eprintln!("Warning: skipping '{}': {e}", page.title);
-                }
+                reporter.page_skipped(&page.title, &e.to_string());
                 continue;
             }
         };
 
-        let page_title = page.title.clone();
+        reporter.page_analysed();
         write_page_result(&mut writer, page, &analysis, format, page_count)?;
-
+        reporter.page_written();
         page_count += 1;
-        if !quiet && page_count % 100 == 0 {
-            eprintln!("Processed {page_count} pages (latest: {})", page_title);
-        }
     }
 
     if format == Format::Json {
@@ -281,10 +496,7 @@ fn process_single(
     }
 
     writer.flush()?;
-
-    if !quiet {
-        eprintln!("Done. Processed {page_count} pages.");
-    }
+    reporter.finish();
 
     Ok(())
 }
@@ -308,11 +520,11 @@ fn process_parallel(
 ) -> Result<(), Box<dyn std::error::Error>> {
     let mut parser =
         DumpParser::new(reader).map_err(|e| format!("failed to initialize parser: {e:?}"))?;
+    let reporter = ProgressReporter::new(quiet, parser.site_info().namespaces.clone());
 
     if !quiet {
-        let info = parser.site_info();
-        eprintln!("Database: {}", info.dbname);
-        eprintln!("Using {} worker threads", num_threads);
+        eprintln!("Database: {}", parser.site_info().dbname);
+        eprintln!("Processing with {} threads", num_threads);
     }
 
     // Bounded channel: parser -> workers (back-pressure to avoid unbounded memory growth)
@@ -330,6 +542,7 @@ fn process_parallel(
         for _ in 0..num_threads {
             let work_rx = &work_rx;
             let result_tx = result_tx.clone();
+            let reporter = &reporter;
             s.spawn(move || {
                 loop {
                     let item = work_rx.lock().unwrap().recv();
@@ -341,7 +554,10 @@ fn process_parallel(
                     let result = match PageAnalysis::analyse_page(text_deleting_iterator(
                         &mut page.revisions,
                     )) {
-                        Ok(analysis) => AnalysisResult::Ok(page, analysis),
+                        Ok(analysis) => {
+                            reporter.page_analysed();
+                            AnalysisResult::Ok(page, analysis)
+                        }
                         Err(e) => AnalysisResult::Skipped(page.title.to_string(), e.to_string()),
                     };
                     // If the writer has dropped, stop
@@ -357,6 +573,7 @@ fn process_parallel(
 
         // Parser thread: reads pages sequentially, applies namespace filter, sends to workers
         let parse_error_ref = &parse_error;
+        let reporter = &reporter;
         s.spawn(move || {
             let mut seq = 0u64;
             loop {
@@ -370,6 +587,7 @@ fn process_parallel(
                         if page_limit.map(|n| seq >= n).unwrap_or(false) {
                             break; // page limit reached
                         }
+                        reporter.page_parsed(&page);
                         if work_tx.send((seq, page)).is_err() {
                             break; // workers gone
                         }
@@ -402,18 +620,13 @@ fn process_parallel(
                 next_seq += 1;
                 match result {
                     AnalysisResult::Skipped(title, err) => {
-                        if !quiet {
-                            eprintln!("Warning: skipping '{title}': {err}");
-                        }
+                        reporter.page_skipped(&title, &err);
                     }
                     AnalysisResult::Ok(page, analysis) => {
-                        let page_title = page.title.clone();
                         write_page_result(&mut writer, page, &analysis, format, page_count)
                             .unwrap();
                         page_count += 1;
-                        if !quiet && page_count % 100 == 0 {
-                            eprintln!("Processed {page_count} pages (latest: {})", page_title);
-                        }
+                        reporter.page_written();
                         drop(analysis);
                     }
                 }
@@ -425,10 +638,7 @@ fn process_parallel(
         }
 
         writer.flush().unwrap();
-
-        if !quiet {
-            eprintln!("Done. Processed {page_count} pages.");
-        }
+        reporter.finish();
     });
 
     // Check if the parser hit an error
