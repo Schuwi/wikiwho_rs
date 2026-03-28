@@ -1,6 +1,6 @@
 use std::borrow::Borrow;
 // SPDX-License-Identifier: MPL-2.0
-use std::collections::{BTreeMap, HashMap};
+use std::collections::HashMap;
 use std::io::{self, BufRead, BufReader, BufWriter, Write};
 use std::process::ExitCode;
 use std::rc::Rc;
@@ -8,16 +8,24 @@ use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::Mutex;
 use std::time::{Duration, Instant};
 
+use yoke::Yoke;
+
 use wikiwho::algorithm::PageAnalysis;
 use wikiwho::dump_parser::{Contributor, DumpParser, Namespace, Page, Revision};
 use wikiwho::utils::iterate_revision_tokens;
 
-fn format_editor(contributor: &Contributor) -> String {
+/// Formats a `Contributor` directly into the serializer, avoiding an intermediate `String`
+/// allocation per editor field. Output: user id as string, or `"0|username"` for IP/anonymous.
+fn serialize_editor<S: serde::Serializer>(
+    contributor: &&Contributor,
+    serializer: S,
+) -> Result<S::Ok, S::Error> {
     match contributor.id {
-        Some(id) if id != 0 => id.to_string(),
-        _ => format!("0|{}", contributor.username),
+        Some(id) if id != 0 => serializer.collect_str(&id),
+        _ => serializer.collect_str(&format_args!("0|{}", contributor.username)),
     }
 }
+
 
 #[derive(Clone, Copy, PartialEq)]
 enum Format {
@@ -486,7 +494,11 @@ fn process_single(
         };
 
         reporter.page_analysed();
-        write_page_result(&mut writer, page, &analysis, format, page_count)?;
+        let yoke = Yoke::attach_to_cart(
+            Box::new((page, analysis)),
+            |cart| build_page_output(&cart.0, &cart.1),
+        );
+        write_page_result(&mut writer, &yoke, format, page_count)?;
         reporter.page_written();
         page_count += 1;
     }
@@ -501,14 +513,32 @@ fn process_single(
     Ok(())
 }
 
-/// Result from a worker thread: either a successful analysis or a skipped page.
+/// Result from a worker thread: either a pre-built output or a skipped page.
+///
+/// The `Ok` variant carries a [`PageOutput`] yoked to its backing `(Page, PageAnalysis)`.
+/// Workers build the `PageOutput` (resolving pointers, collecting token data) so that the
+/// writer thread only needs to serialize — no construction work on the hot I/O path.
 enum AnalysisResult {
-    Ok(Page, PageAnalysis),
+    Ok(Yoke<PageOutput<'static>, Box<(Page, PageAnalysis)>>),
     Skipped(String, String), // (title, error message)
 }
 
 /// Multi-threaded processing pipeline:
-///   parser (1 thread) -> workers (N threads) -> writer (main thread, reordering)
+///
+/// ```text
+///   parser (1 thread) --> workers (N threads) --> writer (main thread)
+///          |    bounded channel    |    bounded channel    |
+/// ```
+///
+/// Both channels are bounded (`num_threads * 2`), which makes the pipeline self-balancing:
+/// if the writer is slow, the result channel fills → workers block → work channel fills →
+/// parser blocks. No stage can overwhelm another, and memory usage stays bounded.
+///
+/// Workers build [`PageOutput`] (via [`build_page_output`]) before sending results, so the
+/// writer thread only calls `serde_json::to_writer` — keeping I/O throughput high.
+///
+/// Output order is non-deterministic (no reordering). This avoids head-of-line blocking
+/// where one slow large page would hold up all completed pages behind it.
 fn process_parallel(
     reader: Box<dyn BufRead + Send>,
     mut writer: Box<dyn Write>,
@@ -528,11 +558,11 @@ fn process_parallel(
     }
 
     // Bounded channel: parser -> workers (back-pressure to avoid unbounded memory growth)
-    let (work_tx, work_rx) = std::sync::mpsc::sync_channel::<(u64, Page)>(num_threads * 2);
+    let (work_tx, work_rx) = std::sync::mpsc::sync_channel::<Page>(num_threads * 2);
     let work_rx = Mutex::new(work_rx);
 
-    // Unbounded channel: workers -> writer (results arrive out of order, reordered before writing)
-    let (result_tx, result_rx) = std::sync::mpsc::channel::<(u64, AnalysisResult)>();
+    // Bounded channel: workers -> writer (back-pressure prevents memory growth)
+    let (result_tx, result_rx) = std::sync::mpsc::sync_channel::<AnalysisResult>(num_threads * 2);
 
     // Track errors from the parser thread
     let parse_error: Mutex<Option<String>> = Mutex::new(None);
@@ -546,7 +576,7 @@ fn process_parallel(
             s.spawn(move || {
                 loop {
                     let item = work_rx.lock().unwrap().recv();
-                    let (seq, mut page) = match item {
+                    let mut page = match item {
                         Ok(v) => v,
                         Err(_) => break, // channel closed, no more work
                     };
@@ -556,12 +586,16 @@ fn process_parallel(
                     )) {
                         Ok(analysis) => {
                             reporter.page_analysed();
-                            AnalysisResult::Ok(page, analysis)
+                            let yoke = Yoke::attach_to_cart(
+                                Box::new((page, analysis)),
+                                |cart| build_page_output(&cart.0, &cart.1),
+                            );
+                            AnalysisResult::Ok(yoke)
                         }
                         Err(e) => AnalysisResult::Skipped(page.title.to_string(), e.to_string()),
                     };
                     // If the writer has dropped, stop
-                    if result_tx.send((seq, result)).is_err() {
+                    if result_tx.send(result).is_err() {
                         break;
                     }
                 }
@@ -575,7 +609,7 @@ fn process_parallel(
         let parse_error_ref = &parse_error;
         let reporter = &reporter;
         s.spawn(move || {
-            let mut seq = 0u64;
+            let mut parsed_count = 0u64;
             loop {
                 match parser.parse_page() {
                     Ok(Some(page)) => {
@@ -584,14 +618,14 @@ fn process_parallel(
                         {
                             continue;
                         }
-                        if page_limit.map(|n| seq >= n).unwrap_or(false) {
+                        if page_limit.map(|n| parsed_count >= n).unwrap_or(false) {
                             break; // page limit reached
                         }
                         reporter.page_parsed(&page);
-                        if work_tx.send((seq, page)).is_err() {
+                        if work_tx.send(page).is_err() {
                             break; // workers gone
                         }
-                        seq += 1;
+                        parsed_count += 1;
                     }
                     Ok(None) => break, // end of stream
                     Err(e) => {
@@ -603,32 +637,22 @@ fn process_parallel(
             // work_tx is dropped here, signaling workers to finish
         });
 
-        // Main thread: collect results, reorder, and write
+        // Main thread: collect results and write (no reordering)
         if format == Format::Json {
             write!(writer, "[").unwrap();
         }
 
-        let mut next_seq: u64 = 0;
         let mut page_count: u64 = 0;
-        let mut reorder_buf: BTreeMap<u64, AnalysisResult> = BTreeMap::new();
 
-        for (seq, result) in &result_rx {
-            reorder_buf.insert(seq, result);
-
-            // Flush all consecutive ready results
-            while let Some(result) = reorder_buf.remove(&next_seq) {
-                next_seq += 1;
-                match result {
-                    AnalysisResult::Skipped(title, err) => {
-                        reporter.page_skipped(&title, &err);
-                    }
-                    AnalysisResult::Ok(page, analysis) => {
-                        write_page_result(&mut writer, page, &analysis, format, page_count)
-                            .unwrap();
-                        page_count += 1;
-                        reporter.page_written();
-                        drop(analysis);
-                    }
+        for result in &result_rx {
+            match result {
+                AnalysisResult::Skipped(title, err) => {
+                    reporter.page_skipped(&title, &err);
+                }
+                AnalysisResult::Ok(yoke) => {
+                    write_page_result(&mut writer, &yoke, format, page_count).unwrap();
+                    page_count += 1;
+                    reporter.page_written();
                 }
             }
         }
@@ -651,74 +675,116 @@ fn process_parallel(
 
 fn write_page_result(
     writer: &mut Box<dyn Write>,
-    page: Page,
-    analysis: &PageAnalysis,
+    yoke: &Yoke<PageOutput<'static>, Box<(Page, PageAnalysis)>>,
     format: Format,
     page_count: u64,
 ) -> Result<(), Box<dyn std::error::Error>> {
     match format {
         Format::Jsonl => {
-            let obj = build_page_json(page, analysis);
-            serde_json::to_writer(&mut *writer, &obj)?;
+            serde_json::to_writer(&mut *writer, yoke.get())?;
             writeln!(writer)?;
         }
         Format::Json => {
             if page_count > 0 {
                 write!(writer, ",")?;
             }
-            let obj = build_page_json(page, analysis);
-            serde_json::to_writer(&mut *writer, &obj)?;
+            serde_json::to_writer(&mut *writer, yoke.get())?;
         }
         Format::Raw => {
-            serde_json::to_writer(&mut *writer, analysis)?;
+            serde_json::to_writer(&mut *writer, &yoke.backing_cart().1)?;
             writeln!(writer)?;
         }
     }
     Ok(())
 }
 
-fn build_page_json(page: Page, analysis: &PageAnalysis) -> serde_json::Value {
-    let revisions_by_id: HashMap<i32, Revision> = page
+/// Serialization-ready view of a page's analysis results.
+///
+/// These structs derive `Serialize` so `serde_json` can stream fields directly to the writer
+/// without building an intermediate `serde_json::Value` tree — avoiding a full duplicate of
+/// all token strings, revision ids, and editor data in memory during serialization.
+///
+/// Fields borrow from `Page` and `PageAnalysis` (e.g. `&'a str` for token values,
+/// `&'a Contributor` for editors). The `Yokeable` derive allows these borrowing structs to
+/// be sent across threads: workers build a `PageOutput` and yoke it to a `Box<(Page,
+/// PageAnalysis)>` cart, which keeps the borrowed data alive.
+#[derive(serde::Serialize, yoke::Yokeable)]
+struct PageOutput<'a> {
+    article_title: &'a str,
+    namespace: i32,
+    revisions: Vec<RevisionOutput<'a>>,
+    spam_ids: &'a [i32],
+    all_tokens: Vec<TokenOutput<'a>>,
+}
+
+#[derive(serde::Serialize, yoke::Yokeable)]
+struct RevisionOutput<'a> {
+    id: i32,
+    timestamp: String,
+    #[serde(serialize_with = "serialize_editor")]
+    editor: &'a Contributor,
+}
+
+#[derive(serde::Serialize, yoke::Yokeable)]
+struct TokenOutput<'a> {
+    token_id: usize,
+    #[serde(rename = "str")]
+    value: &'a str,
+    o_rev_id: i32,
+    #[serde(serialize_with = "serialize_editor")]
+    editor: &'a Contributor,
+    #[serde(rename = "in")]
+    inbound: Vec<i32>,
+    #[serde(rename = "out")]
+    outbound: Vec<i32>,
+}
+
+/// Builds a [`PageOutput`] that borrows from both the parsed `Page` and the `PageAnalysis`.
+///
+/// This resolves internal pointers (revision ids, token origins, in/out edges) into a flat
+/// structure ready for serialization. Called on worker threads so the writer thread doesn't
+/// need to do this work.
+fn build_page_output<'a>(page: &'a Page, analysis: &'a PageAnalysis) -> PageOutput<'a> {
+    let revisions_by_id: HashMap<i32, &Revision> = page
         .revisions
-        .into_iter()
+        .iter()
         .map(|rev| (rev.id, rev))
         .collect();
 
-    let revisions: Vec<serde_json::Value> = analysis
+    let revisions: Vec<RevisionOutput<'a>> = analysis
         .ordered_revisions
         .iter()
         .map(|rev_ptr| {
-            let xml_revision = &revisions_by_id[&rev_ptr.id];
-            serde_json::json!({
-                "id": xml_revision.id,
-                "timestamp": xml_revision.timestamp.to_rfc3339(),
-                "editor": format_editor(&xml_revision.contributor),
-            })
+            let xml_revision = revisions_by_id[&rev_ptr.id];
+            RevisionOutput {
+                id: xml_revision.id,
+                timestamp: xml_revision.timestamp.to_rfc3339(),
+                editor: &xml_revision.contributor,
+            }
         })
         .collect();
 
-    // Build all_tokens from the last (current) revision's content
     let last_rev = &analysis.current_revision;
-    let tokens: Vec<serde_json::Value> = iterate_revision_tokens(analysis, last_rev)
+    let all_tokens: Vec<TokenOutput<'a>> = iterate_revision_tokens(analysis, last_rev)
         .map(|word_ptr| {
             let word_analysis = &analysis[word_ptr];
-            let xml_origin_revision = &revisions_by_id[&word_analysis.origin_revision.id];
-            serde_json::json!({
-                "token_id": word_ptr.unique_id(),
-                "str": &*word_ptr.value,
-                "o_rev_id": xml_origin_revision.id,
-                "editor": format_editor(&xml_origin_revision.contributor),
-                "in": word_analysis.inbound.iter().map(|r| r.id).collect::<Vec<_>>(),
-                "out": word_analysis.outbound.iter().map(|r| r.id).collect::<Vec<_>>(),
-            })
+            let xml_origin_revision = revisions_by_id[&word_analysis.origin_revision.id];
+            TokenOutput {
+                token_id: word_ptr.unique_id(),
+                value: &word_ptr.value,
+                o_rev_id: xml_origin_revision.id,
+                editor: &xml_origin_revision.contributor,
+                inbound: word_analysis.inbound.iter().map(|r| r.id).collect(),
+                outbound: word_analysis.outbound.iter().map(|r| r.id).collect(),
+            }
         })
         .collect();
 
-    serde_json::json!({
-        "article_title": &*page.title,
-        "namespace": page.namespace,
-        "revisions": revisions,
-        "spam_ids": &analysis.spam_ids,
-        "all_tokens": tokens,
-    })
+    PageOutput {
+        article_title: &page.title,
+        namespace: page.namespace,
+        revisions,
+        spam_ids: &analysis.spam_ids,
+        all_tokens,
+    }
 }
