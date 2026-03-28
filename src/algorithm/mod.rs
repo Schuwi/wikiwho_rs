@@ -1,6 +1,9 @@
 // SPDX-License-Identifier: MIT AND MPL-2.0
 mod types;
-use std::{borrow::Cow, collections::HashMap};
+use std::{
+    borrow::{Borrow, Cow},
+    collections::HashMap,
+};
 
 pub use types::*;
 
@@ -384,14 +387,22 @@ impl PageAnalysis {
     ///
     /// Returns [`AnalysisError::NoValidRevisions`] if every revision in the input
     /// is classified as spam or has empty/deleted text.
-    pub fn analyse_page(xml_revisions: &[Revision]) -> Result<Self, AnalysisError> {
+    pub fn analyse_page<I, R>(xml_revisions: I) -> Result<Self, AnalysisError>
+    where
+        R: Borrow<Revision>,
+        I: IntoIterator<Item = R>,
+    {
         Self::analyse_page_with_options(xml_revisions, PageAnalysisOptions::default())
     }
 
-    pub fn analyse_page_with_options(
-        xml_revisions: &[Revision],
+    pub fn analyse_page_with_options<I, R>(
+        xml_revisions: I,
         analysis_options: PageAnalysisOptions,
-    ) -> Result<Self, AnalysisError> {
+    ) -> Result<Self, AnalysisError>
+    where
+        R: Borrow<Revision>,
+        I: IntoIterator<Item = R>,
+    {
         // This means we'll always have an unreferenced dummy revision in the revisions array at index 0,
         // which is not ideal but simplifies the implementation and data model significantly.
         let initial_revision = (RevisionAnalysis::default(), RevisionImmutables::dummy()); /* will be overwritten before being read */
@@ -403,6 +414,8 @@ impl PageAnalysis {
         // Iterate over revisions of the article.
         // Analysis begins at the oldest revision and progresses to the newest.
         for xml_revision in xml_revisions {
+            let xml_revision = xml_revision.borrow();
+
             // Extract text of the revision
             let text = match xml_revision.text {
                 Text::Normal(ref t) => t,
@@ -896,7 +909,11 @@ impl PageAnalysis {
         if text_prev.is_empty() {
             for (i, sentence_curr_pointer) in unmatched_sentences_curr.iter().enumerate() {
                 for word_interned in unmatched_sentence_curr_splitted[i].iter() {
-                    allocate_new_word(self, interner[*word_interned].clone(), sentence_curr_pointer);
+                    allocate_new_word(
+                        self,
+                        interner[*word_interned].clone(),
+                        sentence_curr_pointer,
+                    );
                 }
             }
             return (matched_words_prev, false);
@@ -963,7 +980,11 @@ impl PageAnalysis {
                                 // a new added word
                                 curr_matched = true;
 
-                                allocate_new_word(self, interner[*word_interned].clone(), sentence_curr);
+                                allocate_new_word(
+                                    self,
+                                    interner[*word_interned].clone(),
+                                    sentence_curr,
+                                );
 
                                 *change = None;
                             }

@@ -393,7 +393,9 @@ pub mod output_structs {
 
         for py_token_obj in py_wikiwho.tokens.bind(py).iter() {
             let py_token: PyWord = py_token_obj.extract()?;
-            let word_data = WordImmutables::new(ArcSubstring::new_source(Arc::new(py_token.value.to_str(py)?.to_string())));
+            let word_data = WordImmutables::new(ArcSubstring::new_source(Arc::new(
+                py_token.value.to_str(py)?.to_string(),
+            )));
             let mut word_analysis = WordAnalysis::new(&revision_pointers[&py_token.origin_rev_id]);
 
             // Let's already populate `WordAnalysis` while we're at it

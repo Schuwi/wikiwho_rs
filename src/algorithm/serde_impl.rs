@@ -100,11 +100,9 @@ impl serde::Serialize for PageAnalysis {
             let (substr_start, substr_end) = if substr_bytestr.is_empty() {
                 (0, 0)
             } else {
-                let start = base_bytestr
-                    .element_offset(&substr_bytestr[0])
-                    .expect(
-                        "ArcSubstring::as_str to be a reference inside ArcSubstring::base_string",
-                    );
+                let start = base_bytestr.element_offset(&substr_bytestr[0]).expect(
+                    "ArcSubstring::as_str to be a reference inside ArcSubstring::base_string",
+                );
                 (start, start + substr_bytestr.len())
             };
 
@@ -448,10 +446,12 @@ mod tests {
         let rev1_ptr = pa.new_revision(rev1_imm);
         let rev2_ptr = pa.new_revision(rev2_imm);
 
-        let par_ptr =
-            pa.new_paragraph(ParagraphImmutables::new(ArcSubstring::new_source(Arc::new("Hello world.".to_string()))));
-        let sent_ptr =
-            pa.new_sentence(SentenceImmutables::new(ArcSubstring::new_source(Arc::new("Hello world.".to_string()))));
+        let par_ptr = pa.new_paragraph(ParagraphImmutables::new(ArcSubstring::new_source(
+            Arc::new("Hello world.".to_string()),
+        )));
+        let sent_ptr = pa.new_sentence(SentenceImmutables::new(ArcSubstring::new_source(
+            Arc::new("Hello world.".to_string()),
+        )));
 
         let word0 = WordAnalysis {
             origin_revision: rev1_ptr.clone(),
@@ -460,7 +460,10 @@ mod tests {
             inbound: vec![rev2_ptr.clone()],
             outbound: vec![],
         };
-        let word0_ptr = pa.new_word(WordImmutables::new(ArcSubstring::new_source(Arc::new("hello".to_string()))), word0);
+        let word0_ptr = pa.new_word(
+            WordImmutables::new(ArcSubstring::new_source(Arc::new("hello".to_string()))),
+            word0,
+        );
 
         let word1 = WordAnalysis {
             origin_revision: rev1_ptr.clone(),
@@ -469,7 +472,10 @@ mod tests {
             inbound: vec![],
             outbound: vec![rev2_ptr.clone()],
         };
-        let word1_ptr = pa.new_word(WordImmutables::new(ArcSubstring::new_source(Arc::new("world".to_string()))), word1);
+        let word1_ptr = pa.new_word(
+            WordImmutables::new(ArcSubstring::new_source(Arc::new("world".to_string()))),
+            word1,
+        );
 
         pa.sentences[sent_ptr.0].words_ordered = vec![word0_ptr.clone(), word1_ptr.clone()];
         pa.paragraphs[par_ptr.0].sentences_ordered = vec![sent_ptr];
