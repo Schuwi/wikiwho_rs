@@ -10,6 +10,11 @@ exclude = [ "*.xml", "*.xml.zst" ]
 [lib]
 bench = false
 
+[[bin]]
+name = "wikiwho-cli"
+path = "src/bin/wikiwho-cli.rs"
+required-features = ["cli"]
+
 [[bench]]
 name = "bench_utils"
 harness = false
@@ -28,7 +33,8 @@ strict = []
 optimized-str = [ "dep:aho-corasick", "dep:memchr" ]
 optimized-lowercase = [ "dep:unicode-case-mapping" ]
 python-diff = [ "dep:pyo3" ]
-serde = [ "dep:serde", "chrono/serde", "compact_str/serde" ]
+serde = [ "dep:serde", "dep:serde_json", "chrono/serde", "compact_str/serde" ]
+cli = [ "serde", "dep:getopts", "dep:bzip2", "dep:flate2", "dep:zstd" ]
 
 [dependencies]
 aho-corasick = { version = "1.1.3", optional = true }
@@ -43,6 +49,11 @@ rand = "0.8.5"
 regex = "1.10.6"
 rustc-hash = "2.0.0"
 serde = { version = "1.0.213", optional = true, features = ["derive"] }
+serde_json = { version = "1.0.132", optional = true }
+bzip2 = { version = "0.5", optional = true }
+flate2 = { version = "1", optional = true }
+getopts = { version = "0.2", optional = true }
+zstd = { version = "0.13.2", optional = true }
 string-interner = "0.17.0"
 thiserror = "1.0.63"
 tracing = "0.1.40"
