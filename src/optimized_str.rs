@@ -190,10 +190,10 @@ pub fn split_into_sentences_optimized<'a>(
 ) -> Vec<Cow<'a, str>> {
     let orig_text = text;
 
-    static REGEX_DOT: LazyLock<Regex> =
-        LazyLock::new(|| Regex::new(r"([^\s\.=][^\s\.=][^\s\.=]\.) ").unwrap());
-    static REGEX_URL: LazyLock<Regex> =
-        LazyLock::new(|| Regex::new(r"(http.*?://.*?[ \|<>\n\r])").unwrap());
+    thread_local! {
+        static REGEX_DOT: Regex = Regex::new(r"([^\s\.=][^\s\.=][^\s\.=]\.) ").unwrap();
+        static REGEX_URL: Regex = Regex::new(r"(http.*?://.*?[ \|<>\n\r])").unwrap();
+    }
 
     scratch_buffers.0.push_str(text);
 
@@ -204,7 +204,8 @@ pub fn split_into_sentences_optimized<'a>(
 
     let (text, scratch_buffer) = str_replace_opt(text, finder!("\n"), "\n@@@@", scratch_buffer);
 
-    let (text, scratch_buffer) = regex_replace_opt(text, &REGEX_DOT, "$1@@@@", scratch_buffer);
+    let (text, scratch_buffer) =
+        REGEX_DOT.with(|regex_dot| regex_replace_opt(text, regex_dot, "$1@@@@", scratch_buffer));
 
     let (text, scratch_buffer) = str_replace_opt(text, finder!("; "), ";@@@@", scratch_buffer);
     let (text, scratch_buffer) = str_replace_opt(text, finder!("? "), "?@@@@", scratch_buffer);
@@ -218,7 +219,8 @@ pub fn split_into_sentences_optimized<'a>(
     let (text, scratch_buffer) =
         str_replace_opt(text, finder!("/ref>"), "/ref>@@@@", scratch_buffer);
 
-    let (text, scratch_buffer) = regex_replace_opt(text, &REGEX_URL, "@@@@$1@@@@", scratch_buffer);
+    let (text, scratch_buffer) = REGEX_URL
+        .with(|regex_url| regex_replace_opt(text, regex_url, "@@@@$1@@@@", scratch_buffer));
 
     let (mut text, mut scratch_buffer) = (text, scratch_buffer);
 

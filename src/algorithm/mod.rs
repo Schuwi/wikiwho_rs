@@ -413,8 +413,8 @@ impl PageAnalysis {
 
         // Iterate over revisions of the article.
         // Analysis begins at the oldest revision and progresses to the newest.
-        for xml_revision in xml_revisions {
-            let xml_revision = xml_revision.borrow();
+        for xml_revision_source in xml_revisions {
+            let xml_revision = xml_revision_source.borrow();
 
             // Extract text of the revision
             let text = match xml_revision.text {
@@ -503,6 +503,10 @@ impl PageAnalysis {
                 // and note that we have processed at least one valid revision
                 at_least_one = true;
             }
+
+            // we explicitely drop this iteration source object before getting the next one
+            // so we can potentially free unused memory
+            drop(xml_revision_source);
         }
 
         if !at_least_one {

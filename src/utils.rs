@@ -93,15 +93,15 @@ pub fn split_into_sentences<'a>(
 
 #[doc(hidden)] /* only public for benchmarking */
 pub fn split_into_sentences_naive(text: &str) -> Vec<Cow<'_, str>> {
-    static REGEX_DOT: LazyLock<Regex> =
-        LazyLock::new(|| Regex::new(r"([^\s\.=][^\s\.=][^\s\.=]\.) ").unwrap());
-    static REGEX_URL: LazyLock<Regex> =
-        LazyLock::new(|| Regex::new(r"(http.*?://.*?[ \|<>\n\r])").unwrap());
+    thread_local! {
+        static REGEX_DOT: Regex = Regex::new(r"([^\s\.=][^\s\.=][^\s\.=]\.) ").unwrap();
+        static REGEX_URL: Regex = Regex::new(r"(http.*?://.*?[ \|<>\n\r])").unwrap();
+    }
 
     let orig_text = text;
 
     let text = text.replace("\n", "\n@@@@");
-    let text = REGEX_DOT.replace_all(&text, "$1@@@@");
+    let text = REGEX_DOT.with(|regex_dot| regex_dot.replace_all(&text, "$1@@@@"));
     let text = text.replace("; ", ";@@@@");
     let text = text.replace("? ", "?@@@@");
     let text = text.replace("! ", "!@@@@");
@@ -111,7 +111,7 @@ pub fn split_into_sentences_naive(text: &str) -> Vec<Cow<'_, str>> {
     let text = text.replace("-->", "-->@@@@");
     let text = text.replace("<ref", "@@@@<ref");
     let text = text.replace("/ref>", "/ref>@@@@");
-    let text = REGEX_URL.replace_all(&text, "@@@@$1@@@@");
+    let text = REGEX_URL.with(|regex_url| regex_url.replace_all(&text, "@@@@$1@@@@"));
 
     let mut text = text.into_owned();
     while text.contains("@@@@@@@@") {
