@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MPL-2.0
 //! Token-level diffing based on the Ratcliff/Obershelp "gestalt pattern matching"
 //! algorithm.
 //!

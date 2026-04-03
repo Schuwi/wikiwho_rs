@@ -1,5 +1,5 @@
-use std::borrow::Borrow;
 // SPDX-License-Identifier: MPL-2.0
+use std::borrow::Borrow;
 use std::collections::HashMap;
 use std::io::{self, BufRead, BufReader, BufWriter, Write};
 use std::process::ExitCode;
