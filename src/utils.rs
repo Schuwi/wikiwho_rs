@@ -340,6 +340,7 @@ where
     }
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub(crate) enum ChangeTag {
     Equal,
     Insert,
@@ -384,6 +385,13 @@ pub(crate) fn imara_diff(
     }
 
     result
+}
+
+pub(crate) fn difflib_diff(old: &[Token], new: &[Token]) -> Vec<Option<(ChangeTag, Token)>> {
+    crate::difflib::compare(old, new)
+        .into_iter()
+        .map(|(tag, token)| Some((tag, *token)))
+        .collect()
 }
 
 #[cfg(feature = "python-diff")]

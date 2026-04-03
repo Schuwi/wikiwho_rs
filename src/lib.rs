@@ -27,6 +27,7 @@
 //! ```
 
 pub mod algorithm;
+pub(crate) mod difflib;
 pub mod dump_parser;
 #[cfg(feature = "optimized-str")]
 #[doc(hidden)] /* only public for benchmarking */

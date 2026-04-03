@@ -930,12 +930,12 @@ impl PageAnalysis {
             if self.internals.options.use_python_diff {
                 diff = utils::python_diff(&text_prev, &text_curr, &mut interner);
             } else {
-                diff = utils::imara_diff(&text_prev, &text_curr, interner.num_tokens());
+                diff = utils::difflib_diff(&text_prev, &text_curr);
             }
         }
         #[cfg(not(feature = "python-diff"))]
         {
-            diff = utils::imara_diff(&text_prev, &text_curr, interner.num_tokens());
+            diff = utils::difflib_diff(&text_prev, &text_curr);
         }
 
         for (i, sentence_curr) in unmatched_sentences_curr.iter().enumerate() {
