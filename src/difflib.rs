@@ -1,45 +1,50 @@
-//! Pure Rust port of Python's `difflib.Differ.compare()`.
+//! Token-level diffing based on the Ratcliff/Obershelp "gestalt pattern matching"
+//! algorithm.
 //!
-//! This module implements the Ratcliff/Obershelp "gestalt pattern matching" algorithm
-//! as used in Python's standard library `difflib`. The key entry point is [`compare`],
-//! which produces a flat sequence of element-level diff operations (equal, insert, delete).
+//! This file is a clean-room Rust reimplementation of the algorithmic approach used by
+//! Python's `difflib`, adapted to the needs of this crate. No Python source code is included.
+//! Python is licensed under the Python Software Foundation License.
+//!
+//! The public entry point is [`compare`]. It compares two slices and returns a flat stream
+//! of element-level operations using [`ChangeTag`]s.
 //!
 //! # Why this algorithm?
 //!
-//! WikiWho's authorship attribution pipeline needs a diff algorithm that:
+//! WikiWho's authorship tracking benefits from a matcher that:
 //!
-//! 1. **Prefers contiguous matches.** The algorithm finds the longest contiguous matching
-//!    block, then recursively processes the regions to its left and right. This strongly
-//!    favors matches that preserve local structure — tokens are only matched if they appear
-//!    in the same local context. LCS-based algorithms (Myers, Patience) may align tokens
-//!    across unrelated parts of the text, leading to wrong attribution.
+//! 1. Prefers contiguous matches. The algorithm repeatedly finds the longest contiguous
+//!    equal block, then recurses into the unmatched regions on the left and right. This
+//!    strongly favors local structure over global token reuse.
+//! 2. Downweights very common tokens. When `b` is large enough, tokens that occur too often
+//!    in `b` are removed from the anchor index. That prevents frequent tokens from creating
+//!    misleading matches across unrelated contexts.
 //!
-//! 2. **Filters popular (high-frequency) tokens.** With the "autojunk" heuristic, elements
-//!    that appear in more than 1% of positions in `b` are excluded from the initial match
-//!    search. This prevents common tokens like `[[`, `the`, or `is` from acting as false
-//!    anchors. After a contiguous match is found, it is extended into adjacent popular
-//!    tokens, so popular tokens that moved together with their context retain provenance.
+//! # Important behavior
 //!
-//! # Algorithm overview
+//! - Matching is based on contiguous runs, not longest common subsequences.
+//! - The implementation is asymmetric: `b` is indexed and filtered by the autojunk
+//!   heuristic, while `a` is streamed against that index. Swapping `a` and `b` can change
+//!   which anchors are available.
+//! - Popular elements are excluded only from the initial anchor search. Once an anchored
+//!   match is found, the match is expanded outward into any adjacent equal elements,
+//!   including popular ones.
+//! - The final output contains only `Equal`, `Delete`, and `Insert` operations. A replaced
+//!   region is represented as all deletes from `a` followed by all inserts from `b`.
 //!
-//! 1. **Build index** ([`SequenceMatcher::new`]): For each element in `b`, record the
-//!    positions where it appears. Remove "popular" elements (autojunk heuristic).
+//! # Pipeline in this file
 //!
-//! 2. **Find matches** ([`SequenceMatcher::find_longest_match`]): Sweep through `a`,
-//!    tracking contiguous match lengths against `b` positions. Extend the best match
-//!    into adjacent popular elements.
-//!
-//! 3. **Recurse** ([`SequenceMatcher::matching_blocks`]): Apply step 2 recursively
-//!    (iteratively via a stack) to the regions left and right of each match.
-//!
-//! 4. **Produce opcodes** ([`SequenceMatcher::opcodes`]): Convert matching blocks into
-//!    range-based edit operations (equal, insert, delete, replace).
-//!
-//! 5. **Flatten** ([`compare`]): Expand range-based opcodes into per-element `DiffOp`s,
-//!    applying the Differ's replace-ordering rule (shorter block first).
+//! 1. [`Differ::build_elem_indices`] builds an index of positions in `b` and applies the
+//!    autojunk heuristic.
+//! 2. [`Differ::find_longest_match`] finds the longest contiguous, non-popular anchor match
+//!    inside a search window.
+//! 3. [`Differ::expand_match_within_window`] extends that anchor match into adjacent equal
+//!    elements inside the same window.
+//! 4. [`Differ::find_matching_blocks`] splits the problem around each match until no more
+//!    matches remain, yielding sorted non-overlapping equal blocks.
+//! 5. [`compare`] flattens the gaps and equal blocks into per-element diff operations.
 
-// note: for complexity we use only n instead of n and m since we assume the input sequences have similar length
-// (e.g. instead of n+m it is 2n)
+// Complexity comments use `n` as shorthand for "both input lengths are of the same order",
+// which matches this crate's typical workload.
 
 use std::{hash::Hash, ops::Range};
 
@@ -53,7 +58,8 @@ use crate::utils::ChangeTag;
 
 /// A dense `usize` array that supports O(1) logical clearing via a generation counter.
 ///
-/// Conceptually behaves like a `Vec<usize>` initialized to all zeros. Calling [`clear`]
+/// Conceptually behaves like a `Vec<usize>` initialized to all zeros. Calling
+/// [`Self::clear`]
 /// resets every element to zero in O(1) by incrementing an internal generation counter —
 /// stale entries (written in a previous generation) read as zero without being physically
 /// touched. Only entries written in the current generation are "live".
@@ -68,7 +74,7 @@ struct ClearableArray {
     /// Each slot records the generation in which it was last written.
     /// A slot is "live" iff `generations[i] == generation`.
     generations: Vec<u32>,
-    /// The current generation. Incremented by [`clear`].
+    /// The current generation. Incremented by [`Self::clear`].
     generation: u32,
 }
 
@@ -121,19 +127,28 @@ impl std::ops::IndexMut<usize> for ClearableArray {
     }
 }
 
+/// Matching window or block represented as `(a_range, b_range)`.
 type ABRange = (Range<usize>, Range<usize>);
 
-// LCSt is used for longest common subSTRING here (don't confuse it with LCS = longest common subsequence)
+/// Internal matcher state.
+///
+/// The implementation is intentionally asymmetric: it indexes `b`, then scans `a`
+/// against that index. That asymmetry is observable because the autojunk heuristic only
+/// filters elements from `b_indices`.
 struct Differ<'a, T: Hash + Eq> {
     a: &'a [T],
     b: &'a [T],
 
+    /// For each non-popular element in `b`, the sorted list of positions where it appears.
     b_indices: FxHashMap<&'a T, Vec<usize>>,
+    /// DP row for the previous `i` in `find_longest_match`.
     last_row: ClearableArray,
+    /// DP row currently being filled in `find_longest_match`.
     this_row: ClearableArray,
 }
 
 impl<'a, T: Hash + Eq> Differ<'a, T> {
+    /// Build the asymmetric matcher and precompute the index for `b`.
     fn new(a: &'a [T], b: &'a [T]) -> Self {
         Self {
             a,
@@ -144,6 +159,12 @@ impl<'a, T: Hash + Eq> Differ<'a, T> {
         }
     }
 
+    /// Build the lookup table used to answer "where does this element occur in `b`?".
+    ///
+    /// When `list.len() >= 200`, the autojunk heuristic removes elements whose frequency is
+    /// greater than `1 + list.len() / 100`. Those elements may still be part of a final
+    /// equal block via [`expand_match_within_window`](Self::expand_match_within_window), but
+    /// they cannot start a match on their own.
     fn build_elem_indices(list: &'a [T]) -> FxHashMap<&'a T, Vec<usize>> {
         let mut elem_indices = FxHashMap::default();
 
@@ -164,99 +185,15 @@ impl<'a, T: Hash + Eq> Differ<'a, T> {
         elem_indices
     }
 
-    /// This function returns a range for `self.a` and `self.b` where the
-    /// longest common contiguous match - that does not include any junk! -
-    /// of the slices `&self.a[a_range]` and `&self.b[b_range]` is found.
+    /// Find the longest contiguous anchor match inside a search window.
     ///
-    /// If no such match is found, None is returned.
-    /// If Some is returned the returned ranges are always of non-0 length.
+    /// The returned block is the longest contiguous run shared by `self.a[a_range]` and
+    /// `self.b[b_range]` that can be found by anchoring only on elements present in
+    /// `b_indices`. In other words, popular elements removed by the autojunk heuristic can
+    /// participate only later during [`expand_match_within_window`](Self::expand_match_within_window).
     ///
-    /// ## Algorithm
-    /// In our algorithm we are looking at index pairs (i, j), where i is an index of a and j is an index of b.
-    ///
-    /// ### Step 1 - Visualisation
-    /// There are multiple ways you might go about trying to find matching runs in two strings.
-    /// An intuitive approach might be to write the sequences on two strips of paper and slide them
-    /// along each other, checking where the characters on the top and bottom strip match.
-    ///
-    /// ```text
-    /// Strip a:             B C D      =>    B C D     =>      B C D
-    /// Strip b:             X B C D Y  =>  X B C D Y   =>  X B C D Y
-    /// Mentally counting:   0 0 0 0 0  =>  0 1 2 3 0   =>  0 0 0 0 0
-    /// (We are skipping a few possible combinations here for brevity)
-    /// ```
-    ///
-    /// Let's take a closer look at that mental counting we might have been doing there,
-    /// it is about to get important!
-    /// (In case you usually read right-to-left observe how we began counting from the
-    /// left-most matching character here!)
-    ///
-    /// We found a nice match when we moved the strips so that a[i=0] matches up with b[j=1],
-    /// a[i=1] with b[j=2], a[i=2] with b[j=3], ... you get the idea.
-    ///
-    /// Let's note these observations down in a table :)
-    /// ```text
-    /// +-------+-------+-------+-------+-------+-------+
-    /// | i / j | j = 0 | j = 1 | j = 2 | j = 3 | j = 4 |
-    /// +-------+-------+-------+-------+-------+-------+
-    /// | i = 0 |     0 |     1 |     0 |       |       |
-    /// | i = 1 |       |     0 |     2 |     0 |       |
-    /// | i = 2 |       |       |     0 |     3 |     0 |
-    /// +-------+-------+-------+-------+-------+-------+
-    /// ```
-    /// (The empty cells are theoretically also 0 - I left them out to make it easier to follow)
-    ///
-    /// Take a moment to understand the table.
-    /// Our algorithm is conceptually looking for the **highest cell value** in **this table**!
-    ///
-    /// You can understand each cell value as an answer to the question:
-    /// "How many matching elements will I encounter when I walk **backwards** through a and b,
-    /// starting from element a[i] and b[j] respectively?"
-    /// (_nb: totally what I'm asking myself each morning_)
-    /// An alternative wording would be "How long is the match 'ending' at this position?"
-    /// (shorter but maybe not as intuitive)
-    ///
-    /// If you are still lost, maybe it helps to look at the diagonals of this table. Each of those
-    /// describes a single "shift state", i.e. what the world (or in this case your mental couting)
-    /// looks like when you align strip a and b in one distinct combination.
-    ///
-    /// ### Step 2 - Basic algorithm
-    /// Now that we have this table form we may notice a pattern here:
-    /// If characters at a[i] and b[j] match then we increment by one, otherwise we note down `0`.
-    /// Incrementing _a number_ means we need _a number_ to increment. In our case that number is
-    /// taken from the cell at (i - 1, j - 1) (i.e. following the diagonal towards the upper left)
-    /// if it exists - otherwise `0`.
-    ///
-    /// So we can formulate a simple recursive algorithm:
-    /// ```text
-    /// FUNCTION match_len (i, j)
-    /// IF exists(a[i]) AND exists(b[j]) AND a[i] == b[j] THEN
-    ///     RETURN match_len(i - 1, j - 1) + 1
-    /// ELSE
-    ///     RETURN 0
-    /// END FUNCTION
-    /// ```
-    ///
-    /// ### Step 3 - Optimization
-    /// If we evaluate this non-recursively the simplest approach would be iterating through j
-    /// for every i, i.e. filling the table row by row.
-    /// This would make sure that when evaluating a cell we are sure to have already evaluated
-    /// the dependency at (i - 1, j - 1). (Row -1 and column -1 are conceptually initialized with zeroes.)
-    ///
-    /// Since our diff algorithm ignores elements that occur often we can expect the a[i] == b[j]
-    /// comparison to hold true in only a small amount of cases. So instead of iterating through the whole space
-    /// of j we build an index up front. This index can tell us:
-    /// "Where in b can we find an equal element to a[i]?"
-    /// Then we only iterate through those indices of b returned by our query and evaluate
-    /// `match_len(i, j) = match_len(i - 1, j - 1) + 1` for each.
-    /// All other cells in this row are (implicitely) set to `0`.
-    ///
-    /// We end up still iterating through all **rows** but for each row we only iterate through
-    /// a small fraction of the **columns**.
-    ///
-    /// This has the added benefit of making it very easy to implement the property of our algorithm
-    /// to not match on junk: We simply don't include the junk in our index so if the element at
-    /// `a[i]` is junk we just never get any matches in b to iterate over.
+    /// `None` means that no non-empty anchor match exists in this window.
+    #[doc = include_str!("difflib_find_longest_match.md")]
     fn find_longest_match(&mut self, (a_range, b_range): ABRange) -> Option<ABRange> {
         let mut longest_a_b = None;
         let mut longest_match = 0;
@@ -273,10 +210,15 @@ impl<'a, T: Hash + Eq> Differ<'a, T> {
             // let's go!
             let a_elem = &self.a[i];
 
-            for &j in self.b_indices.get(a_elem).unwrap_or(&Vec::new()) {
-                // here we already know that a[i] == b[j]
+            let Some(b_positions) = self.b_indices.get(a_elem) else {
+                continue;
+            };
 
-                // b_indices are sorted - ignore matches outside our `b_range`
+            for &j in b_positions {
+                // We already know that a[i] == b[j].
+
+                // Positions in `b_indices` are sorted, so we can skip and then stop once we
+                // leave the active search window.
                 if j < b_range.start {
                     continue;
                 }
@@ -284,12 +226,9 @@ impl<'a, T: Hash + Eq> Differ<'a, T> {
                     break;
                 }
 
-                // this is our `match_len(i, j) = match_len(i - 1, j - 1) + 1`
-                let match_len = if j > 0 {
-                    self.last_row[j - 1] + 1
-                } else {
-                    1
-                };
+                // This is the DP recurrence:
+                // match_len(i, j) = match_len(i - 1, j - 1) + 1.
+                let match_len = if j > 0 { self.last_row[j - 1] + 1 } else { 1 };
                 self.this_row[j] = match_len;
 
                 // keep track of the longest match we found so far
@@ -305,6 +244,14 @@ impl<'a, T: Hash + Eq> Differ<'a, T> {
         longest_a_b
     }
 
+    /// Extend an anchor match into adjacent equal elements inside the current window.
+    ///
+    /// This is what lets popular elements re-enter the final equal block: they cannot start a
+    /// match when they were filtered out of `b_indices`, but once a nearby non-popular anchor
+    /// has been found they are allowed to extend that block as long as equality continues.
+    ///
+    /// Staying inside `window` is important. Recursive subproblems are defined by the current
+    /// unmatched window, so expanding beyond it would make sibling matches overlap.
     fn expand_match_within_window(&self, window: ABRange, match_block: ABRange) -> ABRange {
         let (window_a, window_b) = window;
         let (a_range, b_range) = match_block;
@@ -336,8 +283,16 @@ impl<'a, T: Hash + Eq> Differ<'a, T> {
         (expanded_a, expanded_b)
     }
 
-    // may yield equal blocks that are side-by-side, i.e. returned list is not minimal
-    // iterative implementation of the gestalt pattern matching algorithm
+    /// Find all equal blocks by recursively splitting around the longest match in each window.
+    ///
+    /// This is an iterative formulation of the gestalt matching recursion. Each work item is an
+    /// unmatched `(a_window, b_window)` pair. When a longest match is found, that window is
+    /// split into the unmatched regions on the left and right of the match and those regions are
+    /// processed later.
+    ///
+    /// The returned blocks are sorted and non-overlapping, but they are not guaranteed to be
+    /// minimal: two equal blocks may end up adjacent and are left unmerged because [`compare`]
+    /// only needs them as separators between unmatched gaps.
     fn find_matching_blocks(&mut self) -> Vec<ABRange> {
         let mut match_blocks = Vec::new();
 
@@ -345,31 +300,28 @@ impl<'a, T: Hash + Eq> Differ<'a, T> {
         let mut work_queue = vec![(0..self.a.len(), 0..self.b.len())];
 
         while let Some(window) = work_queue.pop() {
-            match self.find_longest_match(window.clone()) {
-                Some(match_block) => {
-                    // take as many adjacent autojunk tokens as possible
-                    let match_block = self.expand_match_within_window(window.clone(), match_block);
+            if let Some(match_block) = self.find_longest_match(window.clone()) {
+                // Pull adjacent popular elements back into the equal block.
+                let match_block = self.expand_match_within_window(window.clone(), match_block);
 
-                    match_blocks.push(match_block.clone());
+                match_blocks.push(match_block.clone());
 
-                    let left = (
-                        window.0.start..match_block.0.start,
-                        window.1.start..match_block.1.start,
-                    );
-                    let right = (
-                        match_block.0.end..window.0.end,
-                        match_block.1.end..window.1.end,
-                    );
+                let left = (
+                    window.0.start..match_block.0.start,
+                    window.1.start..match_block.1.start,
+                );
+                let right = (
+                    match_block.0.end..window.0.end,
+                    match_block.1.end..window.1.end,
+                );
 
-                    if !left.0.is_empty() && !left.1.is_empty() {
-                        work_queue.push(left);
-                    }
-
-                    if !right.0.is_empty() && !right.1.is_empty() {
-                        work_queue.push(right);
-                    }
+                if !left.0.is_empty() && !left.1.is_empty() {
+                    work_queue.push(left);
                 }
-                None => {}
+
+                if !right.0.is_empty() && !right.1.is_empty() {
+                    work_queue.push(right);
+                }
             }
         }
 
@@ -378,7 +330,11 @@ impl<'a, T: Hash + Eq> Differ<'a, T> {
         match_blocks
     }
 
-    /// Emit diffops for a gap (the region between two matching blocks), if non-empty.
+    /// Emit operations for the unmatched gap between two equal blocks.
+    ///
+    /// Gaps are always flattened as deletes from `a` followed by inserts from `b`. This file
+    /// does not have a separate `Replace` opcode; replacement behavior is expressed by the
+    /// ordering of these two runs.
     fn push_gap_diffops(
         &self,
         diff_ops: &'_ mut Vec<(ChangeTag, &'a T)>,
@@ -392,7 +348,7 @@ impl<'a, T: Hash + Eq> Differ<'a, T> {
         }
     }
 
-    /// Emit diffops for an equal block.
+    /// Emit operations for a contiguous equal block.
     fn push_equal_diffops(
         &self,
         diff_ops: &'_ mut Vec<(ChangeTag, &'a T)>,
@@ -404,12 +360,51 @@ impl<'a, T: Hash + Eq> Differ<'a, T> {
     }
 }
 
+/// Compare two slices and return a flat, element-level diff.
+///
+/// The output is a sequence of `(ChangeTag, &T)` pairs in left-to-right diff order:
+///
+/// - `ChangeTag::Equal` references an element from `a` that is also present in `b` as part of
+///   an equal block.
+/// - `ChangeTag::Delete` references an element from `a` that belongs only to the unmatched side
+///   of a gap.
+/// - `ChangeTag::Insert` references an element from `b` that belongs only to the unmatched side
+///   of a gap.
+///
+/// The matcher is asymmetric because the autojunk heuristic is applied only to `b`. If that
+/// matters for your caller, do not assume that `compare(a, b)` and `compare(b, a)` are just
+/// inverses of each other.
+///
+/// Replacement is represented implicitly: if a gap contains elements from both `a` and `b`,
+/// this function emits all deletes for that gap first and then all inserts for that gap.
+///
+/// # Example
+///
+/// ```rust,ignore
+/// use crate::difflib::compare;
+/// use crate::utils::ChangeTag;
+///
+/// let old = ["a", "b", "d"];
+/// let new = ["a", "c", "d", "e"];
+///
+/// let ops = compare(&old, &new);
+/// assert_eq!(
+///     ops,
+///     vec![
+///         (ChangeTag::Equal, &"a"),
+///         (ChangeTag::Delete, &"b"),
+///         (ChangeTag::Insert, &"c"),
+///         (ChangeTag::Equal, &"d"),
+///         (ChangeTag::Insert, &"e"),
+///     ]
+/// );
+/// ```
 pub fn compare<'a, T: Hash + Eq>(a: &'a [T], b: &'a [T]) -> Vec<(ChangeTag, &'a T)> {
     let mut differ = Differ::new(a, b);
 
     let matching_blocks = differ.find_matching_blocks();
 
-    let mut diff_ops = Vec::new();
+    let mut diff_ops = Vec::with_capacity(a.len() + b.len());
     let (mut last_a, mut last_b) = (0, 0);
     for matching_block in matching_blocks {
         let (a_range, b_range) = matching_block.clone();
