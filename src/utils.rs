@@ -326,7 +326,7 @@ where
         let mut remaining_source_str = source_str;
 
         self.map(move |part| {
-            if let Some(index) = remaining_source_str.find(&part) {
+            if let Some(index) = remaining_source_str.find(part) {
                 let borrowed_part = &remaining_source_str[index..index + part.len()];
                 remaining_source_str = &remaining_source_str[index + part.len()..];
                 Cow::Borrowed(borrowed_part)

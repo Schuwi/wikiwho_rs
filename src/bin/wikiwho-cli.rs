@@ -242,7 +242,7 @@ fn format_count(n: u64) -> String {
     let s = n.to_string();
     let mut result = String::with_capacity(s.len() + s.len() / 3);
     for (i, c) in s.chars().enumerate() {
-        if i > 0 && (s.len() - i) % 3 == 0 {
+        if i > 0 && (s.len() - i).is_multiple_of(3) {
             result.push(',');
         }
         result.push(c);
@@ -418,7 +418,12 @@ impl ProgressReporter {
     }
 }
 
-struct RevisionIterHelper<'a>(Rc<&'a mut Revision>);
+struct RevisionIterHelper<'a>(
+    // clippy: we need the Rc so we can have multiple immutable reference while still being able to
+    // turn the last reference around back to mutable
+    #[allow(clippy::redundant_allocation)]
+    Rc<&'a mut Revision>
+);
 
 impl<'a> Borrow<Revision> for RevisionIterHelper<'a> {
     fn borrow(&self) -> &Revision {
@@ -431,7 +436,7 @@ fn text_deleting_iterator(
 ) -> impl Iterator<Item = RevisionIterHelper<'_>> {
     revisions.iter_mut().scan(None, |state, rev| {
         let this_rev = Rc::new(rev);
-        let last_rev = std::mem::replace(state, Some(this_rev.clone()));
+        let last_rev = state.replace(this_rev.clone());
         if let Some(last_rev) = last_rev {
             if let Some(last_rev) = Rc::into_inner(last_rev) {
                 // we don't use the text again, so we might as well drop the original to save memory

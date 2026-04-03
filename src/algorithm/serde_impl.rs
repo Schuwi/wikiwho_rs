@@ -78,6 +78,7 @@ mod vec_arc_string {
     use std::sync::Arc;
 
     pub fn serialize<S: serde::Serializer>(
+        #[allow(clippy::ptr_arg)] // this is a special case since we are matching the `source_strings` field type
         obj: &Vec<Arc<String>>,
         serializer: S,
     ) -> Result<S::Ok, S::Error> {
@@ -88,7 +89,7 @@ mod vec_arc_string {
         deserializer: D,
     ) -> Result<Vec<Arc<String>>, D::Error> {
         let strings: Vec<String> = serde::Deserialize::deserialize(deserializer)?;
-        Ok(strings.into_iter().map(|s| Arc::new(s)).collect())
+        Ok(strings.into_iter().map(Arc::new).collect())
     }
 }
 
