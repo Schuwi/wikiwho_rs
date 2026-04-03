@@ -26,7 +26,6 @@ fn serialize_editor<S: serde::Serializer>(
     }
 }
 
-
 #[derive(Clone, Copy, PartialEq)]
 enum Format {
     Jsonl,
@@ -494,10 +493,9 @@ fn process_single(
         };
 
         reporter.page_analysed();
-        let yoke = Yoke::attach_to_cart(
-            Box::new((page, analysis)),
-            |cart| build_page_output(&cart.0, &cart.1),
-        );
+        let yoke = Yoke::attach_to_cart(Box::new((page, analysis)), |cart| {
+            build_page_output(&cart.0, &cart.1)
+        });
         write_page_result(&mut writer, &yoke, format, page_count)?;
         reporter.page_written();
         page_count += 1;
@@ -569,37 +567,42 @@ fn process_parallel(
 
     std::thread::scope(|s| {
         // Spawn N worker threads that pull pages and analyze them
-        for _ in 0..num_threads {
+        for n in 0..num_threads {
             let work_rx = &work_rx;
             let result_tx = result_tx.clone();
             let reporter = &reporter;
-            s.spawn(move || {
-                loop {
-                    let item = work_rx.lock().unwrap().recv();
-                    let mut page = match item {
-                        Ok(v) => v,
-                        Err(_) => break, // channel closed, no more work
-                    };
+            std::thread::Builder::new()
+                .name(format!("worker {n}"))
+                .spawn_scoped(s, move || {
+                    loop {
+                        let item = work_rx.lock().unwrap().recv();
+                        let mut page = match item {
+                            Ok(v) => v,
+                            Err(_) => break, // channel closed, no more work
+                        };
 
-                    let result = match PageAnalysis::analyse_page(text_deleting_iterator(
-                        &mut page.revisions,
-                    )) {
-                        Ok(analysis) => {
-                            reporter.page_analysed();
-                            let yoke = Yoke::attach_to_cart(
-                                Box::new((page, analysis)),
-                                |cart| build_page_output(&cart.0, &cart.1),
-                            );
-                            AnalysisResult::Ok(yoke)
+                        let result = match PageAnalysis::analyse_page(text_deleting_iterator(
+                            &mut page.revisions,
+                        )) {
+                            Ok(analysis) => {
+                                reporter.page_analysed();
+                                let yoke =
+                                    Yoke::attach_to_cart(Box::new((page, analysis)), |cart| {
+                                        build_page_output(&cart.0, &cart.1)
+                                    });
+                                AnalysisResult::Ok(yoke)
+                            }
+                            Err(e) => {
+                                AnalysisResult::Skipped(page.title.to_string(), e.to_string())
+                            }
+                        };
+                        // If the writer has dropped, stop
+                        if result_tx.send(result).is_err() {
+                            break;
                         }
-                        Err(e) => AnalysisResult::Skipped(page.title.to_string(), e.to_string()),
-                    };
-                    // If the writer has dropped, stop
-                    if result_tx.send(result).is_err() {
-                        break;
                     }
-                }
-            });
+                })
+                .unwrap();
         }
 
         // Drop the original result_tx so that result_rx closes once all workers finish
@@ -608,34 +611,38 @@ fn process_parallel(
         // Parser thread: reads pages sequentially, applies namespace filter, sends to workers
         let parse_error_ref = &parse_error;
         let reporter = &reporter;
-        s.spawn(move || {
-            let mut parsed_count = 0u64;
-            loop {
-                match parser.parse_page() {
-                    Ok(Some(page)) => {
-                        if !namespace_filter.is_empty()
-                            && !namespace_filter.contains(&page.namespace)
-                        {
-                            continue;
+        std::thread::Builder::new()
+            .name("parser".to_string())
+            .spawn_scoped(s, move || {
+                let mut parsed_count = 0u64;
+                loop {
+                    match parser.parse_page() {
+                        Ok(Some(page)) => {
+                            if !namespace_filter.is_empty()
+                                && !namespace_filter.contains(&page.namespace)
+                            {
+                                continue;
+                            }
+                            if page_limit.map(|n| parsed_count >= n).unwrap_or(false) {
+                                break; // page limit reached
+                            }
+                            reporter.page_parsed(&page);
+                            if work_tx.send(page).is_err() {
+                                break; // workers gone
+                            }
+                            parsed_count += 1;
                         }
-                        if page_limit.map(|n| parsed_count >= n).unwrap_or(false) {
-                            break; // page limit reached
+                        Ok(None) => break, // end of stream
+                        Err(e) => {
+                            *parse_error_ref.lock().unwrap() =
+                                Some(format!("XML parse error: {e:?}"));
+                            break;
                         }
-                        reporter.page_parsed(&page);
-                        if work_tx.send(page).is_err() {
-                            break; // workers gone
-                        }
-                        parsed_count += 1;
-                    }
-                    Ok(None) => break, // end of stream
-                    Err(e) => {
-                        *parse_error_ref.lock().unwrap() = Some(format!("XML parse error: {e:?}"));
-                        break;
                     }
                 }
-            }
-            // work_tx is dropped here, signaling workers to finish
-        });
+                // work_tx is dropped here, signaling workers to finish
+            })
+            .unwrap();
 
         // Main thread: collect results and write (no reordering)
         if format == Format::Json {
@@ -655,6 +662,7 @@ fn process_parallel(
                     reporter.page_written();
                 }
             }
+            // TODO: drop in separate thread
         }
 
         if format == Format::Json {
@@ -679,6 +687,7 @@ fn write_page_result(
     format: Format,
     page_count: u64,
 ) -> Result<(), Box<dyn std::error::Error>> {
+    // TODO: look into speeding up serialization
     match format {
         Format::Jsonl => {
             serde_json::to_writer(&mut *writer, yoke.get())?;
@@ -745,11 +754,8 @@ struct TokenOutput<'a> {
 /// structure ready for serialization. Called on worker threads so the writer thread doesn't
 /// need to do this work.
 fn build_page_output<'a>(page: &'a Page, analysis: &'a PageAnalysis) -> PageOutput<'a> {
-    let revisions_by_id: HashMap<i32, &Revision> = page
-        .revisions
-        .iter()
-        .map(|rev| (rev.id, rev))
-        .collect();
+    let revisions_by_id: HashMap<i32, &Revision> =
+        page.revisions.iter().map(|rev| (rev.id, rev)).collect();
 
     let revisions: Vec<RevisionOutput<'a>> = analysis
         .ordered_revisions
