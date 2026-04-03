@@ -1,8 +1,5 @@
 // SPDX-License-Identifier: MPL-2.0
-use imara_diff::{
-    intern::{Interner, Token},
-    Algorithm,
-};
+use imara_diff::intern::{Interner, Token};
 use regex::Regex;
 
 use std::{borrow::Cow, fmt::Debug, sync::Arc};
@@ -228,7 +225,7 @@ pub fn to_lowercase_opt(input: &str) -> (usize, String) {
     (char_count, result)
 }
 
-use std::{collections::HashMap, hash::Hash, ops::Range, sync::LazyLock};
+use std::{collections::HashMap, hash::Hash, sync::LazyLock};
 
 use crate::{
     algorithm::{ArcSubstring, PageAnalysis, PageAnalysisOptions, RevisionPointer, WordPointer},
@@ -347,46 +344,6 @@ pub(crate) enum ChangeTag {
     Delete,
 }
 
-pub(crate) fn imara_diff(
-    old: &[Token],
-    new: &[Token],
-    total_interned_tokens: u32,
-) -> Vec<Option<(ChangeTag, Token)>> {
-    let mut result = Vec::new();
-
-    let mut last_old_pos = 0;
-    imara_diff::diff_with_tokens(
-        Algorithm::Histogram,
-        old,
-        new,
-        total_interned_tokens,
-        |before: Range<u32>, after: Range<u32>| {
-            if before.start > last_old_pos {
-                for token in &old[last_old_pos as usize..before.start as usize] {
-                    result.push(Some((ChangeTag::Equal, *token)));
-                }
-            }
-            last_old_pos = before.end;
-
-            for token in &new[after.start as usize..after.end as usize] {
-                result.push(Some((ChangeTag::Insert, *token)));
-            }
-
-            for token in &old[before.start as usize..before.end as usize] {
-                result.push(Some((ChangeTag::Delete, *token)));
-            }
-        },
-    );
-
-    if last_old_pos < old.len() as u32 {
-        for token in &old[last_old_pos as usize..] {
-            result.push(Some((ChangeTag::Equal, *token)));
-        }
-    }
-
-    result
-}
-
 pub(crate) fn difflib_diff(old: &[Token], new: &[Token]) -> Vec<Option<(ChangeTag, Token)>> {
     crate::difflib::compare(old, new)
         .into_iter()
@@ -433,7 +390,7 @@ pub(crate) fn python_diff(
                 ' ' => Some(ChangeTag::Equal),
                 '+' => Some(ChangeTag::Insert),
                 '-' => Some(ChangeTag::Delete),
-                _ => None, /* apparently it can be '?' for example; I have no idea how diff algorithms work */
+                _ => None, /* ignore '?' annotations which are just for intra-token diff visualization */
             };
 
             if let Some(tag) = tag {

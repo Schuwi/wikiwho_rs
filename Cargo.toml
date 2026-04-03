@@ -78,7 +78,7 @@ opt-level = 3
 [profile.test.package.proptest]
 opt-level = 3
 
-[profile.test.package.rand_chacha]
+[profile.test.package.rand_xoshiro]
 opt-level = 3
 
 [profile.test.package.pyo3]

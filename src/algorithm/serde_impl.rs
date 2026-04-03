@@ -77,11 +77,16 @@ struct SerializedPageAnalysis {
 mod vec_arc_string {
     use std::sync::Arc;
 
-    pub fn serialize<S: serde::Serializer>(obj: &Vec<Arc<String>>, serializer: S) -> Result<S::Ok, S::Error> {
+    pub fn serialize<S: serde::Serializer>(
+        obj: &Vec<Arc<String>>,
+        serializer: S,
+    ) -> Result<S::Ok, S::Error> {
         serializer.collect_seq(obj.iter().map(|s| s.as_str()))
     }
 
-    pub fn deserialize<'de, D: serde::Deserializer<'de>>(deserializer: D) -> Result<Vec<Arc<String>>, D::Error> {
+    pub fn deserialize<'de, D: serde::Deserializer<'de>>(
+        deserializer: D,
+    ) -> Result<Vec<Arc<String>>, D::Error> {
         let strings: Vec<String> = serde::Deserialize::deserialize(deserializer)?;
         Ok(strings.into_iter().map(|s| Arc::new(s)).collect())
     }
@@ -210,7 +215,7 @@ impl serde::Serialize for PageAnalysis {
 impl<'de> serde::Deserialize<'de> for PageAnalysis {
     fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
         let s = SerializedPageAnalysis::deserialize(deserializer)?;
-        
+
         let source_strings = s.source_strings;
         let deserialize_substr = |serial_substr: SerializedArcSubstring| {
             if let Some(source_string) = source_strings.get(serial_substr.source_index) {
