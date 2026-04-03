@@ -2,8 +2,8 @@
 
 use std::{
     collections::HashMap,
-    fs::File,
-    io::{BufReader, BufWriter, Read},
+    fs::{self, File},
+    io::{BufReader, Read},
     path::{Path, PathBuf},
 };
 
@@ -18,8 +18,13 @@ const ANALYSIS_OPTIONS_RUST: PageAnalysisOptions = PageAnalysisOptions::new();
 #[cfg(feature = "python-diff")]
 const ANALYSIS_OPTIONS_PY: PageAnalysisOptions = PageAnalysisOptions::new().use_python_diff();
 
-const DATASET2_PARTIAL_DIR: &str = "schuwi-local/docs/dataset2_partial";
-const GOLD_STANDARD_PATH: &str = "schuwi-local/docs/gold_standard.partial.newnames.csv";
+const STATISTICS_DATA_README_PATH: &str = "tests/statistics-data/README.md";
+const FETCH_STAT_TEST_DATA_SCRIPT: &str = "tests/fetch_stat_test_data.py";
+const GOLD_STANDARD_PATH: &str = "tests/statistics-data/gold_standard.partial.newnames.csv";
+const ARTICLE_PAGE_DIR: &str = "tests/statistics-data/article-pages";
+const ARTICLE_CACHE_DIR: &str = "tests/statistics-data/article-cache";
+const EXTRA_DUMPS_DIR: &str = "tests/statistics-data/extra-dumps";
+const SETUP_HINT: &str = "See tests/statistics-data/README.md. Fetch the archived gold-standard CSV with `python3 tests/fetch_stat_test_data.py`, then place current Wikimedia dump shards in `tests/statistics-data/extra-dumps/` or single-page XML extracts in `tests/statistics-data/article-pages/`.";
 
 struct GoldEntry {
     article: String,
@@ -59,8 +64,11 @@ fn parse_csv_fields(line: &str) -> Vec<String> {
 }
 
 fn parse_gold_standard() -> Vec<GoldEntry> {
-    let content = std::fs::read_to_string(GOLD_STANDARD_PATH)
-        .unwrap_or_else(|_| panic!("Could not read gold standard at {GOLD_STANDARD_PATH}"));
+    let content = fs::read_to_string(GOLD_STANDARD_PATH).unwrap_or_else(|e| {
+        panic!(
+            "Could not read gold standard at {GOLD_STANDARD_PATH}: {e}\n{SETUP_HINT}\nRun: python3 {FETCH_STAT_TEST_DATA_SCRIPT}"
+        )
+    });
 
     let mut entries = Vec::new();
 
@@ -91,77 +99,81 @@ fn parse_gold_standard() -> Vec<GoldEntry> {
     entries
 }
 
-/// Returns the path to the XML file for an article if it exists in the dataset2_partial directory.
+fn article_filename(article: &str) -> String {
+    article.replace(' ', "_")
+}
+
+/// Returns the path to a local single-page XML file for an article if it exists.
 fn find_xml_for_article(article: &str) -> Option<PathBuf> {
-    let filename = article.replace(' ', "_");
-    let path = PathBuf::from(DATASET2_PARTIAL_DIR).join(format!("{filename}.xml"));
-    if path.exists() {
-        Some(path)
-    } else {
-        None
+    const SUFFIXES: &[&str] = &[".xml", ".xml.bz2", ".xml.gz", ".xml.zst", ".xml.zstd"];
+
+    let filename = article_filename(article);
+    for suffix in SUFFIXES {
+        let path = PathBuf::from(ARTICLE_PAGE_DIR).join(format!("{filename}{suffix}"));
+        if path.exists() {
+            return Some(path);
+        }
+    }
+
+    None
+}
+
+fn open_maybe_compressed_reader(path: &Path) -> Result<Box<dyn Read>, std::io::Error> {
+    let file = File::open(path)?;
+    let ext = path.extension().and_then(|e| e.to_str()).unwrap_or("");
+
+    match ext {
+        "bz2" => Ok(Box::new(bzip2::read::BzDecoder::new(file))),
+        "gz" => Ok(Box::new(flate2::read::GzDecoder::new(file))),
+        "zst" | "zstd" => Ok(Box::new(zstd::stream::read::Decoder::new(file)?)),
+        _ => Ok(Box::new(file)),
     }
 }
 
 fn load_page_from_xml(path: &Path) -> Result<Page, ParsingError> {
-    let file =
-        File::open(path).unwrap_or_else(|e| panic!("Could not open {}: {e}", path.display()));
-    let mut parser = DumpParser::new(BufReader::new(file))
+    let reader = open_maybe_compressed_reader(path)
+        .unwrap_or_else(|e| panic!("Could not open {}: {e}", path.display()));
+    let mut parser = DumpParser::new(BufReader::new(reader))
         .unwrap_or_else(|e| panic!("Could not create DumpParser for {}: {e}", path.display()));
     Ok(parser
         .parse_page()?
         .unwrap_or_else(|| panic!("No page found in {}", path.display())))
 }
 
-/// Additional Wikipedia/Wiktionary dump files to search when an article is not found
-/// as a standalone XML file in `DATASET2_PARTIAL_DIR`. Paths starting with `~/` are
-/// expanded to the user's home directory. Supported formats: `.bz2`, `.gz`, `.zst`, plain `.xml`.
-const EXTRA_DUMPS: &[&str] = &[
-    // they are normally distributed by WikiMedia with bzip2 compression but recompressing to zstd
-    // (e.g. `bzip2 -dc ....xml.bz2 | zstd -11 -T4 -o ....xml.zst`) makes the scanning
-    // in `find_page_in_dump` SO MUCH faster!
-    "~/Downloads/enwiki-2026-01-01-p358p689.xml.zst",
-    "~/Downloads/enwiki-2026-01-01-p5592p5716.xml.zst",
-    "~/Downloads/enwiki-2026-01-01-p7045p7327.xml.zst",
-    "~/Downloads/enwiki-2026-01-01-p8121p8239.xml.zst",
-    "~/Downloads/enwiki-2026-01-01-p9105p9256.xml.zst",
-    "~/Downloads/enwiki-2026-01-01-p9317p9426.xml.zst",
-    "~/Downloads/enwiki-2026-01-01-p9428p9592.xml.zst",
-    "~/Downloads/enwiki-2026-01-01-p10257p10530.xml.zst",
-    "~/Downloads/enwiki-2026-01-01-p24095p24221.xml.zst",
-    "~/Downloads/enwiki-2026-01-01-p140332p140700.xml.zst",
-    "~/Downloads/enwiki-2026-01-01-p534366p536006.xml.zstd",
-    "~/Downloads/enwiki-2026-01-01-p2159021p2164836.xml.zst",
-    "~/Downloads/enwiki-2026-01-01-p8704841p8720250.xml.zst",
-    "~/Downloads/enwiki-2026-01-01-p8161655p8188573.xml.zst",
-];
+/// Returns all configured dump files from the repo-local extra-dumps directory.
+fn extra_dump_paths() -> Vec<PathBuf> {
+    let mut dumps = Vec::new();
 
-fn expand_path(path: &str) -> PathBuf {
-    if let Some(rest) = path.strip_prefix("~/") {
-        let home = std::env::var("HOME").unwrap_or_default();
-        PathBuf::from(home).join(rest)
-    } else {
-        PathBuf::from(path)
+    let Ok(entries) = fs::read_dir(EXTRA_DUMPS_DIR) else {
+        return dumps;
+    };
+
+    for entry in entries.flatten() {
+        let path = entry.path();
+        if path.is_file() {
+            dumps.push(path);
+        }
     }
+
+    dumps.sort();
+    dumps
+}
+
+/// Returns the path to the JSON cache file for an article if it exists.
+fn cache_path_for_article(article: &str) -> PathBuf {
+    let filename = article.replace(' ', "_");
+    PathBuf::from(ARTICLE_CACHE_DIR).join(format!("{filename}.json.zst"))
 }
 
 fn find_page_in_dump(dump_path: &Path, title: &str) -> Option<Page> {
-    let file = File::open(dump_path).ok()?;
-    let ext = dump_path.extension().and_then(|e| e.to_str()).unwrap_or("");
-    let reader: Box<dyn Read> = match ext {
-        "bz2" => Box::new(bzip2::read::BzDecoder::new(file)),
-        "gz" => Box::new(flate2::read::GzDecoder::new(file)),
-        "zst" | "zstd" => Box::new(zstd::stream::Decoder::new(file).ok()?),
-        _ => Box::new(file),
-    };
+    let reader = open_maybe_compressed_reader(dump_path).ok()?;
     common::find_page_by_title_and_ns(BufReader::new(reader), title, 0)
         .ok()
         .flatten()
 }
 
-/// Returns the path to the JSON cache file for an article if it exists.
 fn find_cache_for_article(article: &str) -> Option<PathBuf> {
-    let filename = article.replace(' ', "_");
-    let path = PathBuf::from(DATASET2_PARTIAL_DIR).join(format!("{filename}.json"));
+    let path = cache_path_for_article(article);
     if path.exists() {
         Some(path)
     } else {
@@ -171,26 +183,33 @@ fn find_cache_for_article(article: &str) -> Option<PathBuf> {
 
 fn load_page_from_cache(path: &Path) -> Result<Page, Box<dyn std::error::Error>> {
     let file = File::open(path)?;
-    Ok(serde_json::from_reader(BufReader::new(file))?)
+    let decoder = zstd::stream::read::Decoder::new(file)?;
+    Ok(serde_json::from_reader(BufReader::new(decoder))?)
 }
 
 fn save_page_to_cache(article: &str, page: &Page) {
-    let filename = article.replace(' ', "_");
-    let path = PathBuf::from(DATASET2_PARTIAL_DIR).join(format!("{filename}.json"));
-    let result = File::create(&path)
+    let path = cache_path_for_article(article);
+    let result = fs::create_dir_all(path.parent().unwrap())
         .map_err(|e| e.to_string())
-        .and_then(|f| serde_json::to_writer(BufWriter::new(f), page).map_err(|e| e.to_string()));
+        .and_then(|()| File::create(&path).map_err(|e| e.to_string()))
+        .and_then(|file| {
+            let mut encoder =
+                zstd::stream::write::Encoder::new(file, 11).map_err(|e| e.to_string())?;
+            serde_json::to_writer(&mut encoder, page).map_err(|e| e.to_string())?;
+            encoder.finish().map_err(|e| e.to_string())?;
+            Ok(())
+        });
     match result {
         Ok(()) => eprintln!("  Cached '{article}' to {}", path.display()),
         Err(e) => eprintln!("  Warning: failed to cache '{article}': {e}"),
     }
 }
 
-/// Loads a page for a gold-standard article: tries standalone XML first,
-/// then a JSON cache, then searches `EXTRA_DUMPS` in order (saving to cache on hit).
+/// Loads a page for a gold-standard article: tries a local single-page XML extract first,
+/// then a compressed JSON cache, then searches repo-local dump shards in order.
 /// Returns `None` if not found anywhere.
 fn load_article_page(article: &str, up_to_rev_inclusive: Option<i32>) -> Option<Page> {
-    // Try standalone XML file
+    // Try standalone article extract first.
     if let Some(xml_path) = find_xml_for_article(article) {
         match (load_page_from_xml(&xml_path), up_to_rev_inclusive) {
             (Ok(page), None) => return Some(page),
@@ -203,7 +222,7 @@ fn load_article_page(article: &str, up_to_rev_inclusive: Option<i32>) -> Option<
         }
     }
 
-    // Try JSON cache (written after the first dump search to avoid repeating it)
+    // Try compressed JSON cache before scanning dump shards again.
     if let Some(cache_path) = find_cache_for_article(article) {
         match load_page_from_cache(&cache_path) {
             Ok(mut page) => {
@@ -217,13 +236,9 @@ fn load_article_page(article: &str, up_to_rev_inclusive: Option<i32>) -> Option<
         }
     }
 
-    // Fall back to dump files; gold standard uses underscores, Wikipedia titles use spaces
+    // Fall back to repo-local dump shards; gold standard uses underscores, Wikipedia titles use spaces.
     let title = article.replace('_', " ");
-    for &dump_str in EXTRA_DUMPS {
-        let dump_path = expand_path(dump_str);
-        if !dump_path.exists() {
-            continue;
-        }
+    for dump_path in extra_dump_paths() {
         eprintln!("  Searching for '{title}' in {}…", dump_path.display());
         if let Some(mut page) = find_page_in_dump(&dump_path, &title) {
             if let Some(last_rev) = up_to_rev_inclusive {
@@ -319,7 +334,7 @@ fn find_token_origin(analysis: &PageAnalysis, entry: &GoldEntry) -> Option<i32> 
     None
 }
 
-/// Runs the precision evaluation for all gold standard entries that have XML available.
+/// Runs the precision evaluation for all gold-standard entries that have local article data.
 ///
 /// Returns `(correct, wrong, not_found)` counts.
 fn run_precision_test(options: PageAnalysisOptions) -> (usize, usize, usize) {
@@ -353,7 +368,9 @@ fn run_precision_test(options: PageAnalysisOptions) -> (usize, usize, usize) {
             .unwrap();
 
         let Some(page) = load_article_page(article, Some(max_starting_rev)) else {
-            eprintln!("  Skipping '{article}': not found in XML dir or any configured dump");
+            eprintln!(
+                "  Skipping '{article}': not found in `{ARTICLE_PAGE_DIR}`, `{ARTICLE_CACHE_DIR}`, or `{EXTRA_DUMPS_DIR}`"
+            );
             continue;
         };
 
@@ -402,15 +419,16 @@ fn run_precision_test(options: PageAnalysisOptions) -> (usize, usize, usize) {
 /// paper's gold standard dataset.
 ///
 /// The original WikiWho paper reports ~95% precision on the full gold standard.
-/// We evaluate on the subset for which XML revision histories are available locally
-/// (see `schuwi-local/docs/dataset2_partial/`).
+/// We evaluate on the subset for which revision histories are available via repo-local
+/// article extracts, cached pages, or current Wikimedia dump shards.
 #[test]
+#[ignore = "requires locally prepared benchmark data; see tests/statistics-data/README.md"]
 fn gold_standard_precision_rust() {
     let (correct, wrong, not_found) = run_precision_test(ANALYSIS_OPTIONS_RUST);
     let total_evaluated = correct + wrong;
     assert!(
         total_evaluated > 0,
-        "No gold standard entries could be evaluated — are the XML files in {DATASET2_PARTIAL_DIR}?"
+        "No gold standard entries could be evaluated.\n{SETUP_HINT}\nSee {STATISTICS_DATA_README_PATH}"
     );
     let precision = correct as f64 / total_evaluated as f64;
     println!(
@@ -433,12 +451,13 @@ fn gold_standard_precision_rust() {
 /// may score lower due to ambiguous common tokens ("in", "the") appearing many times.
 #[test]
 #[cfg(feature = "python-diff")]
+#[ignore = "requires locally prepared benchmark data; see tests/statistics-data/README.md"]
 fn gold_standard_precision_python_diff() {
     let (correct, wrong, not_found) = run_precision_test(ANALYSIS_OPTIONS_PY);
     let total_evaluated = correct + wrong;
     assert!(
         total_evaluated > 0,
-        "No gold standard entries could be evaluated — are the XML files in {DATASET2_PARTIAL_DIR}?"
+        "No gold standard entries could be evaluated.\n{SETUP_HINT}\nSee {STATISTICS_DATA_README_PATH}"
     );
     let precision = correct as f64 / total_evaluated as f64;
     println!(
@@ -454,14 +473,15 @@ fn gold_standard_precision_python_diff() {
 }
 
 /// Compares word-level origin attribution between pure-Rust and python-diff at the
-/// final revision of each dataset2_partial article.
+/// final revision of each locally prepared gold-standard article.
 ///
 /// Reports the agreement rate: the fraction of words for which both backends attribute
 /// the same origin revision. Disagreements indicate cases where imara-diff's different
 /// LCS choices produce a different attribution than Python's difflib.
 #[test]
 #[cfg(feature = "python-diff")]
-fn divergence_rate_dataset2_partial() {
+#[ignore = "requires locally prepared benchmark data; see tests/statistics-data/README.md"]
+fn divergence_rate_gold_standard_articles() {
     let entries = parse_gold_standard();
 
     let mut by_article: HashMap<String, Vec<&GoldEntry>> = HashMap::new();
@@ -474,16 +494,6 @@ fn divergence_rate_dataset2_partial() {
 
     let mut article_names: Vec<_> = by_article.keys().collect();
     article_names.sort();
-
-    // const PATHS: &[&str] = &[
-    //     "schuwi-local/docs/dataset2_partial/Amstrad_CPC.xml",
-    //     "schuwi-local/docs/dataset2_partial/Antarctica.xml",
-    //     "schuwi-local/docs/dataset2_partial/Apollo_11.xml",
-    // ];
-
-    // let reader1 = common::open_test_dump();
-    // let reader2 = common::open_test_dump();
-    // let pages: Vec<Page> = common::pick_n_random_pages((reader1, reader2), 100, 5).unwrap();
 
     let mut total_agree = 0usize;
     let mut total_words = 0usize;
@@ -501,7 +511,9 @@ fn divergence_rate_dataset2_partial() {
             .unwrap();
 
         let Some(page) = load_article_page(article, Some(max_starting_rev)) else {
-            eprintln!("  Skipping '{article}': not found in XML dir or any configured dump");
+            eprintln!(
+                "  Skipping '{article}': not found in `{ARTICLE_PAGE_DIR}`, `{ARTICLE_CACHE_DIR}`, or `{EXTRA_DUMPS_DIR}`"
+            );
             continue;
         };
 
@@ -510,7 +522,6 @@ fn divergence_rate_dataset2_partial() {
             article_entries.len()
         );
 
-        // for page in pages {
         let (rust_analysis, py_analysis) = std::thread::scope(|s| {
             let rust_analysis = s.spawn(|| {
                 PageAnalysis::analyse_page_with_options(&page.revisions, ANALYSIS_OPTIONS_RUST)
@@ -567,6 +578,10 @@ fn divergence_rate_dataset2_partial() {
         total_words += total;
     }
 
+    assert!(
+        total_words > 0,
+        "No gold standard article data could be evaluated.\n{SETUP_HINT}\nSee {STATISTICS_DATA_README_PATH}"
+    );
     let overall_rate = total_agree as f64 / total_words as f64;
     println!(
         "Overall: {total_agree}/{total_words} words agree ({:.2}%)",

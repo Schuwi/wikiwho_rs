@@ -421,8 +421,7 @@ impl ProgressReporter {
 struct RevisionIterHelper<'a>(
     // clippy: we need the Rc so we can have multiple immutable reference while still being able to
     // turn the last reference around back to mutable
-    #[allow(clippy::redundant_allocation)]
-    Rc<&'a mut Revision>
+    #[allow(clippy::redundant_allocation)] Rc<&'a mut Revision>,
 );
 
 impl<'a> Borrow<Revision> for RevisionIterHelper<'a> {

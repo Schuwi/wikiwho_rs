@@ -272,7 +272,7 @@ This is only beneficial for text where a significant portion of characters are n
 ## Testing and Validation
 
 - **Exact comparison tests** (`algorithm_exact_tests.rs`): Compare the Rust implementation's results against the original Python WikiWho, token by token. These require the `python-diff` feature so that both implementations use the same diff algorithm. Run them with `cargo test --features python-diff`.
-- **Fuzzy Comparison Testing**: Plans to add statistical comparison tests that measure differences when using pure Rust (`imara-diff`) vs. `python-diff`.
+- **Statistical comparison tests** (`algorithm_statistic_tests.rs`): Ignored by default and require local benchmark data. Fetch the archived partial gold standard with `python3 tests/fetch_stat_test_data.py`, place current Wikimedia dump shards into `tests/statistics-data/extra-dumps/`, then run with `cargo test gold_standard_precision_rust -- --ignored` or `cargo test --features python-diff divergence_rate_gold_standard_articles -- --ignored`. See `tests/statistics-data/README.md` for details.
 - **Temporary files**: Some tests use temporary files for IPC coordination between Rust and Python. These files can be large depending on the input dump. Their location follows `std::env::temp_dir()`, which can be controlled by setting the `TMPDIR` environment variable.
 - **Community Feedback**: Seeking input from users testing with different languages and datasets.
 
@@ -338,3 +338,6 @@ However, parts of this project are derived from the
 under the MIT License. Thus for these parts of the project (as marked by the SPDX headers), the
 MIT License applies additionally.\
 This basically just means that the copyright notice in LICENSE-MIT must be preserved.
+
+Wikimedia-derived statistical test fixtures, if present under `tests/statistics-data/article-cache/`,
+are data rather than code and are documented under that directory's attribution and licensing notes.

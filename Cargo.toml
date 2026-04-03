@@ -5,7 +5,7 @@ edition = "2021"
 license = "MPL-2.0 AND MIT"
 repository = "https://github.com/Schuwi/wikiwho_rs"
 description = "Fast Rust reimplementation of the WikiWho algorithm for fine-grained authorship attribution on large datasets. Optimized for easy integration in multi-threaded applications."
-exclude = [ "*.xml", "*.xml.zst" ]
+exclude = [ "*.xml", "*.xml.zst", "*.json.zst", "*.csv" ]
 
 [lib]
 bench = false
@@ -62,7 +62,9 @@ yoke = { version = "0.8.1", features = ["derive"] }
 
 [dev-dependencies]
 bincode = "1.3.3"
+bzip2 = "0.5"
 criterion = "0.5.1"
+flate2 = "1"
 hex = "0.4.3"
 memchr = "2.7.4"
 proptest = "1.5.0"
