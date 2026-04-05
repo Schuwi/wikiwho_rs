@@ -31,7 +31,7 @@ The original Python implementation of WikiWho could process about 300 pages in o
 
 ```toml
 [dependencies]
-wikiwho = "0.2"
+wikiwho = "0.3"
 ```
 
 ## Usage
@@ -202,7 +202,7 @@ By default, `wikiwho` uses a fast Rust implementation of the histogram diff algo
 
 ```toml
 [dependencies]
-wikiwho = { version = "0.2", features = ["python-diff"] }
+wikiwho = { version = "0.3", features = ["python-diff"] }
 ```
 
 and
@@ -220,7 +220,7 @@ let analysis = PageAnalysis::analyse_page_with_options(&page.revisions, PageAnal
 
 ```toml
 [dependencies]
-wikiwho = { version = "0.2", features = ["strict"] }
+wikiwho = { version = "0.3", features = ["strict"] }
 ```
 
 ### Optimized String Processing
@@ -229,7 +229,7 @@ By default, text splitting functions use straightforward implementations based o
 
 ```toml
 [dependencies]
-wikiwho = { version = "0.2", features = ["optimized-str"] }
+wikiwho = { version = "0.3", features = ["optimized-str"] }
 ```
 
 This swaps in alternative implementations that use the Aho-Corasick algorithm for tokenization and `memchr::memmem` with scratch buffers for paragraph and sentence splitting. These produce identical results and are consistently faster than the default implementations, so enabling this feature is generally recommended (it is included in the default feature set).  
@@ -241,7 +241,7 @@ The `optimized-lowercase` feature replaces the standard library's `str::to_lower
 
 ```toml
 [dependencies]
-wikiwho = { version = "0.2", features = ["optimized-lowercase"] }
+wikiwho = { version = "0.3", features = ["optimized-lowercase"] }
 ```
 
 ```rust,ignore
