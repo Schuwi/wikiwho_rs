@@ -16,7 +16,7 @@ from urllib.parse import urlparse
 
 
 ROOT = Path(__file__).resolve().parent.parent
-OUTPUT_PATH = ROOT / "tests/statistics-data/gold_standard.partial.newnames.csv"
+OUTPUT_PATH = ROOT / "dev-data/gold_standard.partial.newnames.csv"
 WAYBACK_EDIT_SNAPSHOT_URL = (
     "https://web.archive.org/web/20190626204719/"
     "https://docs.google.com/spreadsheets/d/1Xvl1NXqFY_efvoZ9oj2xH86fSljLYpDNI1dt2YfISlk/"
@@ -44,7 +44,7 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description=(
             "Normalize a manually recovered partial WikiWho gold-standard CSV into the "
-            "repo-local statistical test data directory."
+            "repo-local development-data directory."
         )
     )
     parser.add_argument(
@@ -75,7 +75,7 @@ def parse_args() -> argparse.Namespace:
 def fetch_url(url: str) -> bytes:
     request = urllib.request.Request(
         url,
-        headers={"User-Agent": "wikiwho_rs statistical test data bootstrapper"},
+        headers={"User-Agent": "wikiwho_rs gold-standard bootstrapper"},
     )
     with urllib.request.urlopen(request, timeout=60) as response:
         return response.read()

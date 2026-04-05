@@ -48,9 +48,10 @@ use std::fs::File;
 use std::io::BufReader;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    // Open the XML dump file
-    let xml_dump = File::open("dewiktionary-20240901-pages-meta-history.xml")?;
-    let reader = BufReader::new(xml_dump);
+    // Open a compressed XML dump file
+    let xml_dump =
+        File::open("dev-data/reference-dumps/dewiktionary-20240901-pages-meta-history.xml.zst")?;
+    let reader = BufReader::new(zstd::stream::Decoder::new(xml_dump)?);
     let mut parser = DumpParser::new(reader)?;
 
     // Parse a single page
@@ -89,8 +90,9 @@ use std::fs::File;
 use std::io::BufReader;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let xml_dump = File::open("dewiktionary-20240901-pages-meta-history.xml")?;
-    let reader = BufReader::new(xml_dump);
+    let xml_dump =
+        File::open("dev-data/reference-dumps/dewiktionary-20240901-pages-meta-history.xml.zst")?;
+    let reader = BufReader::new(zstd::stream::Decoder::new(xml_dump)?);
     let mut parser = DumpParser::new(reader)?;
 
     while let Some(page) = parser.parse_page()? {
@@ -123,8 +125,9 @@ use std::sync::{mpsc::channel, Arc, Mutex};
 use std::thread;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let xml_dump = File::open("dewiktionary-20240901-pages-meta-history.xml")?;
-    let reader = BufReader::new(xml_dump);
+    let xml_dump =
+        File::open("dev-data/reference-dumps/dewiktionary-20240901-pages-meta-history.xml.zst")?;
+    let reader = BufReader::new(zstd::stream::Decoder::new(xml_dump)?);
     let mut parser = DumpParser::new(reader)?;
 
     // Channel to send pages to worker threads
@@ -272,7 +275,7 @@ This is only beneficial for text where a significant portion of characters are n
 ## Testing and Validation
 
 - **Exact comparison tests** (`algorithm_exact_tests.rs`): Compare the Rust implementation's results against the original Python WikiWho, token by token. These require the `python-diff` feature so that both implementations use the same diff algorithm. Run them with `cargo test --features python-diff`.
-- **Statistical comparison tests** (`algorithm_statistic_tests.rs`): Ignored by default and require local benchmark data. Fetch the archived partial gold standard with `python3 tests/fetch_stat_test_data.py`, place current Wikimedia dump shards into `tests/statistics-data/extra-dumps/`, then run with `cargo test gold_standard_precision_rust -- --ignored` or `cargo test --features python-diff divergence_rate_gold_standard_articles -- --ignored`. See `tests/statistics-data/README.md` for details.
+- **Statistical comparison tests** (`algorithm_statistic_tests.rs`): Ignored by default and require local benchmark data. Fetch the archived partial gold standard with `python3 tools/fetch_gold_standard.py`, place current Wikimedia dump shards into `dev-data/extra-dumps/`, then run with `cargo test gold_standard_precision_rust -- --ignored` or `cargo test --features python-diff divergence_rate_gold_standard_articles -- --ignored`. See `dev-data/README.md` for details.
 - **Temporary files**: Some tests use temporary files for IPC coordination between Rust and Python. These files can be large depending on the input dump. Their location follows `std::env::temp_dir()`, which can be controlled by setting the `TMPDIR` environment variable.
 - **Community Feedback**: Seeking input from users testing with different languages and datasets.
 
@@ -337,5 +340,6 @@ MIT License applies additionally.
 Generally the MIT license is more permissive than MPL2 though the MIT license terms
 and copyright notice must still be preserved.
 
-Wikimedia-derived statistical test fixtures, if present under `tests/statistics-data/article-cache/`,
-are data rather than code and are documented under that directory's attribution and licensing notes.
+Wikimedia-derived development fixtures, if present under `dev-data/article-cache/` or
+`dev-data/reference-dumps/`, are data rather than code and are documented under those directories'
+attribution and licensing notes.

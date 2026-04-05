@@ -23,6 +23,7 @@ use common::output_structs::serialize_wikiwho_result;
 use common::{load_local_module, prelude::*};
 
 const ANALYSIS_OPTIONS_PY: PageAnalysisOptions = PageAnalysisOptions::new().use_python_diff();
+const EXACT_REGRESSION_FIXTURE_DIR: &str = "tests/fixtures/exact-regressions";
 
 #[derive(Clone, Copy)]
 struct PageRef {
@@ -426,7 +427,10 @@ fn known_bad_example_familia() {
 #[test]
 fn known_bad_example_anontalkpagetext() {
     let page: Page = serde_json::from_reader(
-        File::open("failing-inputs/Anontalkpagetext_shortened.json").unwrap(),
+        File::open(format!(
+            "{EXACT_REGRESSION_FIXTURE_DIR}/Anontalkpagetext_shortened.json"
+        ))
+        .unwrap(),
     )
     .unwrap();
 
@@ -442,7 +446,10 @@ use crate::common::output_structs::page_analysis_from_wikiwho;
 #[ignore] // this "test" takes very long and is only useful for focus debugging
 fn simplify_bad_example_anontalkpagetext() {
     let reader = BufReader::new(
-        File::open("failing-inputs/Anontalkpagetext_shortened-manually.xml").unwrap(),
+        File::open(format!(
+            "{EXACT_REGRESSION_FIXTURE_DIR}/Anontalkpagetext_shortened-manually.xml"
+        ))
+        .unwrap(),
     );
     let mut parser = DumpParser::new(reader).unwrap();
     let bad_page = parser.parse_page().unwrap().unwrap();

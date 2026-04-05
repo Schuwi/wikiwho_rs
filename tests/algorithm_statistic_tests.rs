@@ -18,13 +18,13 @@ const ANALYSIS_OPTIONS_RUST: PageAnalysisOptions = PageAnalysisOptions::new();
 #[cfg(feature = "python-diff")]
 const ANALYSIS_OPTIONS_PY: PageAnalysisOptions = PageAnalysisOptions::new().use_python_diff();
 
-const STATISTICS_DATA_README_PATH: &str = "tests/statistics-data/README.md";
-const FETCH_STAT_TEST_DATA_SCRIPT: &str = "tests/fetch_stat_test_data.py";
-const GOLD_STANDARD_PATH: &str = "tests/statistics-data/gold_standard.partial.newnames.csv";
-const ARTICLE_PAGE_DIR: &str = "tests/statistics-data/article-pages";
-const ARTICLE_CACHE_DIR: &str = "tests/statistics-data/article-cache";
-const EXTRA_DUMPS_DIR: &str = "tests/statistics-data/extra-dumps";
-const SETUP_HINT: &str = "See tests/statistics-data/README.md. Fetch the archived gold-standard CSV with `python3 tests/fetch_stat_test_data.py`, then place current Wikimedia dump shards in `tests/statistics-data/extra-dumps/` or single-page XML extracts in `tests/statistics-data/article-pages/`.";
+const STATISTICS_DATA_README_PATH: &str = "dev-data/README.md";
+const FETCH_GOLD_STANDARD_SCRIPT: &str = "tools/fetch_gold_standard.py";
+const GOLD_STANDARD_PATH: &str = "dev-data/gold_standard.partial.newnames.csv";
+const ARTICLE_PAGE_DIR: &str = "dev-data/article-pages";
+const ARTICLE_CACHE_DIR: &str = "dev-data/article-cache";
+const EXTRA_DUMPS_DIR: &str = "dev-data/extra-dumps";
+const SETUP_HINT: &str = "See dev-data/README.md. Fetch the archived gold-standard CSV with `python3 tools/fetch_gold_standard.py`, then place current Wikimedia dump shards in `dev-data/extra-dumps/` or single-page XML extracts in `dev-data/article-pages/`.";
 
 struct GoldEntry {
     article: String,
@@ -66,7 +66,7 @@ fn parse_csv_fields(line: &str) -> Vec<String> {
 fn parse_gold_standard() -> Vec<GoldEntry> {
     let content = fs::read_to_string(GOLD_STANDARD_PATH).unwrap_or_else(|e| {
         panic!(
-            "Could not read gold standard at {GOLD_STANDARD_PATH}: {e}\n{SETUP_HINT}\nRun: python3 {FETCH_STAT_TEST_DATA_SCRIPT}"
+            "Could not read gold standard at {GOLD_STANDARD_PATH}: {e}\n{SETUP_HINT}\nRun: python3 {FETCH_GOLD_STANDARD_SCRIPT}"
         )
     });
 
@@ -422,7 +422,7 @@ fn run_precision_test(options: PageAnalysisOptions) -> (usize, usize, usize) {
 /// We evaluate on the subset for which revision histories are available via repo-local
 /// article extracts, cached pages, or current Wikimedia dump shards.
 #[test]
-#[ignore = "requires locally prepared benchmark data; see tests/statistics-data/README.md"]
+#[ignore = "requires locally prepared benchmark data; see dev-data/README.md"]
 fn gold_standard_precision_rust() {
     let (correct, wrong, not_found) = run_precision_test(ANALYSIS_OPTIONS_RUST);
     let total_evaluated = correct + wrong;
@@ -451,7 +451,7 @@ fn gold_standard_precision_rust() {
 /// may score lower due to ambiguous common tokens ("in", "the") appearing many times.
 #[test]
 #[cfg(feature = "python-diff")]
-#[ignore = "requires locally prepared benchmark data; see tests/statistics-data/README.md"]
+#[ignore = "requires locally prepared benchmark data; see dev-data/README.md"]
 fn gold_standard_precision_python_diff() {
     let (correct, wrong, not_found) = run_precision_test(ANALYSIS_OPTIONS_PY);
     let total_evaluated = correct + wrong;
@@ -480,7 +480,7 @@ fn gold_standard_precision_python_diff() {
 /// LCS choices produce a different attribution than Python's difflib.
 #[test]
 #[cfg(feature = "python-diff")]
-#[ignore = "requires locally prepared benchmark data; see tests/statistics-data/README.md"]
+#[ignore = "requires locally prepared benchmark data; see dev-data/README.md"]
 fn divergence_rate_gold_standard_articles() {
     let entries = parse_gold_standard();
 

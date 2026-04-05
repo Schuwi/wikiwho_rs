@@ -1,13 +1,13 @@
-# Statistical Test Data
+# Development Data
 
 `tests/algorithm_statistic_tests.rs` uses local-only benchmark data and is `#[ignore]` by default.
 
-This directory is the public recipe for that setup. The actual benchmark inputs stay untracked.
+This directory is the public recipe for local development data shared by tests and benchmarks. The actual benchmark inputs stay untracked.
 
 ## Layout
 
 - `gold_standard.partial.newnames.csv`
-  - Local cache of the normalized partial WikiWho gold-standard CSV used by the tests.
+  - Local cache of the normalized partial WikiWho gold-standard CSV used by tests and benchmarks.
   - Not committed.
 - `article-pages/`
   - Optional single-page article extracts such as `Apollo_11.xml` or `Apollo_11.xml.zst`.
@@ -16,16 +16,20 @@ This directory is the public recipe for that setup. The actual benchmark inputs 
   - Auto-generated page caches written by the tests as `.json.zst`.
   - May be committed, but these files are Wikimedia-derived test data, not software.
   - See `article-cache/README.md` and `article-cache/ATTRIBUTION.md`.
+- `reference-dumps/`
+  - Shared committed Wikimedia reference dumps used by exact tests and documentation examples.
+  - These remain in their upstream dump format rather than being transformed into project-specific fixtures.
+  - See `reference-dumps/README.md` and `reference-dumps/ATTRIBUTION.md`.
 - `extra-dumps/`
   - Current Wikimedia dump shards searched when a page is not present in `article-pages/` or `article-cache/`.
   - Not committed.
 
 ## Gold Standard Setup
 
-Prepare the test copy with:
+Prepare the local gold-standard copy with:
 
 ```sh
-python3 tests/fetch_stat_test_data.py
+python3 tools/fetch_gold_standard.py
 ```
 
 Important provenance details:
@@ -39,7 +43,7 @@ The script can recover the partial CSV directly from the pinned Wayback HTML sna
 If you want to inspect or preserve the recovered pre-rename intermediate explicitly, write it out with:
 
 ```sh
-python3 tests/fetch_stat_test_data.py --write-recovered-csv /path/to/gold_standard.partial.csv
+python3 tools/fetch_gold_standard.py --write-recovered-csv /path/to/gold_standard.partial.csv
 ```
 
 The title normalization is:
@@ -51,9 +55,9 @@ The title normalization is:
 If you want to force a specific source, pass it explicitly. Both CSV and HTML are supported, as local files or URLs:
 
 ```sh
-python3 tests/fetch_stat_test_data.py --input /path/to/gold_standard.partial.csv
-python3 tests/fetch_stat_test_data.py --input /path/to/gold_standard_wayback.html
-python3 tests/fetch_stat_test_data.py --input 'https://web.archive.org/web/20190626204719/https://docs.google.com/spreadsheets/d/1Xvl1NXqFY_efvoZ9oj2xH86fSljLYpDNI1dt2YfISlk/edit?usp=sharing'
+python3 tools/fetch_gold_standard.py --input /path/to/gold_standard.partial.csv
+python3 tools/fetch_gold_standard.py --input /path/to/gold_standard_wayback.html
+python3 tools/fetch_gold_standard.py --input 'https://web.archive.org/web/20190626204719/https://docs.google.com/spreadsheets/d/1Xvl1NXqFY_efvoZ9oj2xH86fSljLYpDNI1dt2YfISlk/edit?usp=sharing'
 ```
 
 Older manually extracted CSV intermediates may differ from the HTML recovery output in insignificant whitespace, so the canonical checksum below is based on the HTML recovery path.
@@ -68,7 +72,7 @@ The normalized gold-standard CSV is generated locally on demand and intentionall
 
 ## Dump Setup
 
-Put current Wikimedia dump shards into `tests/statistics-data/extra-dumps/`.
+Put current Wikimedia dump shards into `dev-data/extra-dumps/`.
 
 Supported formats:
 
@@ -80,7 +84,9 @@ Supported formats:
 
 Recompressing XML dump shards to zstd is strongly recommended because the page scan path is much faster on `.zst` files (e.g. `bzip2 -dc ....xml.bz2 | zstd -11 -T4 -o ....xml.zst`).
 
-The tests also accept per-article extracts in `tests/statistics-data/article-pages/`. On the first successful lookup from a dump shard, the page is cached automatically into `tests/statistics-data/article-cache/<Article>.json.zst`.
+The tests also accept per-article extracts in `dev-data/article-pages/`. On the first successful lookup from a dump shard, the page is cached automatically into `dev-data/article-cache/<Article>.json.zst`.
+
+The repository also keeps one committed shared reference dump in `dev-data/reference-dumps/` for exact-test coverage and development examples. Treat that directory as upstream Wikimedia dump data rather than as project code.
 
 ## Committing `article-cache/`
 

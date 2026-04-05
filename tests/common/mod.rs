@@ -231,7 +231,8 @@ pub fn find_page_by_title_and_ns<P: PageRepresentation, R: std::io::Read>(
 }
 
 pub fn open_test_dump() -> impl Read {
-    const DUMP_PATH: &str = "dewiktionary-20240901-pages-meta-history.xml.zst";
+    const DUMP_PATH: &str =
+        "dev-data/reference-dumps/dewiktionary-20240901-pages-meta-history.xml.zst";
 
     let file = File::open(DUMP_PATH).unwrap_or_else(|_| panic!("file not found: {}", DUMP_PATH));
     zstd::stream::Decoder::new(file).unwrap()
