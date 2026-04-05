@@ -6,7 +6,9 @@ use std::{
     collections::HashMap,
     fs::File,
     io::{BufReader, Read, Seek, SeekFrom, Write},
+    path::PathBuf,
     sync::mpsc::Sender,
+    thread::JoinHandle,
 };
 
 use pyo3::{import_exception, types::PyDict, IntoPyObjectExt};
@@ -29,6 +31,34 @@ const EXACT_REGRESSION_FIXTURE_DIR: &str = "tests/fixtures/exact-regressions";
 struct PageRef {
     offset: u64,
     length: u64,
+}
+
+struct TempArtifacts {
+    file: PathBuf,
+    result_dir: PathBuf,
+}
+
+impl Drop for TempArtifacts {
+    fn drop(&mut self) {
+        let _ = std::fs::remove_file(&self.file);
+        let _ = std::fs::remove_dir_all(&self.result_dir);
+    }
+}
+
+fn join_thread(handle: JoinHandle<()>) {
+    if let Err(payload) = handle.join() {
+        std::panic::resume_unwind(payload);
+    }
+}
+
+fn join_finished_thread(handle: &mut Option<JoinHandle<()>>) {
+    if handle
+        .as_ref()
+        .map(|handle| handle.is_finished())
+        .unwrap_or(false)
+    {
+        join_thread(handle.take().unwrap());
+    }
 }
 
 fn run_analysis_python(py: Python<'_>, page: &Page) -> PageAnalysis {
@@ -66,7 +96,7 @@ fn run_analysis_python_mt(
     result_sender: Sender<(String, PageAnalysis)>,
     input_path: &std::path::Path,
     result_dir: &std::path::Path,
-) -> Py<PyAny> {
+) -> (Py<PyAny>, JoinHandle<()>) {
     // leave some headroom for the Rust side
     let threads = std::thread::available_parallelism().unwrap().get() - 2;
     let threads = usize::max(1, threads);
@@ -103,7 +133,7 @@ fn run_analysis_python_mt(
 
     // Result collection thread: receive (key, path, offset, length) tuples from Python,
     // read result bincode from per-worker files outside the GIL, and forward to main thread.
-    std::thread::spawn(move || {
+    let collector_handle = std::thread::spawn(move || {
         import_exception!(queue, Empty);
 
         let mut last_log_time = std::time::Instant::now();
@@ -167,7 +197,7 @@ fn run_analysis_python_mt(
         println!("Python processing done, received {received} results");
     });
 
-    py_work_queue
+    (py_work_queue, collector_handle)
 }
 
 #[test]
@@ -537,30 +567,32 @@ fn first_1000_pages_mt() {
     let pid = std::process::id();
     let temp_path = std::env::temp_dir().join(format!("wikiwho_test_{pid}.bin"));
     let result_dir = std::env::temp_dir().join(format!("wikiwho_test_{pid}_results"));
-    let cleanup_path = temp_path.clone();
-    let cleanup_result_dir = result_dir.clone();
+    let _cleanup = TempArtifacts {
+        file: temp_path.clone(),
+        result_dir: result_dir.clone(),
+    };
 
     // pre-create temp file and result directory
     File::create(&temp_path).unwrap();
     std::fs::create_dir_all(&result_dir).unwrap();
 
     // python process — returns the work queue for the producer to feed
-    let (py_work_queue, py_receiver) = {
+    let (py_work_queue, py_receiver, mut py_collector_handle) = {
         let (result_sender, result_receiver) = std::sync::mpsc::channel();
 
-        let work_queue =
+        let (work_queue, collector_handle) =
             Python::attach(|py| run_analysis_python_mt(py, result_sender, &temp_path, &result_dir));
 
-        (work_queue, result_receiver)
+        (work_queue, result_receiver, Some(collector_handle))
     };
 
     // rust thread
-    let (rust_sender, rust_receiver) = {
+    let (rust_sender, rust_receiver, mut rust_handle) = {
         let (work_sender, work_receiver) = std::sync::mpsc::channel::<PageRef>();
         let (result_sender, result_receiver) = std::sync::mpsc::channel();
         let rust_temp_path = temp_path.clone();
 
-        std::thread::spawn(move || {
+        let rust_handle = std::thread::spawn(move || {
             let mut file = File::open(&rust_temp_path).unwrap();
             let mut buf = Vec::new();
 
@@ -594,13 +626,14 @@ fn first_1000_pages_mt() {
             println!("Rust thread done, processed {processed} pages");
         });
 
-        (work_sender, result_receiver)
+        (work_sender, result_receiver, Some(rust_handle))
     };
 
     // parser/producer thread — serializes pages to temp file, sends PageRefs to Rust worker
     // and (offset, length) tuples to Python work queue (tiny GIL acquisitions)
-    std::thread::spawn(move || {
-        let mut file = File::create(&temp_path).unwrap();
+    let producer_temp_path = temp_path.clone();
+    let mut producer_handle = Some(std::thread::spawn(move || {
+        let mut file = File::create(&producer_temp_path).unwrap();
         let mut parser = DumpParser::new(BufReader::new(reader)).unwrap();
         let mut offset: u64 = 0;
         for _ in 0..PAGE_COUNT {
@@ -626,7 +659,7 @@ fn first_1000_pages_mt() {
         });
 
         println!("Producer thread done, wrote {PAGE_COUNT} pages to temp file");
-    });
+    }));
 
     // Main matching loop — polls both result channels, compares when both sides are ready.
     // Pages are re-read from the temp file on demand to avoid holding them in memory.
@@ -640,7 +673,7 @@ fn first_1000_pages_mt() {
         },
     }
 
-    let mut main_file = File::open(&cleanup_path).unwrap();
+    let mut main_file = File::open(&temp_path).unwrap();
     let mut main_buf = Vec::new();
     let read_page = |file: &mut File, buf: &mut Vec<u8>, page_ref: PageRef| -> Page {
         file.seek(SeekFrom::Start(page_ref.offset)).unwrap();
@@ -655,6 +688,12 @@ fn first_1000_pages_mt() {
     let mut compared = 0;
 
     loop {
+        // If a worker panics, abort immediately instead of waiting forever for
+        // channels or queues that may never be closed.
+        join_finished_thread(&mut producer_handle);
+        join_finished_thread(&mut rust_handle);
+        join_finished_thread(&mut py_collector_handle);
+
         if !rust_done {
             match rust_receiver.try_recv() {
                 Ok((key, page_ref, analysis_rust)) => {
@@ -712,11 +751,19 @@ fn first_1000_pages_mt() {
         std::thread::sleep(std::time::Duration::from_millis(20));
     }
 
+    if let Some(handle) = producer_handle.take() {
+        join_thread(handle);
+    }
+    if let Some(handle) = rust_handle.take() {
+        join_thread(handle);
+    }
+    if let Some(handle) = py_collector_handle.take() {
+        join_thread(handle);
+    }
+
     assert!(
         pending.is_empty(),
         "unmatched results: {:?}",
         pending.keys().collect::<Vec<_>>()
     );
-    let _ = std::fs::remove_file(&cleanup_path);
-    let _ = std::fs::remove_dir_all(&cleanup_result_dir);
 }
