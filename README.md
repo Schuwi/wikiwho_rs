@@ -21,7 +21,7 @@ A high-performance Rust implementation of the WikiWho algorithm for token-level 
 
 ## Motivation
 
-The original Python implementation of WikiWho could process about 300 pages in one to two minutes. In contrast, `wikiwho_rs` can process an entire German Wiktionary dump (approximately 1.3 million pages) in just 2 minutes using 8 processor cores. This performance boost makes large-scale authorship analysis feasible and efficient.
+The original Python implementation of WikiWho could process about 300 pages in one to two minutes. In contrast, `wikiwho_rs` can process an entire German Wiktionary dump (approximately 1.3 million pages) in just under 4 minutes using 8 processor cores. This performance boost makes large-scale authorship analysis feasible and efficient.
 
 </div>
 
@@ -286,6 +286,8 @@ Contributions are welcome! Here are some ways you can help:
 - **Feature Development**: Help implement new features like resumable parsing or configuration options.
 - **Parser Enhancements**: Work on separating the parser into its own crate or improving its capabilities.
 
+By submitting a contribution, you agree that your code will be licensed under this project’s license.
+
 ### Getting Started
 
 - Fork the repository: [wikiwho_rs GitHub](https://github.com/Schuwi/wikiwho_rs)
@@ -315,17 +317,11 @@ TMPDIR=/path/with/space cargo test --features python-diff
 - **Versioning**: Will follow semantic versioning. Expect potential breaking changes before reaching 1.0.0.
 - **Updates**: Development is on-demand. Regular maintenance depends on community interest and contributions.
 
-## TODO
-- [x] review public API
-- [ ] properly document code
-- [x] add proper readme
-- [ ] add performance comparison to python implementation
-
 </div>
 
 ## Acknowledgments
 
-This library was developed through a mix of hard work, creativity, and collaboration with various tools, including GitHub Copilot and ChatGPT. It has been an exciting journey filled with coding and brainstorming 💛.
+This library was developed through a mix of hard work, creativity, and collaboration with various tools, including GitHub Copilot, ChatGPT and Claude Code. It has been an exciting journey filled with coding and brainstorming 💛.
 
 Special thanks to the friendly guidance and support of ChatGPT along the way, helping with documentation and understanding the original implementation to make this library as robust and performant as possible.
 
@@ -335,9 +331,11 @@ This project is primarily licensed under the Mozilla Public License 2.0.
 
 However, parts of this project are derived from the
 [original `WikiWho` python implementation](https://github.com/wikiwho/WikiWho/), which is licensed
-under the MIT License. Thus for these parts of the project (as marked by the SPDX headers), the
-MIT License applies additionally.\
-This basically just means that the copyright notice in LICENSE-MIT must be preserved.
+under the MIT License. Thus for these parts of the project (as marked by the SPDX headers) the
+MIT License applies additionally.
+
+Generally the MIT license is more permissive than MPL2 though the MIT license terms
+and copyright notice must still be preserved.
 
 Wikimedia-derived statistical test fixtures, if present under `tests/statistics-data/article-cache/`,
 are data rather than code and are documented under that directory's attribution and licensing notes.
