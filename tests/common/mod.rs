@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MPL-2.0
 //! All tests need to be run in a Python venv that has installed the `requirements.txt`!
 #![allow(unused)]
+#![cfg(feature = "python-diff")]
 
 use chrono::DateTime;
 use memchr::memmem::Finder;
@@ -22,6 +23,7 @@ pub mod prelude {
     pub(crate) use pyo3::prelude::*;
 }
 
+#[cfg(feature = "serde")]
 pub use delta_debugging::delta_debug_texts;
 
 macro_rules! with_gil {
@@ -294,6 +296,7 @@ if '' not in sys.path:
 }
 
 #[allow(clippy::useless_conversion)] // pyo3 proc macros generate identity conversions for PyErr
+#[cfg(feature = "serde")]
 pub mod output_structs {
     use super::*;
     use pyo3::{
@@ -568,6 +571,7 @@ pub mod output_structs {
 }
 
 #[allow(clippy::useless_conversion)] // pyo3 proc macros generate identity conversions for PyErr
+#[cfg(feature = "serde")]
 pub mod input_structs {
     use super::*;
     use pyo3::prelude::*;
@@ -831,6 +835,7 @@ pub mod proptest_support {
     }
 }
 
+#[cfg(feature = "serde")]
 pub mod delta_debugging {
     use std::collections::HashSet;
 

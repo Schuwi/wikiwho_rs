@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: MPL-2.0
+#![cfg(feature = "serde")] // needed for JSON cache path
 
 use std::{
     collections::HashMap,

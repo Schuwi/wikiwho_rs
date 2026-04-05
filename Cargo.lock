@@ -1250,7 +1250,6 @@ dependencies = [
  "thiserror",
  "tracing",
  "unicode-case-mapping",
- "wikiwho",
  "yoke",
  "zstd",
 ]

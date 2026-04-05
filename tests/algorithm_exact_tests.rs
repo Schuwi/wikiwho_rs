@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MPL-2.0
 // it only makes sense to compare the algorithm to python if the same diff algorithm is used
-#![cfg(feature = "python-diff")]
+#![cfg(all(feature = "python-diff", feature = "serde"))]
 
 use std::{
     collections::HashMap,
@@ -443,7 +443,7 @@ use common::delta_debug_texts;
 use crate::common::output_structs::page_analysis_from_wikiwho;
 
 #[test]
-#[ignore] // this "test" takes very long and is only useful for focus debugging
+#[ignore = "not really a test but a debugging helper; very slow"]
 fn simplify_bad_example_anontalkpagetext() {
     let reader = BufReader::new(
         File::open(format!(
@@ -492,8 +492,7 @@ fn known_bad_example_hallo() {
 }
 
 #[test]
-// expensive test
-#[ignore]
+#[ignore = "expensive test"]
 fn big_history_wunschliste() {
     let reader = common::open_test_dump();
     // Wiktionary:Wunschliste
@@ -505,8 +504,7 @@ fn big_history_wunschliste() {
 }
 
 #[test]
-// expensive test
-#[ignore]
+#[ignore = "expensive test"]
 fn big_history_teestube() {
     let reader = common::open_test_dump();
     // Wiktionary:Teestube
@@ -529,8 +527,7 @@ fn random_pages_100() {
 }
 
 #[test]
-// this test takes quite some time and quite a lot of memory (~25GB); could be optimized further if needed
-#[ignore]
+#[ignore = "takes quite some time and quite a lot of memory (~25GB); could be optimized further if needed"]
 fn first_1000_pages_mt() {
     const PAGE_COUNT: usize = 1000;
 

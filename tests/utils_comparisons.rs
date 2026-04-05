@@ -1,3 +1,5 @@
+#![cfg(feature = "python-diff")]
+
 mod common;
 
 use common::prelude::*;
