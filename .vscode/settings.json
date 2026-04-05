@@ -1,5 +1,3 @@
 {
-    "rust-analyzer.cargo.features": [
-        "python-diff"
-    ],
+    "rust-analyzer.cargo.features": "all",
 }
