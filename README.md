@@ -48,10 +48,8 @@ use std::fs::File;
 use std::io::BufReader;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    // Open a compressed XML dump file
-    let xml_dump =
-        File::open("dev-data/reference-dumps/dewiktionary-20240901-pages-meta-history.xml.zst")?;
-    let reader = BufReader::new(zstd::stream::Decoder::new(xml_dump)?);
+    let xml_dump = File::open("path/to/pages-meta-history.xml")?;
+    let reader = BufReader::new(xml_dump);
     let mut parser = DumpParser::new(reader)?;
 
     // Parse a single page
@@ -90,9 +88,8 @@ use std::fs::File;
 use std::io::BufReader;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let xml_dump =
-        File::open("dev-data/reference-dumps/dewiktionary-20240901-pages-meta-history.xml.zst")?;
-    let reader = BufReader::new(zstd::stream::Decoder::new(xml_dump)?);
+    let xml_dump = File::open("path/to/pages-meta-history.xml")?;
+    let reader = BufReader::new(xml_dump);
     let mut parser = DumpParser::new(reader)?;
 
     while let Some(page) = parser.parse_page()? {
@@ -125,9 +122,8 @@ use std::sync::{mpsc::channel, Arc, Mutex};
 use std::thread;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let xml_dump =
-        File::open("dev-data/reference-dumps/dewiktionary-20240901-pages-meta-history.xml.zst")?;
-    let reader = BufReader::new(zstd::stream::Decoder::new(xml_dump)?);
+    let xml_dump = File::open("path/to/pages-meta-history.xml")?;
+    let reader = BufReader::new(xml_dump);
     let mut parser = DumpParser::new(reader)?;
 
     // Channel to send pages to worker threads
