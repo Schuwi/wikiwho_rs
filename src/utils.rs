@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MPL-2.0
-use imara_diff::intern::{Interner, Token};
+use imara_diff::{Interner, Token};
 use regex::Regex;
 
 use std::{borrow::Cow, fmt::Debug, sync::Arc};
@@ -180,6 +180,16 @@ pub fn to_lowercase(
     input: &str,
     #[allow(unused)] analysis_options: PageAnalysisOptions,
 ) -> (usize, String) {
+    #[cfg(feature = "python-diff")]
+    {
+        // When comparing against the Python reference implementation, use Python's
+        // Unicode tables for non-ASCII lowercasing so exact-equivalence tests stay
+        // stable even when Rust and Python are built against different Unicode versions.
+        if analysis_options.use_python_diff && !input.is_ascii() {
+            return python_lowercase(input);
+        }
+    }
+
     #[cfg(feature = "optimized-lowercase")]
     {
         if analysis_options.optimize_non_ascii {
@@ -195,6 +205,20 @@ pub fn to_lowercase(
         let lowercase = input.to_lowercase();
         (lowercase.chars().count(), lowercase)
     }
+}
+
+#[cfg(feature = "python-diff")]
+fn python_lowercase(input: &str) -> (usize, String) {
+    use pyo3::{prelude::*, types::PyString};
+
+    Python::attach(|py| {
+        let lowercase: String = PyString::new(py, input)
+            .call_method0("lower")
+            .unwrap()
+            .extract()
+            .unwrap();
+        (lowercase.chars().count(), lowercase)
+    })
 }
 
 #[doc(hidden)] /* only public for benchmarking */
@@ -362,28 +386,28 @@ pub(crate) fn python_diff(
         types::{PyList, PyString},
     };
 
-    Python::with_gil(|py| {
-        let builtins = py.import_bound("builtins").unwrap();
-        let difflib = py.import_bound("difflib").unwrap();
+    Python::attach(|py| {
+        let builtins = py.import("builtins").unwrap();
+        let difflib = py.import("difflib").unwrap();
         let differ = difflib.getattr("Differ").unwrap().call0().unwrap();
 
         // we can't just use the token indices converted to string instead of the literal text
         // if we want to reproduce the original behavior because the diff algorithm
         // is content-aware due to a "junk" metric
-        let old = PyList::new_bound(py, old.iter().map(|&token| interner[token].as_str()));
-        let new = PyList::new_bound(py, new.iter().map(|&token| interner[token].as_str()));
+        let old = PyList::new(py, old.iter().map(|&token| interner[token].as_str())).unwrap();
+        let new = PyList::new(py, new.iter().map(|&token| interner[token].as_str())).unwrap();
 
         let diff = differ.call_method1("compare", (old, new)).unwrap();
         let diff = builtins
             .call_method1("list", (diff,))
             .unwrap()
-            .downcast_into::<PyList>()
+            .cast_into::<PyList>()
             .unwrap();
 
         let mut result = Vec::new();
         let mut temporary_source = Arc::new(String::new());
         for item in diff.iter() {
-            let diff_item = item.downcast::<PyString>().unwrap();
+            let diff_item = item.cast::<PyString>().unwrap();
             let diff_item = diff_item.to_str().unwrap();
 
             let tag = match diff_item.chars().next().unwrap() {

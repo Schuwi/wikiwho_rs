@@ -5,9 +5,9 @@ mod common;
 use common::prelude::*;
 
 fn call_split_fn_py(py: Python<'_>, input: &str, fn_name: &str) -> Vec<String> {
-    let builtins = py.import_bound("builtins").unwrap();
+    let builtins = py.import("builtins").unwrap();
     let split_fn = py
-        .import_bound("WikiWho.utils")
+        .import("WikiWho.utils")
         .unwrap()
         .getattr(fn_name)
         .unwrap();
@@ -71,7 +71,7 @@ proptest! {
 // individual test cases found by proptest for closer inspection
 #[test]
 fn test_case_1() {
-    Python::with_gil(|py| {
+    Python::attach(|py| {
         let tokens_rust = wikiwho::utils::split_into_tokens_naive("®\u{2000}￼");
         let tokens_py = call_split_fn_py(py, "®\u{2000}￼", "split_into_tokens");
 

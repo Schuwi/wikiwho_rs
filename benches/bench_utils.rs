@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MPL-2.0
 use criterion::{criterion_group, criterion_main, BenchmarkId, Criterion};
-use rand::{Rng, SeedableRng};
+use rand::{RngExt, SeedableRng};
 use wikiwho::{optimized_str, utils};
 
 fn generate_input_split_into_paragraphs(length: u64) -> String {
@@ -16,12 +16,12 @@ fn generate_input_split_into_paragraphs(length: u64) -> String {
         "\r", "\n", "\r\n", "\n\n", "{|", "|}", "|-\n", "<table>", "</table>", "<tr>", "</tr>",
     ];
     for _ in 0..(length / 10) {
-        let mut pos = rng.gen_range(0..input.len());
+        let mut pos = rng.random_range(0..input.len());
         while !input.is_char_boundary(pos) {
-            pos = rng.gen_range(0..input.len());
+            pos = rng.random_range(0..input.len());
         }
 
-        let value = VALUES[rng.gen_range(0..VALUES.len())];
+        let value = VALUES[rng.random_range(0..VALUES.len())];
         input.insert_str(pos, value);
     }
 
@@ -60,12 +60,12 @@ fn generate_input_split_into_sentences(length: u64) -> String {
         " ", "\n", ". ", ", ", "; ", ": ", "? ", "! ", "//", "http", "<!--", "-->", "<ref", "/ref>",
     ];
     for _ in 0..(length / 10) {
-        let mut pos = rng.gen_range(0..input.len());
+        let mut pos = rng.random_range(0..input.len());
         while !input.is_char_boundary(pos) {
-            pos = rng.gen_range(0..input.len());
+            pos = rng.random_range(0..input.len());
         }
 
-        let value = VALUES[rng.gen_range(0..VALUES.len())];
+        let value = VALUES[rng.random_range(0..VALUES.len())];
         input.insert_str(pos, value);
     }
 
@@ -109,12 +109,12 @@ fn generate_input_split_into_tokens(length: u64) -> String {
         "»", "«", "”", "÷", "×", "′", "″", "‴", "¡", "¿", "©", "℗", "®", "℠", "™",
     ];
     for _ in 0..(length / 10) {
-        let mut pos = rng.gen_range(0..input.len());
+        let mut pos = rng.random_range(0..input.len());
         while !input.is_char_boundary(pos) {
-            pos = rng.gen_range(0..input.len());
+            pos = rng.random_range(0..input.len());
         }
 
-        let value = VALUES[rng.gen_range(0..VALUES.len())];
+        let value = VALUES[rng.random_range(0..VALUES.len())];
         input.insert_str(pos, value);
     }
 
@@ -142,7 +142,7 @@ fn generate_input_to_lowercase(ascii_ratio: f32) -> String {
     let mut input = String::new();
     for _ in 0..LENGTH {
         if rng.gen::<f32>() < ascii_ratio {
-            input.push(rng.gen_range(0u8..0x80u8) as char);
+            input.push(rng.random_range(0u8..0x80u8) as char);
         } else {
             input.push(rng.gen());
         }

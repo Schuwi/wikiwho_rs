@@ -10,7 +10,7 @@ pub use types::*;
 #[cfg(feature = "serde")]
 mod serde_impl;
 
-use imara_diff::intern::Interner;
+use imara_diff::Interner;
 use rustc_hash::{FxHashMap, FxHashSet};
 
 use crate::{

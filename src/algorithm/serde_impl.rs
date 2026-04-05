@@ -79,8 +79,7 @@ mod vec_arc_string {
 
     pub fn serialize<S: serde::Serializer>(
         // this is a special case since we are matching the `source_strings` field type
-        #[allow(clippy::ptr_arg)]
-        obj: &Vec<Arc<String>>,
+        #[allow(clippy::ptr_arg)] obj: &Vec<Arc<String>>,
         serializer: S,
     ) -> Result<S::Ok, S::Error> {
         serializer.collect_seq(obj.iter().map(|s| s.as_str()))
@@ -436,6 +435,16 @@ mod tests {
     use compact_str::CompactString;
     use std::sync::Arc;
 
+    fn bincode_serialize<T: serde::Serialize>(value: &T) -> Vec<u8> {
+        bincode::serde::encode_to_vec(value, bincode::config::standard()).unwrap()
+    }
+
+    fn bincode_deserialize<T: serde::de::DeserializeOwned>(bytes: &[u8]) -> T {
+        bincode::serde::decode_from_slice(bytes, bincode::config::standard())
+            .map(|(value, _)| value)
+            .expect("deserialize")
+    }
+
     fn make_revision(id: i32, text: &str) -> Revision {
         Revision {
             id,
@@ -726,8 +735,8 @@ mod tests {
     #[test]
     fn test_roundtrip_bincode() {
         let pa = build_test_page_analysis();
-        let bytes = bincode::serialize(&pa).expect("serialize");
-        let deser: PageAnalysis = bincode::deserialize(&bytes).expect("deserialize");
+        let bytes = bincode_serialize(&pa);
+        let deser: PageAnalysis = bincode_deserialize(&bytes);
         assert_roundtrip_eq(&pa, &deser);
     }
 

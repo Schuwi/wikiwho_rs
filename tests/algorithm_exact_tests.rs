@@ -9,7 +9,7 @@ use std::{
     sync::mpsc::Sender,
 };
 
-use pyo3::{import_exception, types::PyDict};
+use pyo3::{import_exception, types::PyDict, IntoPyObjectExt};
 
 use wikiwho::{
     algorithm::{AnalysisError, PageAnalysis, PageAnalysisOptions},
@@ -20,7 +20,7 @@ mod common;
 
 use common::input_structs;
 use common::output_structs::serialize_wikiwho_result;
-use common::{load_local_module, prelude::*};
+use common::{bincode_deserialize, bincode_serialize, load_local_module, prelude::*};
 
 const ANALYSIS_OPTIONS_PY: PageAnalysisOptions = PageAnalysisOptions::new().use_python_diff();
 const EXACT_REGRESSION_FIXTURE_DIR: &str = "tests/fixtures/exact-regressions";
@@ -33,11 +33,13 @@ struct PageRef {
 
 fn run_analysis_python(py: Python<'_>, page: &Page) -> PageAnalysis {
     let page_py = input_structs::PyPage::from_page(page);
-    let locals = PyDict::new_bound(py);
-    locals.set_item("page", page_py.into_py(py)).unwrap();
+    let locals = PyDict::new(py);
+    locals
+        .set_item("page", page_py.into_py_any(py).unwrap())
+        .unwrap();
 
-    py.run_bound(
-        "
+    py.run(
+        c"
 from WikiWho.wikiwho import Wikiwho
 
 wikiwho = Wikiwho('') # title is not relevant for algorithm behavior
@@ -93,7 +95,7 @@ fn run_analysis_python_mt(
             result_dir.to_str().unwrap(),
         ))
         .unwrap()
-        .downcast_into::<PyDict>()
+        .cast_into::<PyDict>()
         .unwrap();
 
     let py_work_queue = result.get_item("work_receiver").unwrap().unwrap().unbind();
@@ -113,14 +115,14 @@ fn run_analysis_python_mt(
             // Acquire the GIL only to extract a small metadata tuple.
             // Queue.get(timeout) releases the GIL internally while waiting.
             let item =
-                Python::with_gil(
+                Python::attach(
                     |py| match py_result_queue.call_method1(py, "get", (0.5f64,)) {
                         Ok(obj) => {
                             if obj.extract::<String>(py).ok().as_deref() == Some("close") {
                                 return Ok(None);
                             }
                             let py_result: &pyo3::Bound<'_, pyo3::types::PyTuple> =
-                                obj.downcast_bound(py).unwrap();
+                                obj.cast_bound(py).unwrap();
                             let key: String = py_result.get_item(0).unwrap().extract().unwrap();
                             let path: String = py_result.get_item(1).unwrap().extract().unwrap();
                             let offset: u64 = py_result.get_item(2).unwrap().extract().unwrap();
@@ -155,7 +157,7 @@ fn run_analysis_python_mt(
                     }
 
                     result_sender
-                        .send((key, bincode::deserialize(&result_buffer).unwrap()))
+                        .send((key, bincode_deserialize(&result_buffer).unwrap()))
                         .unwrap();
                 }
                 Ok(None) => break,
@@ -171,7 +173,7 @@ fn run_analysis_python_mt(
 #[test]
 fn test_case_1() {
     // found by proptest
-    Python::with_gil(|py| {
+    Python::attach(|py| {
         let page = Page {
             title: "Test".into(),
             namespace: 0,
@@ -546,9 +548,8 @@ fn first_1000_pages_mt() {
     let (py_work_queue, py_receiver) = {
         let (result_sender, result_receiver) = std::sync::mpsc::channel();
 
-        let work_queue = Python::with_gil(|py| {
-            run_analysis_python_mt(py, result_sender, &temp_path, &result_dir)
-        });
+        let work_queue =
+            Python::attach(|py| run_analysis_python_mt(py, result_sender, &temp_path, &result_dir));
 
         (work_queue, result_receiver)
     };
@@ -570,7 +571,7 @@ fn first_1000_pages_mt() {
                 file.seek(SeekFrom::Start(page_ref.offset)).unwrap();
                 buf.resize(page_ref.length as usize, 0);
                 file.read_exact(&mut buf).unwrap();
-                let page: Page = bincode::deserialize(&buf).unwrap();
+                let page: Page = bincode_deserialize(&buf).unwrap();
                 let key = format!("{}:{}", page.namespace, page.title);
                 let analysis =
                     PageAnalysis::analyse_page_with_options(&page.revisions, ANALYSIS_OPTIONS_PY)
@@ -604,13 +605,13 @@ fn first_1000_pages_mt() {
         let mut offset: u64 = 0;
         for _ in 0..PAGE_COUNT {
             let page = parser.parse_page().unwrap().unwrap();
-            let bytes = bincode::serialize(&page).unwrap();
+            let bytes = bincode_serialize(&page);
             let length = bytes.len() as u64;
             file.write_all(&bytes).unwrap();
             let page_ref = PageRef { offset, length };
             rust_sender.send(page_ref).unwrap();
             // Send tiny (offset, length) tuple to Python — minimal GIL time
-            Python::with_gil(|py| {
+            Python::attach(|py| {
                 py_work_queue
                     .call_method1(py, "put_nowait", ((offset, length),))
                     .unwrap();
@@ -618,7 +619,7 @@ fn first_1000_pages_mt() {
             offset += length;
         }
         // Signal end of work to Python pool
-        Python::with_gil(|py| {
+        Python::attach(|py| {
             py_work_queue
                 .call_method1(py, "put_nowait", (py.None(),))
                 .unwrap();
@@ -645,7 +646,7 @@ fn first_1000_pages_mt() {
         file.seek(SeekFrom::Start(page_ref.offset)).unwrap();
         buf.resize(page_ref.length as usize, 0);
         file.read_exact(buf).unwrap();
-        bincode::deserialize(buf).unwrap()
+        bincode_deserialize(buf).unwrap()
     };
 
     let mut pending: HashMap<String, PendingResult> = HashMap::new();

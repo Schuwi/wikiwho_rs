@@ -9,7 +9,7 @@ use std::{
 
 use compact_str::CompactString;
 use quick_xml::events::{BytesEnd, BytesStart};
-use rand::Rng;
+use rand::RngExt;
 use tracing::instrument;
 
 // we normally don't retrieve the value of the tags, so this is the most efficient backend
@@ -622,7 +622,7 @@ impl<R: BufRead> DumpParser<R> {
                     self.current_path.pop();
                 }
                 quick_xml::events::Event::Text(e) => {
-                    let text = e.unescape()?;
+                    let text = e.decode().map_err(quick_xml::Error::from)?;
 
                     use Tag::*;
 
@@ -762,7 +762,7 @@ impl<R: BufRead> DumpParser<R> {
                     self.current_path.pop();
                 }
                 quick_xml::events::Event::Text(e) => {
-                    let text = e.unescape()?;
+                    let text = e.decode().map_err(quick_xml::Error::from)?;
 
                     use Tag::*;
 
@@ -812,7 +812,7 @@ impl<R: BufRead> DumpParser<R> {
                                         position = self.xml_parser.buffer_position()
                                     );
                                     // always use negative ids for invalid ids
-                                    Some(rand::thread_rng().gen_range(i32::MIN..-100))
+                                    Some(rand::rng().random_range(i32::MIN..-100))
                                 };
                             }
                         }

@@ -5,7 +5,7 @@
 
 use chrono::DateTime;
 use memchr::memmem::Finder;
-use rand::{seq::SliceRandom, SeedableRng};
+use rand::{prelude::IndexedRandom, seq::SliceRandom, SeedableRng};
 use std::{
     collections::HashMap,
     fs::File,
@@ -28,7 +28,7 @@ pub use delta_debugging::delta_debug_texts;
 
 macro_rules! with_gil {
     ($py: ident, $body: expr) => {{
-        let result = Python::with_gil(|$py| {
+        let result = Python::attach(|$py| {
             let _: () = $body;
             Ok(())
         });
@@ -40,6 +40,18 @@ macro_rules! with_gil {
     }};
 }
 pub(crate) use with_gil;
+
+#[cfg(feature = "serde")]
+pub(crate) fn bincode_serialize<T: serde::Serialize>(value: &T) -> Vec<u8> {
+    bincode::serde::encode_to_vec(value, bincode::config::standard()).unwrap()
+}
+
+#[cfg(feature = "serde")]
+pub(crate) fn bincode_deserialize<T: serde::de::DeserializeOwned>(
+    bytes: &[u8],
+) -> Result<T, bincode::error::DecodeError> {
+    bincode::serde::decode_from_slice(bytes, bincode::config::standard()).map(|(value, _)| value)
+}
 
 pub fn dummy_revision() -> Revision {
     Revision {
@@ -121,7 +133,7 @@ pub fn pick_n_random_pages<P: PageRepresentation, R: std::io::Read>(
 
     /* define specific algorithm to ensure reproducibility */
     let mut rng = rand_xoshiro::Xoshiro256PlusPlus::seed_from_u64(seed);
-    let mut chosen_offsets: Vec<_> = page_starts.choose_multiple(&mut rng, n).copied().collect();
+    let mut chosen_offsets: Vec<_> = page_starts.sample(&mut rng, n).copied().collect();
     chosen_offsets.sort_unstable();
 
     // Second pass: parse the chosen pages
@@ -281,8 +293,8 @@ impl PageRepresentation for Vec<u8> {
 
 pub fn load_local_module<'a>(py: Python<'a>, module_name: &str) -> PyResult<Bound<'a, PyModule>> {
     // make sure the current directory is in sys.path
-    py.run_bound(
-        "
+    py.run(
+        c"
 import sys
 if '' not in sys.path:
     sys.path.append('')
@@ -291,7 +303,7 @@ if '' not in sys.path:
         None,
     )?;
 
-    let module = PyModule::import_bound(py, module_name)?;
+    let module = PyModule::import(py, module_name)?;
     Ok(module)
 }
 
@@ -315,15 +327,15 @@ pub mod output_structs {
         py_wikiwho: &Bound<'a, PyAny>,
         page_bincode: &Bound<'a, PyBytes>,
     ) -> PyResult<Bound<'a, PyBytes>> {
-        let page: Page = bincode::deserialize(page_bincode.as_bytes()).map_err(|err| {
+        let page: Page = bincode_deserialize(page_bincode.as_bytes()).map_err(|err| {
             pyo3::exceptions::PyValueError::new_err(format!(
                 "Invalid page_bincode. Expected bincode-serialized Page. Error: {err}"
             ))
         })?;
 
         let page_analysis = page_analysis_from_wikiwho(py_wikiwho, &page)?;
-        let serialized = bincode::serialize(&page_analysis).unwrap();
-        Ok(PyBytes::new_bound(py_wikiwho.py(), &serialized))
+        let serialized = bincode_serialize(&page_analysis);
+        Ok(PyBytes::new(py_wikiwho.py(), &serialized))
     }
 
     pub fn page_analysis_from_wikiwho(
@@ -332,12 +344,15 @@ pub mod output_structs {
     ) -> PyResult<PageAnalysis> {
         // iterate over values in Python dict like this: {_key: [value, ..], ...}
         // calls closure with unique Python object id of each `value` and extracted `value` (`T`)
-        fn py_iter_ht<'a, T: FromPyObject<'a>>(
-            hashtable: &Bound<'a, PyDict>,
+        fn py_iter_ht<T>(
+            hashtable: &Bound<'_, PyDict>,
             mut f: impl FnMut(usize, T) -> PyResult<()>,
-        ) -> PyResult<()> {
+        ) -> PyResult<()>
+        where
+            T: for<'a, 'py> FromPyObject<'a, 'py, Error = PyErr>,
+        {
             for (_hash, list) in hashtable.iter() {
-                let list: Bound<PyList> = list.downcast_into()?;
+                let list: Bound<PyList> = list.cast_into()?;
 
                 for obj in list.iter() {
                     let obj_id = obj.as_ptr().addr();
@@ -443,7 +458,7 @@ pub mod output_structs {
                             "Hash {hash} not found in hashtable"
                         ))
                     })?
-                    .downcast_into()?;
+                    .cast_into()?;
 
                 // if there are multiple children with the same hash, then they are ordered by
                 // appearance in the ordered list and we can disambiguate them by counting
@@ -574,7 +589,7 @@ pub mod output_structs {
 #[cfg(feature = "serde")]
 pub mod input_structs {
     use super::*;
-    use pyo3::prelude::*;
+    use pyo3::{prelude::*, IntoPyObjectExt};
 
     macro_rules! with_pickle_functions {
         (#[pymethods] impl $name:ident { $($other:tt)* }) => {
@@ -585,22 +600,22 @@ pub mod input_structs {
                     Self::default()
                 }
 
-                pub fn __getstate__(&self, py: Python) -> PyResult<PyObject> {
-                    Ok(pyo3::types::PyBytes::new_bound(py, &bincode::serialize(self).unwrap()).into())
+                pub fn __getstate__(&self, py: Python) -> PyResult<Py<PyAny>> {
+                    Ok(pyo3::types::PyBytes::new(py, &bincode_serialize(self)).into_any().unbind())
                 }
 
-                pub fn __setstate__(&mut self, _py: Python, state: PyObject) -> PyResult<()> {
+                pub fn __setstate__(&mut self, _py: Python, state: Py<PyAny>) -> PyResult<()> {
                     let state = state.extract::<&[u8]>(_py).unwrap();
-                    *self = bincode::deserialize(state).unwrap();
+                    *self = bincode_deserialize(state).unwrap();
                     Ok(())
                 }
 
-                pub fn __reduce__(slf: &pyo3::Bound<Self>) -> PyResult<PyObject> {
+                pub fn __reduce__(slf: &pyo3::Bound<Self>) -> PyResult<Py<PyAny>> {
                     let py = slf.py();
                     let state = slf.borrow().__getstate__(py)?;
                     let cls = slf.get_type();
                     let new_fn = cls.getattr(pyo3::intern!(py, "__new__"))?;
-                    Ok((new_fn, (cls,), state).into_py(py))
+                    (new_fn, (cls,), state).into_py_any(py)
                 }
 
                 $(
@@ -610,7 +625,7 @@ pub mod input_structs {
         }
     }
 
-    #[pyclass(module = "tests.support")]
+    #[pyclass(module = "tests.support", from_py_object)]
     #[derive(Clone, Default, serde::Serialize, serde::Deserialize)]
     pub struct PyDeleted(bool);
 
@@ -630,7 +645,7 @@ pub mod input_structs {
         }
     }
 
-    #[pyclass(module = "tests.support")]
+    #[pyclass(module = "tests.support", from_py_object)]
     #[derive(Clone, Default, serde::Serialize, serde::Deserialize)]
     pub struct PyTimestamp;
 
@@ -644,7 +659,7 @@ pub mod input_structs {
         }
     }
 
-    #[pyclass(module = "tests.support")]
+    #[pyclass(module = "tests.support", from_py_object)]
     #[derive(Clone, Default, serde::Serialize, serde::Deserialize)]
     pub struct PyRevision {
         #[pyo3(get)]
@@ -696,7 +711,7 @@ pub mod input_structs {
         }
     }
 
-    #[pyclass(module = "tests.support")]
+    #[pyclass(module = "tests.support", from_py_object)]
     #[derive(Clone, Default, serde::Serialize, serde::Deserialize)]
     pub struct PyPage {
         #[pyo3(get)]
@@ -713,12 +728,12 @@ pub mod input_structs {
                 let py = this.py();
                 let revisions = this.borrow().revisions.clone();
 
-                revisions.into_py(py).bind(py).call_method0("__iter__")
+                revisions.into_bound_py_any(py)?.call_method0("__iter__")
             }
 
             #[staticmethod]
             fn from_bincode(state: &[u8]) -> PyResult<Self> {
-                let page: wikiwho::dump_parser::Page = match bincode::deserialize(state) {
+                let page: wikiwho::dump_parser::Page = match bincode_deserialize(state) {
                     Ok(page) => page,
                     Err(err) => return Err(pyo3::exceptions::PyValueError::new_err(
                         format!("Invalid state for PyPage. Expected bincode-serialized Page. Error: {err}"),
