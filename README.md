@@ -289,7 +289,7 @@ This is only beneficial for text where a significant portion of characters are n
 
 CI runs on GitHub Actions (`.github/workflows/`):
 
-- **`ci.yml`** (every push to `main` and every PR): `rustfmt`, Clippy across feature combinations (`-D warnings`), `cargo test --lib` + doc-tests, docs with warnings as errors, an MSRV check (Rust 1.94.1), coverage via `cargo-llvm-cov` (uploaded to Codecov), `cargo package`, a **SemVer check** (`cargo-semver-checks` over `--all-features` vs the latest crates.io release), and — the headline job — **deterministic parity against the reference Python WikiWho** (`algorithm_exact_tests`). Pull requests run parity against a small committed dump subset; pushes to `main` additionally fetch the full dump for deeper real-page parity.
+- **`ci.yml`** (every push to `main` and every PR): `rustfmt`, Clippy across feature combinations (`-D warnings`), `cargo test --lib` + doc-tests, docs with warnings as errors, an MSRV check (Rust 1.94.1), coverage via `cargo-llvm-cov` (uploaded to Codecov), `cargo package`, a **SemVer check** (`cargo-semver-checks` over `--all-features` vs the latest crates.io release), a **changelog check** (PRs must add an entry to `CHANGELOG.md`), and — the headline job — **deterministic parity against the reference Python WikiWho** (`algorithm_exact_tests`). Pull requests run parity against a small committed dump subset; pushes to `main` additionally fetch the full dump for deeper real-page parity.
   - The SemVer check enforces **continuous version bumping**: a PR that makes a breaking API change must bump `version` in `Cargo.toml` accordingly (for `0.x`, the minor field, e.g. `0.3.x` → `0.4.0`), or CI fails. Purely additive changes are not forced to bump.
 - **`fuzz.yml`** (weekly + manual): randomized property-test fuzzing of Rust-vs-Python parity. A failure uploads the discovered `*.proptest-regressions` seed so it can be committed as a permanent regression.
 - **`heavy.yml`** (manual only): big-history parity and the opt-in ~25 GB multithreaded parity test against the full dump.
@@ -338,6 +338,8 @@ By submitting a contribution, you agree that your code will be licensed under th
 
 - Fork the repository: [wikiwho_rs GitHub](https://github.com/Schuwi/wikiwho_rs)
 - Create a new branch for your feature or bug fix.
+- Add an entry under `## [Unreleased]` in [`CHANGELOG.md`](CHANGELOG.md) (Keep a Changelog format). CI enforces this; for changes that don't warrant an entry (CI, docs, refactors) a maintainer can apply the `skip-changelog` label.
+- If your change alters the public API in a breaking way, bump `version` in `Cargo.toml` (for `0.x`, the minor field) — the `semver` CI job checks this.
 - Submit a pull request with a clear description of your changes.
 
 ### Development Setup

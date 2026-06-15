@@ -15,8 +15,11 @@ e.g. `0.3.x` → `0.4.0`). So by the time you release, `main` already carries a 
 
 ## Procedure
 
-1. Ensure `CHANGELOG.md` is up to date for the release, and `version` in `Cargo.toml` is the
-   version to publish (it was bumped in whichever PR introduced the breaking change).
+1. In `CHANGELOG.md`, rename `## [Unreleased]` to `## [X.Y.Z] - YYYY-MM-DD`, add a fresh empty
+   `## [Unreleased]` above it, and update the link refs at the bottom (point `[unreleased]` at
+   `compare/vX.Y.Z...HEAD` and add `[X.Y.Z]`). The `[Unreleased]` entries were filled in per PR
+   (enforced by ci.yml's `changelog` job). Ensure `version` in `Cargo.toml` is the version to
+   publish (bumped in whichever PR introduced the breaking change).
 2. Merge to `main` and wait for CI (`ci.yml`) to go green.
 3. Tag that commit and push the tag:
    ```sh
@@ -123,6 +126,8 @@ detection and forensics, not revocation.
 - **Immutable releases** enabled (repo/org setting). Verification by tag name depends on this; if
   it is ever disabled, fall back to pinning the commit (`--source-digest`, read from the
   attestation certificate or the crate's `.cargo_vcs_info.json`).
+- A **`skip-changelog`** label, for PRs that don't warrant a `CHANGELOG.md` entry (the `changelog`
+  CI job is skipped when it's present; Dependabot PRs are exempt automatically via the actor check).
 
 ## Possible future additions
 
