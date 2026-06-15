@@ -1,0 +1,94 @@
+name: Verify release
+
+# Runs automatically after a successful Release workflow run (post-release smoke test) and
+# can also be triggered manually for ad-hoc verification of any already-published tag.
+#
+# Mirrors the consumer verification steps from the README: download the .crate from crates.io,
+# run `gh attestation verify` with the same pinned identity a consumer would use.
+# Then cross-checks the SHA256 of that download against the release asset we attached during
+# the release — catching any byte-level divergence between the crates.io upload and what
+# `cargo package` produced (the artifact we attested).
+on:
+  workflow_run:
+    workflows: [Release]
+    types: [completed]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Tag to verify (e.g. v0.3.3)"
+        required: true
+        type: string
+
+permissions:
+  attestations: read
+  contents: read # gh release download
+
+jobs:
+  verify:
+    name: verify crates.io attestation
+    runs-on: ubuntu-latest
+    # For workflow_run: only proceed when the release actually succeeded.
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      github.event.workflow_run.conclusion == 'success'
+    steps:
+      - name: Resolve tag and version
+        id: ver
+        env:
+          # workflow_run: head_branch holds the tag name for tag-triggered workflows.
+          # workflow_dispatch: read from the manual input.
+          INPUT_TAG: ${{ inputs.tag }}
+          HEAD_BRANCH: ${{ github.event.workflow_run.head_branch }}
+        run: |
+          tag="${INPUT_TAG:-$HEAD_BRANCH}"
+          ver="${tag#v}"
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+          echo "ver=$ver" >> "$GITHUB_OUTPUT"
+          echo "Verifying release $tag (crate version $ver)"
+
+      # Mirror the README's consumer verification steps exactly.
+      - name: Download .crate from crates.io
+        env:
+          VER: ${{ steps.ver.outputs.ver }}
+        run: |
+          url="https://crates.io/api/v1/crates/wikiwho/${VER}/download"
+          echo "Downloading $url"
+          curl -fsSL "$url" -o "wikiwho-${VER}.crate"
+          echo "sha256: $(sha256sum "wikiwho-${VER}.crate" | cut -d' ' -f1)"
+
+      - name: Verify build-provenance attestation
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ steps.ver.outputs.tag }}
+          VER: ${{ steps.ver.outputs.ver }}
+        run: |
+          gh attestation verify "wikiwho-${VER}.crate" \
+            --repo "$GITHUB_REPOSITORY" \
+            --cert-identity "https://github.com/${GITHUB_REPOSITORY}/.github/workflows/release.yml@refs/tags/${TAG}" \
+            --deny-self-hosted-runners
+
+      # Cross-check: compare the crates.io download against the release asset we attached.
+      # `cargo package` is byte-for-byte deterministic per commit, so these MUST match.
+      # A mismatch would mean the crates.io upload diverged from what we attested — silent
+      # failure that this step is designed to catch.
+      - name: Cross-check release asset SHA vs crates.io download
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ steps.ver.outputs.tag }}
+          VER: ${{ steps.ver.outputs.ver }}
+        run: |
+          gh release download "$TAG" \
+            --repo "$GITHUB_REPOSITORY" \
+            --pattern "wikiwho-${VER}.crate" \
+            --output "release-asset.crate"
+          cio=$(sha256sum "wikiwho-${VER}.crate" | cut -d' ' -f1)
+          asset=$(sha256sum "release-asset.crate" | cut -d' ' -f1)
+          echo "crates.io sha256:      $cio"
+          echo "release asset sha256:  $asset"
+          if [ "$cio" = "$asset" ]; then
+            echo "Byte-for-byte match — crates.io upload equals the attested cargo package artifact."
+          else
+            echo "::error::SHA mismatch: crates.io=$cio  release-asset=$asset"
+            echo "::error::The crates.io upload does not match the release asset we attested."
+            exit 1
+          fi

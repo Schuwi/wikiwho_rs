@@ -88,33 +88,50 @@ jobs:
       # the tagged commit, so a version that understates the API change can't be released — and
       # this credentialed workflow stays leaner (one less third-party action, no Python).
 
+      # --- Build the one artifact we will publish, attach, AND attest. `cargo package` is
+      # byte-for-byte deterministic for a given commit: a clean `cargo package` of the tagged
+      # commit reproduces the exact bytes `cargo publish` uploads to crates.io (verified out of
+      # band). So attesting THIS local file is a true build-provenance claim over what we built,
+      # and it is identical to the crates.io download by construction — without trusting a
+      # re-download. We can't reuse this tarball for the upload (cargo has no such flag) and
+      # `cargo publish` does not persist its own copy, but it repackages the same bytes and leaves
+      # this file untouched. `--no-verify` here because `cargo publish` runs the verification build. ---
+      - name: Package
+        id: crate
+        run: |
+          cargo package --no-verify
+          meta=$(cargo metadata --no-deps --format-version=1)
+          name=$(echo "$meta" | jq -r '.packages[0].name')
+          ver=$(echo "$meta" | jq -r '.packages[0].version')
+          path="target/package/${name}-${ver}.crate"
+          test -f "$path" || { echo "::error::cargo package did not produce $path"; exit 1; }
+          sha256sum "$path"
+          echo "path=$path" >> "$GITHUB_OUTPUT"
+
       # --- Publish to crates.io via Trusted Publishing (OIDC): no CARGO_REGISTRY_TOKEN is
-      # stored anywhere. `cargo publish` runs a verification build and leaves the exact
-      # uploaded tarball in target/package/, which we then attest and attach — so the
-      # attestation subject, the release asset, and the crates.io bytes are identical by
-      # construction (no reliance on cargo packaging being byte-deterministic across runs). ---
+      # stored anywhere. Auth is obtained immediately before the (irreversible) upload. ---
       - name: Authenticate to crates.io (OIDC)
         id: auth
         uses: rust-lang/crates-io-auth-action@bbd81622f20ce9e2dd9622e3218b975523e45bbe # v1.0.4
 
       - name: Publish
-        run: cargo publish
+        run: cargo publish # repackages the same bytes + runs the verification build + uploads
         env:
           CARGO_REGISTRY_TOKEN: ${{ steps.auth.outputs.token }}
 
       # --- Create the immutable GitHub Release (after the crates.io publish succeeded). The repo
       # has immutable releases enabled, so publishing locks the tag to this commit (which is what
       # makes verification by tag name sound) and auto-generates a GitHub-signed release
-      # attestation over the asset digest. The exact tarball cargo publish uploaded (still in
-      # target/package/) is attached as an independent cross-link to the crates.io artifact;
-      # it is deliberately NOT the documented verification target (consumers verify the crates.io
-      # download — see README). Uses GitHub's recommended draft -> attach -> publish flow so the
-      # asset is in place before immutability locks. ---
+      # attestation over the asset digest. The packaged tarball (identical to the crates.io bytes)
+      # is attached as an independent cross-link to the crates.io artifact; it is deliberately NOT
+      # the documented verification target (consumers verify the crates.io download — see README).
+      # Uses GitHub's recommended draft -> attach -> publish flow so the asset is in place before
+      # immutability locks. ---
       - name: GitHub Release (immutable, with .crate cross-link)
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          gh release create "${GITHUB_REF_NAME}" target/package/*.crate \
+          gh release create "${GITHUB_REF_NAME}" "${{ steps.crate.outputs.path }}" \
             --draft --verify-tag --generate-notes
           gh release edit "${GITHUB_REF_NAME}" --draft=false
 
@@ -127,4 +144,4 @@ jobs:
       - name: Attest build provenance
         uses: actions/attest-build-provenance@a2bbfa25375fe432b6a289bc6b6cd05ecd0c4c32 # v4.1.0
         with:
-          subject-path: target/package/*.crate
+          subject-path: ${{ steps.crate.outputs.path }}
