@@ -317,6 +317,31 @@ gh attestation verify "wikiwho-$ver.crate" \
   --deny-self-hosted-runners
 ```
 
+A successful run looks like (digest and version tag will match your download):
+
+```
+Loaded digest sha256:24efbc63017eb2c7f0ca0086299752dfa3147d956b41ed0be726faf277b8ffd9 for file://wikiwho-0.3.3.crate
+Loaded 1 attestation from GitHub API
+
+The following policy criteria will be enforced:
+- Predicate type must match:..................... https://slsa.dev/provenance/v1
+- Source Repository Owner URI must match:........ https://github.com/Schuwi
+- Source Repository URI must match:.............. https://github.com/Schuwi/wikiwho_rs
+- Subject Alternative Name must match:........... https://github.com/Schuwi/wikiwho_rs/.github/workflows/release.yml@refs/tags/v0.3.3
+- OIDC Issuer must match:........................ https://token.actions.githubusercontent.com
+- Action workflow Runner Environment must match : github-hosted
+
+✓ Verification succeeded!
+
+The following 1 attestation matched the policy criteria
+
+- Attestation #1
+  - Build repo:..... Schuwi/wikiwho_rs
+  - Build workflow:. .github/workflows/release.yml@refs/tags/v0.3.3
+  - Signer repo:.... Schuwi/wikiwho_rs
+  - Signer workflow: .github/workflows/release.yml@refs/tags/v0.3.3
+```
+
 `gh` fetches the attestation from GitHub by the file's content digest (crates.io does not serve it), so this **fails if the crates.io bytes were not built by this repo's release workflow** — including anything published out-of-band. The two pins check the signing certificate, the only part of an attestation a compromised build cannot forge:
 
 - `--cert-identity` — the exact build identity: produced by `release.yml` **at the `vX.Y.Z` tag**. Because this repo uses [immutable releases](https://docs.github.com/en/code-security/concepts/supply-chain-security/immutable-releases), that tag is permanently locked to one commit, so pinning the tag also pins the source — no commit hash to look up. (`--repo` alone would accept an attestation from any workflow in the repo; this pins the workflow path *and* ref, which is also the build-signer identity.)
