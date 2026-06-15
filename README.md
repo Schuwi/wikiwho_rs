@@ -305,8 +305,10 @@ Releases on [crates.io](https://crates.io/crates/wikiwho) are published by CI (n
 
 ```sh
 ver=X.Y.Z  # replace with the version number, no leading 'v'
-# fetch the exact bytes crates.io serves (static CDN — the API redirect endpoint blocks curl)
-curl -o "wikiwho-$ver.crate" "https://static.crates.io/crates/wikiwho/wikiwho-$ver.crate"
+# fetch the exact bytes crates.io serves (crates.io requires a descriptive User-Agent)
+curl -L -A "wikiwho-verify (https://github.com/Schuwi/wikiwho_rs)" \
+  -o "wikiwho-$ver.crate" \
+  "https://crates.io/api/v1/crates/wikiwho/$ver/download"
 
 # verify provenance, pinned to the release workflow, the version tag, and a GitHub-hosted runner
 gh attestation verify "wikiwho-$ver.crate" \

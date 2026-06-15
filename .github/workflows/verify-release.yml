@@ -50,12 +50,11 @@ jobs:
         env:
           VER: ${{ steps.ver.outputs.ver }}
         run: |
-          # Use the static CDN URL directly. The crates.io API endpoint
-          # (crates.io/api/v1/crates/{name}/{version}/download) just redirects here,
-          # but returns 403 from GitHub Actions IPs due to bot detection.
-          url="https://static.crates.io/crates/wikiwho/wikiwho-${VER}.crate"
+          # crates.io requires a descriptive User-Agent; the default curl/X.Y.Z gets a 403.
+          url="https://crates.io/api/v1/crates/wikiwho/${VER}/download"
           echo "Downloading $url"
-          curl -fsSL "$url" -o "wikiwho-${VER}.crate"
+          curl -fsSL -A "wikiwho-verify (https://github.com/Schuwi/wikiwho_rs)" \
+            "$url" -o "wikiwho-${VER}.crate"
           echo "sha256: $(sha256sum "wikiwho-${VER}.crate" | cut -d' ' -f1)"
 
       - name: Verify build-provenance attestation
