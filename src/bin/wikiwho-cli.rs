@@ -20,10 +20,11 @@ fn serialize_editor<S: serde::Serializer>(
     contributor: &&Contributor,
     serializer: S,
 ) -> Result<S::Ok, S::Error> {
-    match contributor.id {
-        Some(id) if id != 0 => serializer.collect_str(&id),
-        _ => serializer.collect_str(&format_args!("0|{}", contributor.username)),
-    }
+    // match contributor.id {
+    //     Some(id) if id != 0 => serializer.collect_str(&id),
+    //     _ => serializer.collect_str(&format_args!("0|{}", contributor.username)),
+    // }
+    serializer.collect_str(contributor.username.as_str())
 }
 
 #[derive(Clone, Copy, PartialEq)]
@@ -44,14 +45,15 @@ Arguments:
                           Compression auto-detected from extension (.bz2, .zst, .gz)
 
 Options:
-  -o, --output PATH       Output file (omit or \"-\" for stdout)
-                          Compression auto-detected from extension (.bz2, .zst, .gz)
-  -f, --format FORMAT     Output format: jsonl (default), json, raw
-  -j, --jobs N            Number of worker threads (default: number of CPUs)
-  -n, --namespace NS      Only process pages in this namespace (repeatable)
-  -N, --pages N           Only process the first N pages
-  -q, --quiet             Suppress progress messages on stderr
-  -h, --help              Show this help message"
+  -o, --output PATH         Output file (omit or \"-\" for stdout)
+                            Compression auto-detected from extension (.bz2, .zst, .gz)
+  -f, --format FORMAT       Output format: jsonl (default), json, raw
+  -c, --compression-level N Compression level for output encoder, ignored if uncompressed
+  -j, --jobs N              Number of worker threads (default: number of CPUs)
+  -n, --namespace NS        Only process pages in this namespace (repeatable)
+  -N, --pages N             Only process the first N pages
+  -q, --quiet               Suppress progress messages on stderr
+  -h, --help                Show this help message"
     );
 }
 
@@ -72,6 +74,12 @@ fn run() -> Result<(), Box<dyn std::error::Error>> {
         "output",
         "Output file (\"-\" or omit for stdout)",
         "PATH",
+    );
+    opts.optopt(
+        "c",
+        "compression-level",
+        "Compression level for output encoder",
+        "LEVEL",
     );
     opts.optopt(
         "f",
@@ -120,6 +128,16 @@ fn run() -> Result<(), Box<dyn std::error::Error>> {
             .unwrap_or(1),
     };
 
+    let compression_level: Option<i32> = if let Some(level_str) = matches.opt_str("c") {
+        Some(
+            level_str
+                .parse::<i32>()
+                .map_err(|e| format!("invalid -c value: {e}"))?,
+        )
+    } else {
+        None
+    };
+
     let namespace_filter: Vec<i32> = matches
         .opt_strs("n")
         .iter()
@@ -161,18 +179,45 @@ fn run() -> Result<(), Box<dyn std::error::Error>> {
             let file = std::fs::File::create(path)
                 .map_err(|e| format!("cannot create output '{path}': {e}"))?;
             if path.ends_with(".bz2") {
+                let compression = if let Some(level) = compression_level {
+                    u32::try_from(level)
+                        .ok()
+                        .and_then(bzip2::Compression::try_new)
+                        .ok_or_else(|| format!("invalid compression level for bzip2: {level}"))?
+                } else {
+                    bzip2::Compression::default()
+                };
+
                 Box::new(BufWriter::new(bzip2::write::BzEncoder::new(
                     file,
-                    bzip2::Compression::default(),
+                    compression,
                 )))
             } else if path.ends_with(".zst") || path.ends_with(".zstd") {
+                if matches!(compression_level, Some(level) if !(0..=22).contains(&level)) {
+                    return Err(format!(
+                        "invalid compression level for zstd: {}",
+                        compression_level.unwrap()
+                    )
+                    .into());
+                }
+
                 Box::new(BufWriter::new(
-                    zstd::Encoder::new(file, 3).map_err(|e| format!("zstd init: {e}"))?,
+                    zstd::Encoder::new(file, compression_level.unwrap_or(0))
+                        .map_err(|e| format!("zstd init: {e}"))?,
                 ))
             } else if path.ends_with(".gz") {
+                let compression = if let Some(level) = compression_level {
+                    u32::try_from(level)
+                        .ok()
+                        .map(flate2::Compression::new)
+                        .ok_or_else(|| format!("invalid compression level for gz: {level}"))?
+                } else {
+                    flate2::Compression::default()
+                };
+
                 Box::new(BufWriter::new(flate2::write::GzEncoder::new(
                     file,
-                    flate2::Compression::default(),
+                    compression,
                 )))
             } else {
                 Box::new(BufWriter::new(file))
@@ -723,6 +768,7 @@ fn write_page_result(
 /// PageAnalysis)>` cart, which keeps the borrowed data alive.
 #[derive(serde::Serialize, yoke::Yokeable)]
 struct PageOutput<'a> {
+    page_id: i32,
     article_title: &'a str,
     namespace: i32,
     revisions: Vec<RevisionOutput<'a>>,
@@ -791,6 +837,7 @@ fn build_page_output<'a>(page: &'a Page, analysis: &'a PageAnalysis) -> PageOutp
         .collect();
 
     PageOutput {
+        page_id: page.id,
         article_title: &page.title,
         namespace: page.namespace,
         revisions,

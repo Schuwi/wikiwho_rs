@@ -1,0 +1,57 @@
+name: Fuzz parity
+
+# Randomized property tests that compare the Rust implementation against the reference
+# Python WikiWho on generated inputs. Unlike the deterministic parity in ci.yml, these
+# draw a fresh random seed each run, so they keep exploring new inputs even when the code
+# hasn't changed — i.e. a continuous fuzzing campaign. A failure should be turned into a
+# permanent regression by committing the emitted *.proptest-regressions seed.
+
+on:
+  schedule:
+    - cron: "0 4 * * 1" # weekly, Monday 04:00 UTC
+  workflow_dispatch:
+    inputs:
+      cases:
+        description: "proptest cases per test"
+        required: false
+        default: "20000"
+
+permissions:
+  contents: read
+
+env:
+  CARGO_TERM_COLOR: always
+  RUST_BACKTRACE: 1
+  PROPTEST_CASES: ${{ github.event.inputs.cases || '20000' }}
+
+jobs:
+  fuzz:
+    name: randomized parity vs Python
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+        with: { lfs: false }
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12" }
+      - name: Set up reference WikiWho venv
+        run: |
+          python -m venv .venv
+          ./.venv/bin/pip install --upgrade pip
+          ./.venv/bin/pip install -r requirements.txt
+          echo "VIRTUAL_ENV=$PWD/.venv" >> "$GITHUB_ENV"
+          echo "PYO3_PYTHON=$PWD/.venv/bin/python" >> "$GITHUB_ENV"
+          echo "$PWD/.venv/bin" >> "$GITHUB_PATH"
+      - name: Fuzz algorithm parity (random pages)
+        run: cargo test --features python-diff,serde --test algorithm_exact_tests -- random_unicode_page tokenized_page
+      - name: Fuzz tokenizer parity (split functions)
+        run: cargo test --features python-diff --test utils_comparisons -- compare_split_into_
+      - name: Upload discovered regression seeds
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: proptest-regressions
+          path: tests/**/*.proptest-regressions
+          if-no-files-found: ignore

@@ -141,17 +141,26 @@ fn load_page_from_xml(path: &Path) -> Result<Page, ParsingError> {
         .unwrap_or_else(|| panic!("No page found in {}", path.display())))
 }
 
-/// Returns all configured dump files from the repo-local extra-dumps directory.
+/// Returns all configured dump files from the extra-dumps directory.
+///
+/// The directory can be overridden with the `WIKIWHO_EXTRA_DUMPS` environment variable.
+/// Hidden files (e.g. a `.gitignore` placeholder) are skipped so they are never mistaken
+/// for a dump shard.
 fn extra_dump_paths() -> Vec<PathBuf> {
     let mut dumps = Vec::new();
 
-    let Ok(entries) = fs::read_dir(EXTRA_DUMPS_DIR) else {
+    let dir = std::env::var("WIKIWHO_EXTRA_DUMPS").unwrap_or_else(|_| EXTRA_DUMPS_DIR.to_owned());
+    let Ok(entries) = fs::read_dir(&dir) else {
         return dumps;
     };
 
     for entry in entries.flatten() {
         let path = entry.path();
-        if path.is_file() {
+        let is_hidden = path
+            .file_name()
+            .and_then(|n| n.to_str())
+            .is_some_and(|n| n.starts_with('.'));
+        if path.is_file() && !is_hidden {
             dumps.push(path);
         }
     }

@@ -483,9 +483,7 @@ impl<R: BufRead> DumpParser<R> {
                     );
                 }
             }
-            Err(TagReadingError::XmlError(e)) => {
-                return Err(e);
-            }
+            Err(TagReadingError::XmlError(e)) => Err(e),
             _ => unreachable!(),
         }
     }
@@ -699,6 +697,7 @@ impl<R: BufRead> DumpParser<R> {
         let span = tracing::span!(tracing::Level::DEBUG, "parse_page", self=?self, title=tracing::field::Empty);
 
         let mut page = Page {
+            id: 0,
             title: CompactString::default(),
             namespace: 0,
             revisions: Vec::new(),
@@ -785,7 +784,19 @@ impl<R: BufRead> DumpParser<R> {
                             }
                             span.record("title", page.title.as_str());
                         }
-                        [MediaWiki, Page, Id] => { /* ignore page id */ }
+                        [MediaWiki, Page, Id] => {
+                            page.id = if let Ok(id) = text.parse() {
+                                id
+                            } else {
+                                tracing::warn!(
+                                    message = "Found invalid page id, generating a random id",
+                                    id = text.as_ref(),
+                                    position = self.xml_parser.buffer_position()
+                                );
+                                // always use negative ids for invalid ids
+                                rand::rng().random_range(i32::MIN..-100)
+                            };
+                        }
                         [MediaWiki, Page, Ns] => {
                             let ns = if let Ok(id) = text.parse() {
                                 id
@@ -805,7 +816,7 @@ impl<R: BufRead> DumpParser<R> {
                                 revision_builder.id = if let Ok(id) = text.parse() {
                                     Some(id)
                                 } else {
-                                    tracing::info!(
+                                    tracing::warn!(
                                         message =
                                             "Found invalid revision id, generating a random id",
                                         id = text.as_ref(),

@@ -1,7 +1,13 @@
 // SPDX-License-Identifier: MPL-2.0
-//! All tests need to be run in a Python venv that has installed the `requirements.txt`!
+//! Shared test helpers.
+//!
+//! The pyo3-based helpers (everything that talks to the reference Python WikiWho) are
+//! gated behind the `python-diff` feature; the pure-Rust helpers (`open_test_dump`,
+//! `find_page_by_title_and_ns`, `pick_n_random_pages`, `proptest_support`, …) compile
+//! without it, so tests that don't need Python (e.g. `gold_standard_precision_rust` in
+//! `algorithm_statistic_tests.rs`) can use them. Python-dependent tests still require a
+//! venv with `requirements.txt` installed.
 #![allow(unused)]
-#![cfg(feature = "python-diff")]
 
 use chrono::DateTime;
 use memchr::memmem::Finder;
@@ -14,8 +20,10 @@ use std::{
 
 use wikiwho::dump_parser::{self, Contributor, Page, Revision, Text};
 
+#[cfg(feature = "python-diff")]
 use pyo3::prelude::*;
 
+#[cfg(feature = "python-diff")]
 pub mod prelude {
     pub(crate) use super::proptest_support;
     pub(crate) use super::{dummy_revision, with_gil};
@@ -26,6 +34,7 @@ pub mod prelude {
 #[cfg(feature = "serde")]
 pub use delta_debugging::delta_debug_texts;
 
+#[cfg(feature = "python-diff")]
 macro_rules! with_gil {
     ($py: ident, $body: expr) => {{
         let result = Python::attach(|$py| {
@@ -39,6 +48,7 @@ macro_rules! with_gil {
         }
     }};
 }
+#[cfg(feature = "python-diff")]
 pub(crate) use with_gil;
 
 #[cfg(feature = "serde")]
@@ -118,7 +128,8 @@ pub fn pick_n_random_pages<P: PageRepresentation, R: std::io::Read>(
             // No page start found in this buffer
 
             // keep the last few bytes to find a potential page start that spans two buffers
-            consume = buf.len() - PAGE_START.len();
+            // (saturating so a buffer smaller than PAGE_START doesn't underflow)
+            consume = buf.len().saturating_sub(PAGE_START.len());
         }
         stream_offset += consume as u64;
         buffer.copy_within(consume..buffered_bytes, 0);
@@ -231,7 +242,8 @@ pub fn find_page_by_title_and_ns<P: PageRepresentation, R: std::io::Read>(
             // No page start found in this buffer
 
             // keep the last few bytes to find a potential page start that spans two buffers
-            let consume = buffered_bytes - MAXIMUM_MATCH_LEN;
+            // (saturating so a file smaller than MAXIMUM_MATCH_LEN doesn't underflow)
+            let consume = buffered_bytes.saturating_sub(MAXIMUM_MATCH_LEN);
             buffer.copy_within(consume..buffered_bytes, 0);
             buffered_bytes -= consume;
         }
@@ -244,12 +256,34 @@ pub fn find_page_by_title_and_ns<P: PageRepresentation, R: std::io::Read>(
     Ok(None)
 }
 
-pub fn open_test_dump() -> impl Read {
-    const DUMP_PATH: &str =
+/// Opens the reference dump used by the real-page parity tests.
+///
+/// The dump location can be overridden with the `WIKIWHO_TEST_DUMP` environment
+/// variable. CI uses this to point at a small representative subset on pull requests
+/// and at the full dump on pushes to `main`; locally it defaults to the gitignored
+/// reference dump under `dev-data/`.
+///
+/// Returns `None` (after printing a `SKIP:` notice) when the dump is not present, so
+/// callers can return early instead of panicking. Use the `let Some(reader) = … else
+/// { return; }` pattern at the call site.
+pub fn open_test_dump() -> Option<impl Read> {
+    const DEFAULT_DUMP_PATH: &str =
         "dev-data/reference-dumps/dewiktionary-20240901-pages-meta-history.xml.zst";
 
-    let file = File::open(DUMP_PATH).unwrap_or_else(|_| panic!("file not found: {}", DUMP_PATH));
-    zstd::stream::Decoder::new(file).unwrap()
+    let path = std::env::var("WIKIWHO_TEST_DUMP").unwrap_or_else(|_| DEFAULT_DUMP_PATH.to_owned());
+
+    match File::open(&path) {
+        Ok(file) => Some(
+            zstd::stream::Decoder::new(file).expect("failed to create zstd decoder for test dump"),
+        ),
+        Err(err) => {
+            eprintln!(
+                "SKIP: reference dump not available at `{path}` ({err}); set WIKIWHO_TEST_DUMP \
+                 to a dump file to run real-page parity tests."
+            );
+            None
+        }
+    }
 }
 
 pub trait PageRepresentation: Sized {
@@ -291,6 +325,7 @@ impl PageRepresentation for Vec<u8> {
     }
 }
 
+#[cfg(feature = "python-diff")]
 pub fn load_local_module<'a>(py: Python<'a>, module_name: &str) -> PyResult<Bound<'a, PyModule>> {
     // make sure the current directory is in sys.path
     py.run(
@@ -308,7 +343,7 @@ if '' not in sys.path:
 }
 
 #[allow(clippy::useless_conversion)] // pyo3 proc macros generate identity conversions for PyErr
-#[cfg(feature = "serde")]
+#[cfg(all(feature = "serde", feature = "python-diff"))]
 pub mod output_structs {
     use super::*;
     use pyo3::{
@@ -586,7 +621,7 @@ pub mod output_structs {
 }
 
 #[allow(clippy::useless_conversion)] // pyo3 proc macros generate identity conversions for PyErr
-#[cfg(feature = "serde")]
+#[cfg(all(feature = "serde", feature = "python-diff"))]
 pub mod input_structs {
     use super::*;
     use pyo3::{prelude::*, IntoPyObjectExt};
@@ -842,6 +877,7 @@ pub mod proptest_support {
                 (revisions in correct_revision_vec(has_hash, text_strategy.clone(), max_revisions))
         -> Page {
             Page {
+                id: 0, /* ignored in algorithm */
                 title: "Pagetitle".into(), /* ignored in algorithm */
                 namespace: 0, /* ignored in algorithm */
                 revisions

@@ -8,7 +8,7 @@ fn generate_input_split_into_paragraphs(length: u64) -> String {
     let mut rng = rand_xoshiro::Xoshiro256PlusPlus::seed_from_u64(length); /* define specific algorithm to ensure reproducibility */
     let mut input = String::new();
     for _ in 0..length {
-        input.push(rng.gen());
+        input.push(rng.random());
     }
 
     // add some expected values at random places
@@ -52,7 +52,7 @@ fn generate_input_split_into_sentences(length: u64) -> String {
     let mut rng = rand_xoshiro::Xoshiro256PlusPlus::seed_from_u64(length); /* define specific algorithm to ensure reproducibility */
     let mut input = String::new();
     for _ in 0..length {
-        input.push(rng.gen());
+        input.push(rng.random());
     }
 
     // add some expected values at random places
@@ -96,7 +96,7 @@ fn generate_input_split_into_tokens(length: u64) -> String {
     let mut rng = rand_xoshiro::Xoshiro256PlusPlus::seed_from_u64(length); /* define specific algorithm to ensure reproducibility */
     let mut input = String::new();
     for _ in 0..length {
-        input.push(rng.gen());
+        input.push(rng.random());
     }
 
     // add some expected values at random places
@@ -141,10 +141,10 @@ fn generate_input_to_lowercase(ascii_ratio: f32) -> String {
     let mut rng = rand_xoshiro::Xoshiro256PlusPlus::seed_from_u64(ascii_ratio.to_bits().into()); /* define specific algorithm to ensure reproducibility */
     let mut input = String::new();
     for _ in 0..LENGTH {
-        if rng.gen::<f32>() < ascii_ratio {
+        if rng.random::<f32>() < ascii_ratio {
             input.push(rng.random_range(0u8..0x80u8) as char);
         } else {
-            input.push(rng.gen());
+            input.push(rng.random());
         }
     }
 

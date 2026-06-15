@@ -375,8 +375,8 @@ mod tests {
     fn test_case_1() {
         let input = "®\u{2000}￼";
 
-        let expected = crate::utils::split_into_tokens_naive(&input);
-        let result_corasick = split_into_tokens_corasick(&input);
+        let expected = crate::utils::split_into_tokens_naive(input);
+        let result_corasick = split_into_tokens_corasick(input);
 
         assert_eq!(result_corasick, expected);
     }

@@ -6,6 +6,15 @@
 
 A high-performance Rust implementation of the WikiWho algorithm for token-level authorship tracking in Wikimedia pages.
 
+<div class="rustdoc-hidden">
+
+[![CI](https://github.com/Schuwi/wikiwho_rs/actions/workflows/ci.yml/badge.svg)](https://github.com/Schuwi/wikiwho_rs/actions/workflows/ci.yml)
+[![codecov](https://codecov.io/gh/Schuwi/wikiwho_rs/branch/main/graph/badge.svg)](https://codecov.io/gh/Schuwi/wikiwho_rs)
+[![crates.io](https://img.shields.io/crates/v/wikiwho.svg)](https://crates.io/crates/wikiwho)
+[![docs.rs](https://docs.rs/wikiwho/badge.svg)](https://docs.rs/wikiwho)
+
+</div>
+
 ## Overview
 
 `wikiwho` is a Rust library that implements the [WikiWho algorithm](https://github.com/wikiwho/WikiWho), enabling users to track authorship on a token level (token ≈ word) across all revisions of a Wikimedia page (e.g., Wikipedia, Wiktionary). It reimplements the original algorithm by Fabian Flöck and Maribel Acosta with significant performance improvements, allowing for efficient processing of entire Wikipedia/Wiktionary XML dumps.
@@ -271,9 +280,23 @@ This is only beneficial for text where a significant portion of characters are n
 ## Testing and Validation
 
 - **Exact comparison tests** (`algorithm_exact_tests.rs`): Compare the Rust implementation's results against the original Python WikiWho, token by token. These require the `python-diff` feature so that both implementations use the same diff algorithm. Run them with `cargo test --features python-diff`.
-- **Statistical comparison tests** (`algorithm_statistic_tests.rs`): Ignored by default and require local benchmark data. Fetch the archived partial gold standard with `python3 tools/fetch_gold_standard.py`, place current Wikimedia dump shards into `dev-data/extra-dumps/`, then run with `cargo test gold_standard_precision_rust -- --ignored` or `cargo test --features python-diff divergence_rate_gold_standard_articles -- --ignored`. See `dev-data/README.md` for details.
+- **Statistical comparison tests** (`algorithm_statistic_tests.rs`): Ignored by default and require local benchmark data. Fetch the archived partial gold standard with `python3 tools/fetch_gold_standard.py`, place current Wikimedia dump shards into `dev-data/extra-dumps/`, then run with `cargo test gold_standard_precision_rust -- --ignored` or `cargo test --features python-diff divergence_rate_gold_standard_articles -- --ignored`. See `dev-data/README.md` for details. (These accuracy tests are still being brought up to their precision threshold and are not yet part of CI.)
 - **Temporary files**: Some tests use temporary files for IPC coordination between Rust and Python. These files can be large depending on the input dump. Their location follows `std::env::temp_dir()`, which can be controlled by setting the `TMPDIR` environment variable.
+- **Test dump location**: Real-page tests read a reference dump; set `WIKIWHO_TEST_DUMP=/path/to/dump.xml.zst` to override the default path. If the dump is absent, those tests skip (with a `SKIP:` notice) instead of failing.
 - **Community Feedback**: Seeking input from users testing with different languages and datasets.
+
+### Continuous Integration
+
+CI runs on GitHub Actions (`.github/workflows/`):
+
+- **`ci.yml`** (every push to `main` and every PR): `rustfmt`, Clippy across feature combinations (`-D warnings`), `cargo test --lib` + doc-tests, docs with warnings as errors, an MSRV check (Rust 1.94.1), coverage via `cargo-llvm-cov` (uploaded to Codecov), `cargo package`, and — the headline job — **deterministic parity against the reference Python WikiWho** (`algorithm_exact_tests`). Pull requests run parity against a small committed dump subset; pushes to `main` additionally fetch the full dump for deeper real-page parity.
+- **`fuzz.yml`** (weekly + manual): randomized property-test fuzzing of Rust-vs-Python parity. A failure uploads the discovered `*.proptest-regressions` seed so it can be committed as a permanent regression.
+- **`heavy.yml`** (manual only): big-history parity and the opt-in ~25 GB multithreaded parity test against the full dump.
+
+Test data:
+
+- The representative subset (`dewiktionary-20240901-ci-subset.xml.zst`, ~900 KB) is committed via Git LFS, so contributors and CI get it on clone — no download needed. Regenerate it from a full dump with `python3 tools/make_ci_subset.py`.
+- The full 808 MB dump lives in the [`Schuwi/wikiwho-data`](https://github.com/Schuwi/wikiwho-data) release. Fetch it (checksum-verified) with `python3 tools/fetch_test_data.py --which full`.
 
 ## Contributing
 

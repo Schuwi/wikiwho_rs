@@ -205,6 +205,7 @@ fn test_case_1() {
     // found by proptest
     Python::attach(|py| {
         let page = Page {
+            id: 0,
             title: "Test".into(),
             namespace: 0,
             revisions: vec![
@@ -256,6 +257,7 @@ fn test_case_1() {
 fn test_case_2() {
     // found by proptest
     let page = Page {
+        id: 0,
         title: "Test".into(),
         namespace: 0,
         revisions: vec![
@@ -448,7 +450,9 @@ proptest! {
 
 #[test]
 fn known_bad_example_familia() {
-    let reader = common::open_test_dump();
+    let Some(reader) = common::open_test_dump() else {
+        return;
+    };
     let page: Page = common::find_page_by_title_and_ns(reader, "familia", 0)
         .unwrap()
         .unwrap();
@@ -515,7 +519,9 @@ fn simplify_bad_example_anontalkpagetext() {
 
 #[test]
 fn known_bad_example_hallo() {
-    let reader = common::open_test_dump();
+    let Some(reader) = common::open_test_dump() else {
+        return;
+    };
     let page: Page = common::find_page_by_title_and_ns(reader, "Hallo", 0)
         .unwrap()
         .unwrap();
@@ -526,7 +532,9 @@ fn known_bad_example_hallo() {
 #[test]
 #[ignore = "expensive test"]
 fn big_history_wunschliste() {
-    let reader = common::open_test_dump();
+    let Some(reader) = common::open_test_dump() else {
+        return;
+    };
     // Wiktionary:Wunschliste
     let page: Page = common::find_page_by_title_and_ns(reader, "Wunschliste", 4)
         .unwrap()
@@ -538,7 +546,9 @@ fn big_history_wunschliste() {
 #[test]
 #[ignore = "expensive test"]
 fn big_history_teestube() {
-    let reader = common::open_test_dump();
+    let Some(reader) = common::open_test_dump() else {
+        return;
+    };
     // Wiktionary:Teestube
     let page: Page = common::find_page_by_title_and_ns(reader, "Teestube", 4)
         .unwrap()
@@ -549,8 +559,10 @@ fn big_history_teestube() {
 
 #[test]
 fn random_pages_100() {
-    let reader1 = common::open_test_dump();
-    let reader2 = common::open_test_dump();
+    let (Some(reader1), Some(reader2)) = (common::open_test_dump(), common::open_test_dump())
+    else {
+        return;
+    };
     let pages = common::pick_n_random_pages((reader1, reader2), 100, 0).unwrap();
 
     for page in pages {
@@ -563,7 +575,9 @@ fn random_pages_100() {
 fn first_1000_pages_mt() {
     const PAGE_COUNT: usize = 1000;
 
-    let reader = common::open_test_dump();
+    let Some(reader) = common::open_test_dump() else {
+        return;
+    };
     let pid = std::process::id();
     let temp_path = std::env::temp_dir().join(format!("wikiwho_test_{pid}.bin"));
     let result_dir = std::env::temp_dir().join(format!("wikiwho_test_{pid}_results"));

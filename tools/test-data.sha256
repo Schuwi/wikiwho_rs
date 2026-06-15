@@ -1,0 +1,5 @@
+# SHA-256 sums for test-data artifacts hosted in the Schuwi/wikiwho-data release
+# (tag: dewiktionary-20240901). Verified by tools/fetch_test_data.py.
+# The ci-subset is also committed in-repo via Git LFS under dev-data/reference-dumps/.
+15916141d87fd3d13c82d354100b0643d144688b6fe2ceee763ce970111d29fd  dewiktionary-20240901-pages-meta-history.xml.zst
+04e4e335329e3d280beb790250e9f88e4d33430e4ff043c7b881d7f660135381  dewiktionary-20240901-ci-subset.xml.zst

@@ -1,0 +1,56 @@
+name: Heavy parity (manual)
+
+# Expensive parity tests that need the full 808 MB dump and (for the multithreaded test)
+# a lot of RAM. Manual-only — never triggered automatically. The multithreaded test needs
+# ~25 GB RAM, which exceeds standard GitHub runners; enable `run_mt` only on a large or
+# self-hosted runner.
+
+on:
+  workflow_dispatch:
+    inputs:
+      run_mt:
+        description: "also run first_1000_pages_mt (needs ~25 GB RAM)"
+        type: boolean
+        required: false
+        default: false
+
+permissions:
+  contents: read
+
+env:
+  CARGO_TERM_COLOR: always
+  RUST_BACKTRACE: 1
+
+jobs:
+  heavy:
+    name: big-history parity on full dump
+    runs-on: ubuntu-latest
+    timeout-minutes: 360
+    steps:
+      - uses: actions/checkout@v4
+        with: { lfs: false }
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12" }
+      - name: Set up reference WikiWho venv
+        run: |
+          python -m venv .venv
+          ./.venv/bin/pip install --upgrade pip
+          ./.venv/bin/pip install -r requirements.txt
+          echo "VIRTUAL_ENV=$PWD/.venv" >> "$GITHUB_ENV"
+          echo "PYO3_PYTHON=$PWD/.venv/bin/python" >> "$GITHUB_ENV"
+          echo "$PWD/.venv/bin" >> "$GITHUB_PATH"
+      - name: Fetch full dump from wikiwho-data
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: python3 tools/fetch_test_data.py --which full --dest dev-data/reference-dumps
+      - name: Big-history parity (ignored expensive tests)
+        env:
+          WIKIWHO_TEST_DUMP: ${{ github.workspace }}/dev-data/reference-dumps/dewiktionary-20240901-pages-meta-history.xml.zst
+        run: cargo test --features python-diff,serde --test algorithm_exact_tests -- --ignored big_history_wunschliste big_history_teestube
+      - name: Multithreaded 1000-page parity (opt-in)
+        if: ${{ inputs.run_mt }}
+        env:
+          WIKIWHO_TEST_DUMP: ${{ github.workspace }}/dev-data/reference-dumps/dewiktionary-20240901-pages-meta-history.xml.zst
+        run: cargo test --features python-diff,serde --test algorithm_exact_tests -- --ignored first_1000_pages_mt
