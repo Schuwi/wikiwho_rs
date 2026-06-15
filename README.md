@@ -319,7 +319,7 @@ gh attestation verify "wikiwho-$ver.crate" \
 
 A successful run looks like (digest and version tag will match your download):
 
-```
+```text
 Loaded digest sha256:24efbc63017eb2c7f0ca0086299752dfa3147d956b41ed0be726faf277b8ffd9 for file://wikiwho-0.3.3.crate
 Loaded 1 attestation from GitHub API
 
