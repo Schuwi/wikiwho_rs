@@ -1,0 +1,130 @@
+name: Release
+
+# Tag-driven release. Publishes `wikiwho` to crates.io from CI (never a laptop) with
+# verifiable provenance. See RELEASING.md for the full rationale.
+#
+# This workflow is intentionally NON-reusable and triggered ONLY by a tag push: that keeps
+# the signer identity equal to the source (no reusable-workflow signer != source gap) and
+# guarantees the signing certificate's SAN is always release.yml@refs/tags/v*, which is what
+# consumers pin with `gh attestation verify --cert-identity`.
+on:
+  push:
+    tags: ["v*"]
+
+# Never run two publishes for the same tag at once.
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: write # create the GitHub Release
+  id-token: write # OIDC: Trusted Publishing + provenance attestation
+  attestations: write # actions/attest-build-provenance
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  release:
+    name: publish to crates.io
+    runs-on: ubuntu-latest
+    # Manual-approval gate configured in repo Settings -> Environments -> release.
+    environment: release
+    steps:
+      # Third-party actions are pinned to full commit SHAs (not mutable tags) because this
+      # workflow holds the publish/attestation credentials. Dependabot (github-actions)
+      # keeps the pins current; the trailing comment tracks the human-readable version.
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+        with: { lfs: false } # packaging excludes dev-data; no LFS payload needed
+
+      # Rust stable is preinstalled on ubuntu-latest; use it instead of a toolchain action to
+      # keep this credentialed workflow's third-party surface minimal.
+      - run: rustup default stable
+
+      # --- Gate 1: refuse to publish unless ci.yml is green for THIS exact commit. ---
+      # ci.yml runs on push-to-main, so the tagged commit (tip of green main) already has
+      # a successful run. Poll briefly in case the tag was pushed before CI finished.
+      - name: Require green CI for this commit
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          sha="${GITHUB_SHA}"
+          deadline=$(( $(date +%s) + 900 )) # wait up to 15 min
+          while :; do
+            json=$(gh run list --workflow ci.yml --commit "$sha" \
+                     --json status,conclusion --limit 1)
+            status=$(echo "$json" | jq -r '.[0].status // empty')
+            conclusion=$(echo "$json" | jq -r '.[0].conclusion // empty')
+            if [ -z "$status" ]; then
+              echo "No ci.yml run found yet for $sha; waiting..."
+            elif [ "$status" != "completed" ]; then
+              echo "ci.yml run is '$status'; waiting..."
+            elif [ "$conclusion" = "success" ]; then
+              echo "ci.yml succeeded for $sha."
+              break
+            else
+              echo "::error::ci.yml for $sha concluded '$conclusion'; refusing to publish."
+              exit 1
+            fi
+            if [ "$(date +%s)" -ge "$deadline" ]; then
+              echo "::error::Timed out waiting for a successful ci.yml run on $sha. Tag the tip of a green main."
+              exit 1
+            fi
+            sleep 30
+          done
+
+      # --- Gate 2: Cargo.toml version must equal the tag. ---
+      - name: Version matches tag
+        run: |
+          v=$(cargo metadata --no-deps --format-version=1 | jq -r '.packages[0].version')
+          if [ "v$v" != "${GITHUB_REF_NAME}" ]; then
+            echo "::error::Cargo.toml version v$v != tag ${GITHUB_REF_NAME}"
+            exit 1
+          fi
+          echo "Releasing v$v"
+
+      # NOTE: SemVer is enforced by ci.yml's `semver` job (over --all-features, incl.
+      # python-diff), not here. Gate 1 above already requires that ci.yml run to be green for
+      # the tagged commit, so a version that understates the API change can't be released — and
+      # this credentialed workflow stays leaner (one less third-party action, no Python).
+
+      # --- Publish to crates.io via Trusted Publishing (OIDC): no CARGO_REGISTRY_TOKEN is
+      # stored anywhere. `cargo publish` runs a verification build and leaves the exact
+      # uploaded tarball in target/package/, which we then attest and attach — so the
+      # attestation subject, the release asset, and the crates.io bytes are identical by
+      # construction (no reliance on cargo packaging being byte-deterministic across runs). ---
+      - name: Authenticate to crates.io (OIDC)
+        id: auth
+        uses: rust-lang/crates-io-auth-action@bbd81622f20ce9e2dd9622e3218b975523e45bbe # v1.0.4
+
+      - name: Publish
+        run: cargo publish
+        env:
+          CARGO_REGISTRY_TOKEN: ${{ steps.auth.outputs.token }}
+
+      # --- Create the immutable GitHub Release (after the crates.io publish succeeded). The repo
+      # has immutable releases enabled, so publishing locks the tag to this commit (which is what
+      # makes verification by tag name sound) and auto-generates a GitHub-signed release
+      # attestation over the asset digest. The exact tarball cargo publish uploaded (still in
+      # target/package/) is attached as an independent cross-link to the crates.io artifact;
+      # it is deliberately NOT the documented verification target (consumers verify the crates.io
+      # download — see README). Uses GitHub's recommended draft -> attach -> publish flow so the
+      # asset is in place before immutability locks. ---
+      - name: GitHub Release (immutable, with .crate cross-link)
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release create "${GITHUB_REF_NAME}" target/package/*.crate \
+            --draft --verify-tag --generate-notes
+          gh release edit "${GITHUB_REF_NAME}" --draft=false
+
+      # --- Attest build provenance LAST. Because this is the final step, a valid attestation
+      # for this tag can exist ONLY once both the crates.io publish AND the immutable release
+      # have succeeded — there is never an orphan attestation binding a .crate to a tag that
+      # never shipped. If any earlier step fails the run fails closed (no attestation -> the
+      # consumer's `gh attestation verify` fails safe, rather than passing for an artifact that
+      # was never published). Subject == the release asset == the crates.io bytes (one file). ---
+      - name: Attest build provenance
+        uses: actions/attest-build-provenance@a2bbfa25375fe432b6a289bc6b6cd05ecd0c4c32 # v4.1.0
+        with:
+          subject-path: target/package/*.crate

@@ -116,6 +116,25 @@ jobs:
       - uses: Swatinem/rust-cache@v2
       - run: cargo package --no-verify
 
+  semver:
+    name: semver (all features)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: { lfs: false }
+      # cargo-semver-checks compares the public API against the latest crates.io release and
+      # fails if the version in Cargo.toml doesn't reflect the change (0.x rules understood) —
+      # so a PR that makes a breaking change must bump the version (the minor field, for 0.x).
+      # --all-features covers the whole surface, incl. the python-diff `use_python_diff` toggle;
+      # pyo3 only needs a Python interpreter to *build* (not the WikiWho venv — rustdoc is
+      # compiled, never run). This is also what enforces SemVer for releases: release.yml
+      # requires this workflow to be green for the tagged commit.
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12" }
+      - uses: obi1kenobi/cargo-semver-checks-action@v2
+        with:
+          feature-group: all-features
+
   # --- Headline: prove the Rust implementation matches the reference Python WikiWho ---
 
   parity-deterministic:
