@@ -88,7 +88,6 @@ pub struct Revision {
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Page {
-    pub id: i32,
     pub title: CompactString,
     pub namespace: i32,
     pub revisions: Vec<Revision>,
