@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [0.3.3] - 2026-06-15
+## [0.3.4] - 2026-06-15
 
 ### Added
 
@@ -16,6 +16,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Updated `pyo3` to `v0.29.0`.
+
+## [0.3.3] - 2026-06-15
+
+**Yanked**
 
 ## [0.3.2] - 2026-06-15
 
@@ -74,7 +78,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 Initial release.
 
-[unreleased]: https://github.com/Schuwi/wikiwho_rs/compare/v0.3.3...HEAD
+[unreleased]: https://github.com/Schuwi/wikiwho_rs/compare/v0.3.4...HEAD
+[0.3.4]: https://github.com/Schuwi/wikiwho_rs/compare/v0.3.1...v0.3.4
 [0.3.3]: https://github.com/Schuwi/wikiwho_rs/compare/v0.3.1...v0.3.3
 [0.3.2]: https://github.com/Schuwi/wikiwho_rs/compare/v0.3.1...v0.3.2
 [0.3.1]: https://github.com/Schuwi/wikiwho_rs/compare/v0.3.0...v0.3.1
