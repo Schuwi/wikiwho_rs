@@ -116,6 +116,44 @@ jobs:
       - uses: Swatinem/rust-cache@v2
       - run: cargo package --no-verify
 
+  semver:
+    name: semver (all features)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: { lfs: false }
+      # cargo-semver-checks compares the public API against the latest crates.io release and
+      # fails if the version in Cargo.toml doesn't reflect the change (0.x rules understood) —
+      # so a PR that makes a breaking change must bump the version (the minor field, for 0.x).
+      # --all-features covers the whole surface, incl. the python-diff `use_python_diff` toggle;
+      # pyo3 only needs a Python interpreter to *build* (not the WikiWho venv — rustdoc is
+      # compiled, never run). This is also what enforces SemVer for releases: release.yml
+      # requires this workflow to be green for the tagged commit.
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12" }
+      - uses: obi1kenobi/cargo-semver-checks-action@v2
+        with:
+          feature-group: all-features
+
+  changelog:
+    name: changelog entry
+    # PRs must record their change under [Unreleased] in CHANGELOG.md. Skipped for Dependabot
+    # and for PRs carrying the `skip-changelog` label (CI/docs/refactors that don't warrant one).
+    if: github.event_name == 'pull_request' && github.actor != 'dependabot[bot]' && !contains(github.event.pull_request.labels.*.name, 'skip-changelog')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0, lfs: false }
+      - name: Require a CHANGELOG.md update
+        run: |
+          git fetch --no-tags origin "$GITHUB_BASE_REF"
+          if git diff --name-only "origin/$GITHUB_BASE_REF...HEAD" | grep -qx 'CHANGELOG.md'; then
+            echo "CHANGELOG.md updated."
+          else
+            echo "::error::Add an entry under [Unreleased] in CHANGELOG.md, or apply the 'skip-changelog' label for changes that don't warrant one (CI, docs, refactors)."
+            exit 1
+          fi
+
   # --- Headline: prove the Rust implementation matches the reference Python WikiWho ---
 
   parity-deterministic:
