@@ -304,15 +304,42 @@ Test data:
 Releases on [crates.io](https://crates.io/crates/wikiwho) are published by CI (not from a maintainer's machine), so they are independently verifiable. Each release is signed with an [SLSA build-provenance attestation](https://github.com/actions/attest-build-provenance). **Verify the artifact you actually install** — the `.crate` from crates.io (or the copy in your local `~/.cargo` cache):
 
 ```sh
-ver=<version>
-# fetch the exact bytes crates.io serves
-curl -L -o "wikiwho-$ver.crate" "https://crates.io/api/v1/crates/wikiwho/$ver/download"
+ver=X.Y.Z  # replace with the version number, no leading 'v'
+# fetch the exact bytes crates.io serves (crates.io requires a descriptive User-Agent)
+curl -L -A "wikiwho-verify (https://github.com/Schuwi/wikiwho_rs)" \
+  -o "wikiwho-$ver.crate" \
+  "https://crates.io/api/v1/crates/wikiwho/$ver/download"
 
 # verify provenance, pinned to the release workflow, the version tag, and a GitHub-hosted runner
 gh attestation verify "wikiwho-$ver.crate" \
   --repo Schuwi/wikiwho_rs \
   --cert-identity "https://github.com/Schuwi/wikiwho_rs/.github/workflows/release.yml@refs/tags/v$ver" \
   --deny-self-hosted-runners
+```
+
+A successful run looks like (digest and version tag will match your download):
+
+```text
+Loaded digest sha256:24efbc63017eb2c7f0ca0086299752dfa3147d956b41ed0be726faf277b8ffd9 for file://wikiwho-0.3.3.crate
+Loaded 1 attestation from GitHub API
+
+The following policy criteria will be enforced:
+- Predicate type must match:..................... https://slsa.dev/provenance/v1
+- Source Repository Owner URI must match:........ https://github.com/Schuwi
+- Source Repository URI must match:.............. https://github.com/Schuwi/wikiwho_rs
+- Subject Alternative Name must match:........... https://github.com/Schuwi/wikiwho_rs/.github/workflows/release.yml@refs/tags/v0.3.3
+- OIDC Issuer must match:........................ https://token.actions.githubusercontent.com
+- Action workflow Runner Environment must match : github-hosted
+
+✓ Verification succeeded!
+
+The following 1 attestation matched the policy criteria
+
+- Attestation #1
+  - Build repo:..... Schuwi/wikiwho_rs
+  - Build workflow:. .github/workflows/release.yml@refs/tags/v0.3.3
+  - Signer repo:.... Schuwi/wikiwho_rs
+  - Signer workflow: .github/workflows/release.yml@refs/tags/v0.3.3
 ```
 
 `gh` fetches the attestation from GitHub by the file's content digest (crates.io does not serve it), so this **fails if the crates.io bytes were not built by this repo's release workflow** — including anything published out-of-band. The two pins check the signing certificate, the only part of an attestation a compromised build cannot forge:

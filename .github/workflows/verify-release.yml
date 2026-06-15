@@ -46,14 +46,15 @@ jobs:
           echo "ver=$ver" >> "$GITHUB_OUTPUT"
           echo "Verifying release $tag (crate version $ver)"
 
-      # Mirror the README's consumer verification steps exactly.
       - name: Download .crate from crates.io
         env:
           VER: ${{ steps.ver.outputs.ver }}
         run: |
+          # crates.io requires a descriptive User-Agent; the default curl/X.Y.Z gets a 403.
           url="https://crates.io/api/v1/crates/wikiwho/${VER}/download"
           echo "Downloading $url"
-          curl -fsSL "$url" -o "wikiwho-${VER}.crate"
+          curl -fsSL -A "wikiwho-verify (https://github.com/Schuwi/wikiwho_rs)" \
+            "$url" -o "wikiwho-${VER}.crate"
           echo "sha256: $(sha256sum "wikiwho-${VER}.crate" | cut -d' ' -f1)"
 
       - name: Verify build-provenance attestation
