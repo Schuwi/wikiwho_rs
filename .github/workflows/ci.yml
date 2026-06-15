@@ -207,11 +207,71 @@ jobs:
             echo "::warning::full dump unavailable from wikiwho-data; skipping deep parity"
           fi
 
-  # NOTE: a gold-standard *accuracy* job (algorithm_statistic_tests) is intentionally NOT
-  # wired up yet. It is blocked on two maintainer-side items:
-  #   1. the committed dev-data/article-cache is stale (old serde format, missing `id`)
-  #      and must be regenerated — a natural wikiwho-data test-data deliverable;
-  #   2. gold_standard_precision_rust currently locates only 3/98 tokens (~66.7%), below
-  #      its own 0.85 threshold — the token-location logic is still WIP.
-  # Once both are resolved this becomes a pure-Rust, no-Python PR gate (LFS article-cache
-  # + `python3 tools/fetch_gold_standard.py` + `cargo test gold_standard_precision_rust`).
+  gold-standard:
+    name: gold standard accuracy (pure Rust)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: { lfs: false }
+      # Selective LFS: fetch only the cached gold-standard article pages, never the dumps.
+      - name: Fetch gold-standard article cache (LFS)
+        run: git lfs pull --include="dev-data/article-cache/*.json.zst"
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      # The CSV is fetched from a Wayback snapshot and SHA-256-verified by the script. Cache
+      # it (keyed on the script, which pins the expected hash) so an occasional archive.org
+      # hiccup can't fail unrelated PRs.
+      - name: Cache gold-standard CSV
+        id: gold-csv
+        uses: actions/cache@v4
+        with:
+          path: dev-data/gold_standard.partial.newnames.csv
+          key: gold-standard-csv-${{ hashFiles('tools/fetch_gold_standard.py') }}
+      - name: Fetch the archived gold-standard CSV
+        if: steps.gold-csv.outputs.cache-hit != 'true'
+        run: python3 tools/fetch_gold_standard.py # stdlib only; the runner's python3 suffices
+      - name: Precision vs. paper gold standard (imara-diff / pure Rust)
+        run: |
+          cargo test --features serde --test algorithm_statistic_tests -- \
+            --ignored --nocapture gold_standard_precision_rust
+
+  gold-standard-parity:
+    name: gold standard vs Python (push to main)
+    # The python-diff statistical baselines need the reference WikiWho venv; like the deep
+    # parity run, they're reserved for push-to-main to keep PRs fast.
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: { lfs: false }
+      - name: Fetch gold-standard article cache (LFS)
+        run: git lfs pull --include="dev-data/article-cache/*.json.zst"
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12" }
+      - name: Set up reference WikiWho venv
+        run: |
+          python -m venv .venv
+          ./.venv/bin/pip install --upgrade pip
+          ./.venv/bin/pip install -r requirements.txt
+          # "Activate" the venv for later steps so pyo3's auto-initialized interpreter
+          # finds the installed WikiWho module (VIRTUAL_ENV is what site.py keys on).
+          echo "VIRTUAL_ENV=$PWD/.venv" >> "$GITHUB_ENV"
+          echo "PYO3_PYTHON=$PWD/.venv/bin/python" >> "$GITHUB_ENV"
+          echo "$PWD/.venv/bin" >> "$GITHUB_PATH"
+      - name: Cache gold-standard CSV
+        id: gold-csv
+        uses: actions/cache@v4
+        with:
+          path: dev-data/gold_standard.partial.newnames.csv
+          key: gold-standard-csv-${{ hashFiles('tools/fetch_gold_standard.py') }}
+      - name: Fetch the archived gold-standard CSV
+        if: steps.gold-csv.outputs.cache-hit != 'true'
+        run: python3 tools/fetch_gold_standard.py
+      - name: Python-diff precision + Rust/Python divergence
+        run: |
+          cargo test --features python-diff,serde --test algorithm_statistic_tests -- \
+            --ignored --nocapture \
+            gold_standard_precision_python_diff \
+            divergence_rate_gold_standard_articles
