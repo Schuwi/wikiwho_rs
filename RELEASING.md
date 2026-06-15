@@ -45,11 +45,14 @@ are compile-verified even though the test suite is not re-run.
 
 ## What a release produces
 
-Order of operations: run the gates, `cargo publish`, create the immutable GitHub release, then
-**attest last**. `cargo publish` leaves the exact uploaded tarball in `target/package/`; that one
-file is what gets attached to the release and attested, so the attestation subject, the release
-asset, and the crates.io bytes are identical **by construction** — no assumption that cargo
-packaging is byte-deterministic across invocations.
+Order of operations: run the gates, `cargo package` the artifact, `cargo publish`, create the
+immutable GitHub release, then **attest last**. The release attaches and attests the local
+`cargo package` tarball — the artifact we built in CI. `cargo package` is byte-for-byte
+deterministic for a given commit (a clean package of the tagged commit reproduces the exact bytes
+`cargo publish` uploads to crates.io), so that one file equals the crates.io download **by
+construction**; the attestation subject, the release asset, and the crates.io bytes are the same
+bytes. (`cargo publish` repackages the same content internally — it does not persist its own copy,
+and there is no flag to make it reuse ours — but the bytes are identical.)
 
 **Attestation is deliberately the final step.** A valid build-provenance attestation for a tag can
 therefore exist only once the crate is actually on crates.io *and* the immutable release is
