@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.2] - 2026-06-15
+
 ### Added
 
 - Releases are now built and published by CI with a verifiable [SLSA build-provenance attestation](https://github.com/actions/attest-build-provenance); published crates can be checked with `gh attestation verify` (see "Verifying a release" in the README).
