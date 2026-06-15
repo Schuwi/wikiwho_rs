@@ -205,7 +205,6 @@ fn test_case_1() {
     // found by proptest
     Python::attach(|py| {
         let page = Page {
-            id: 0,
             title: "Test".into(),
             namespace: 0,
             revisions: vec![
@@ -257,7 +256,6 @@ fn test_case_1() {
 fn test_case_2() {
     // found by proptest
     let page = Page {
-        id: 0,
         title: "Test".into(),
         namespace: 0,
         revisions: vec![
