@@ -304,7 +304,7 @@ Test data:
 Releases on [crates.io](https://crates.io/crates/wikiwho) are published by CI (not from a maintainer's machine), so they are independently verifiable. Each release is signed with an [SLSA build-provenance attestation](https://github.com/actions/attest-build-provenance). **Verify the artifact you actually install** — the `.crate` from crates.io (or the copy in your local `~/.cargo` cache):
 
 ```sh
-ver=<version>
+ver=0.3.3  # version number only, no leading 'v'
 # fetch the exact bytes crates.io serves (static CDN — the API redirect endpoint blocks curl)
 curl -o "wikiwho-$ver.crate" "https://static.crates.io/crates/wikiwho/wikiwho-$ver.crate"
 
