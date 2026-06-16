@@ -188,6 +188,44 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 - **Purpose**: Provides utility functions.
 - **Key Function**: `iterate_revision_tokens()` for easy iteration over tokens in a revision.
 
+## Migrating from Python WikiWho
+
+If you are coming from the original [Python WikiWho](https://github.com/wikiwho/WikiWho), this crate exposes the same concepts under Rust-idiomatic names. The biggest structural difference is token lookup: Python returns a `Wikiwho` object whose `tokens` list you index by token id, whereas here you index the `PageAnalysis` itself with a `WordPointer` (`analysis[word_pointer]`) to get the per-token [`WordAnalysis`](https://docs.rs/wikiwho/latest/wikiwho/algorithm/struct.WordAnalysis.html).
+
+### Concept mapping
+
+| Python WikiWho | This crate |
+| --- | --- |
+| `analyse_article_from_xml_dump(...)` | [`PageAnalysis::analyse_page(&page.revisions)`](https://docs.rs/wikiwho/latest/wikiwho/algorithm/struct.PageAnalysis.html#method.analyse_page) |
+| `tokens[id]` lookup | `analysis[word_pointer]` (indexing a `PageAnalysis` with a `WordPointer`) |
+| token `o_rev_id` | `WordAnalysis.origin_revision.id` |
+| token `in` | `WordAnalysis.inbound` |
+| token `out` | `WordAnalysis.outbound` |
+| spam revisions | `PageAnalysis.spam_ids` |
+
+To iterate the tokens of a revision in order (the Python `iter_*` helpers), use [`utils::iterate_revision_tokens(&analysis, &revision)`](https://docs.rs/wikiwho/latest/wikiwho/utils/fn.iterate_revision_tokens.html); see the [Basic Example](#basic-example) above.
+
+### Parity with Python WikiWho
+
+Parity is verified in CI, not just claimed:
+
+- **Exact mode (`python-diff`):** with the `python-diff` feature enabled, results are **byte-identical** to the reference Python WikiWho — paragraph, sentence, and token splitting included. This is enforced token-by-token by the parity suite ([`tests/algorithm_exact_tests.rs`](tests/algorithm_exact_tests.rs)) on every PR.
+- **Default mode (Rust histogram diff):** without the feature, the fast `imara-diff` histogram backend is used instead of Python's `difflib`. It scores **≥85% precision** against the paper's gold standard, a floor enforced in CI ([`tests/algorithm_statistic_tests.rs`](tests/algorithm_statistic_tests.rs)). For reference, the original paper reports ~95% precision using `difflib`.
+
+The 85% figure sounds lower than it is: it is measured on a small subset (≤18 tokens from 3 articles) of the gold standard, using text-based context matching that gets confused by very common, ambiguous tokens (e.g. `"in"`, `"the"`) that recur many times in an article. It is a conservative CI floor, not a representative accuracy number for the algorithm as a whole. If you need results that match Python exactly, enable `python-diff`.
+
+### Tokenization compatibility
+
+Paragraph, sentence, and token splitting match the Python implementation. This is enforced by the parity suite ([`tests/algorithm_exact_tests.rs`](tests/algorithm_exact_tests.rs)), which compares the full paragraph/sentence/token structure of every revision against Python's output.
+
+### Spam detection
+
+Spam detection uses the same logic and constants as Python (the `CHANGE_PERCENTAGE`, `PREVIOUS_LENGTH`, `CURR_LENGTH`, `TOKEN_DENSITY_LIMIT` thresholds in [`src/algorithm/mod.rs`](src/algorithm/mod.rs)). Revisions detected as spam are skipped during analysis and their IDs are collected in `PageAnalysis.spam_ids` (they do not appear in `ordered_revisions` or `revisions_by_id`).
+
+### Reference Python implementation
+
+The exact-comparison tests pin a fork of WikiWho rather than `wikiwho/WikiWho` upstream: [`Schuwi/WikiWho`](https://github.com/Schuwi/WikiWho) (see [`requirements.txt`](requirements.txt)). The fork only adds instrumentation — it keeps the `value` fields of sentence and paragraph objects so the parity tests can compare the full splitting structure. The authorship algorithm itself is unchanged from upstream, so parity against the fork is parity against WikiWho's behavior.
+
 ## Dependencies
 
 - **`compact_str`**: Used in the public API for efficient handling of mostly short strings, such as page titles and contributor names.
@@ -261,7 +299,7 @@ This is only beneficial for text where a significant portion of characters are n
 ## Limitations
 
 - **XML Format Compatibility**: Tested with Wikimedia dump XML format version 0.11. Dumps from other versions or projects may have variations that could cause parsing issues.
-- **Accuracy**: While the library aims for a faithful reimplementation, slight variations may occur due to differences in the diff algorithm.
+- **Accuracy**: In the default mode the Rust histogram diff replaces Python's `difflib`, so attributions can differ slightly on ambiguous tokens; precision against the paper's gold standard is held at ≥85% in CI (the paper reports ~95% with `difflib`). Enable the `python-diff` feature for byte-identical parity with the reference Python WikiWho. See [Migrating from Python WikiWho](#migrating-from-python-wikiwho) for the full parity story.
 - **Other Wiki Formats**: Optimized for Wikipedia-like wikis. Users can manually construct `Page` and `Revision` structs from other data sources if needed.
 
 <div class="rustdoc-hidden">

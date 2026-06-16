@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- README: "Migrating from Python WikiWho" guide with a concept-mapping table (e.g. `analyse_article_from_xml_dump` → `PageAnalysis::analyse_page`, `tokens[id]` → `analysis[word_pointer]`, `o_rev_id`/`in`/`out` → `WordAnalysis` fields, spam → `PageAnalysis.spam_ids`), a quantitative parity section (≥85% default precision, byte-identical with `python-diff`), and notes on tokenization compatibility, spam detection, and the pinned `Schuwi/WikiWho` reference fork.
+
+### Changed
+
+- README: replaced the vague "slight variations may occur" accuracy note with the concrete parity numbers.
+
 ## [0.3.4] - 2026-06-15
 
 ### Added
