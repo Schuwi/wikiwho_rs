@@ -190,18 +190,19 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
 ## Migrating from Python WikiWho
 
-Coming from the original [Python WikiWho](https://github.com/wikiwho/WikiWho)? The main structural change is token lookup: instead of indexing `Wikiwho.tokens` by position, you index the `PageAnalysis` itself with a `WordPointer` (`analysis[word_pointer]`) to get a [`WordAnalysis`](https://docs.rs/wikiwho/latest/wikiwho/algorithm/struct.WordAnalysis.html). Iterate a revision's tokens in order with [`utils::iterate_revision_tokens`](https://docs.rs/wikiwho/latest/wikiwho/utils/fn.iterate_revision_tokens.html) (see the [Basic Example](#basic-example)).
+Coming from the original [Python WikiWho](https://github.com/wikiwho/WikiWho)? The main structural change is token lookup: instead of indexing `Wikiwho.tokens` by position (or by `token_id` in the JSON API), you index the `PageAnalysis` itself with a `WordPointer` (`analysis[word_pointer]`) to get a [`WordAnalysis`](https://docs.rs/wikiwho/latest/wikiwho/algorithm/struct.WordAnalysis.html). Iterate a revision's tokens in order with [`utils::iterate_revision_tokens`](https://docs.rs/wikiwho/latest/wikiwho/utils/fn.iterate_revision_tokens.html) (see the [Basic Example](#basic-example)).
 
-The mapping below uses the in-process object attributes returned by `analyse_article_from_xml_dump` (as exercised by this crate's parity bridge in `tests/`), not the short keys used in WikiWho's JSON/pickle output (`o_rev_id`, `in`, `out`).
+The table maps both ways you might know WikiWho today: the in-process Python object attributes returned by `analyse_article_from_xml_dump`, and the field names from the [WikiWho web API](https://wikiwho-api.wmcloud.org/) (e.g. the `all_content` endpoint).
 
-| Python WikiWho | This crate |
-| --- | --- |
-| `Wikiwho(...).analyse_article_from_xml_dump(...)` | [`PageAnalysis::analyse_page(&page.revisions)`](https://docs.rs/wikiwho/latest/wikiwho/algorithm/struct.PageAnalysis.html#method.analyse_page) |
-| `Wikiwho.tokens[i]` | `analysis[word_pointer]` |
-| token `.origin_rev_id` | `WordAnalysis.origin_revision.id` |
-| token `.last_rev_id` | `WordAnalysis.latest_revision.id` |
-| token `.inbound` / `.outbound` | `WordAnalysis.inbound` / `WordAnalysis.outbound` |
-| `Wikiwho.spam_ids` | `PageAnalysis.spam_ids` |
+| Python object | WikiWho JSON API | This crate |
+| --- | --- | --- |
+| `Wikiwho(title).analyse_article_from_xml_dump(page)` | `all_content` / `rev_content` endpoint | [`PageAnalysis::analyse_page(&page.revisions)`](https://docs.rs/wikiwho/latest/wikiwho/algorithm/struct.PageAnalysis.html#method.analyse_page) |
+| `Wikiwho.tokens[i]` | per-token object (`token_id`) | `analysis[word_pointer]` |
+| token `.value` | `str` | the token text (`word_pointer.value`) |
+| token `.origin_rev_id` | `o_rev_id` | `WordAnalysis.origin_revision.id` |
+| token `.inbound` / `.outbound` | `in` / `out` | `WordAnalysis.inbound` / `WordAnalysis.outbound` |
+| origin revision's editor | `editor` | contributor of `origin_revision` (see [Basic Example](#basic-example)) |
+| `Wikiwho.spam_ids` | *(not exposed)* | `PageAnalysis.spam_ids` |
 
 Behavior matches the Python implementation: paragraph/sentence/token splitting and spam detection use the same logic and constants, and the `python-diff` feature makes results byte-identical to the reference Python WikiWho (the default backend holds ≥85% precision against the paper's gold standard — see [Validation](#validation)).
 
