@@ -9,11 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- README: "Migrating from Python WikiWho" guide with a concept-mapping table (e.g. `analyse_article_from_xml_dump` → `PageAnalysis::analyse_page`, `tokens[id]` → `analysis[word_pointer]`, `o_rev_id`/`in`/`out` → `WordAnalysis` fields, spam → `PageAnalysis.spam_ids`), a quantitative parity section (≥85% default precision, byte-identical with `python-diff`), and notes on tokenization compatibility, spam detection, and the pinned `Schuwi/WikiWho` reference fork.
+- README: "Migrating from Python WikiWho" section with a concept-mapping table from Python WikiWho fields/calls to this crate (e.g. `analyse_article_from_xml_dump` → `PageAnalysis::analyse_page`, `tokens[id]` → `analysis[word_pointer]`, `o_rev_id`/`in`/`out` → `WordAnalysis` fields, spam → `PageAnalysis.spam_ids`).
 
 ### Changed
 
-- README: replaced the vague "slight variations may occur" accuracy note with the concrete parity numbers.
+- README: replaced the vague "slight variations may occur" accuracy note with concrete wording that points to the quantitative parity figures.
+- Documented the `Schuwi/WikiWho` reference fork (used by the exact-comparison tests) in `CONTRIBUTING.md`, and noted in the `PageAnalysis::spam_ids` docs that spam detection matches the Python implementation.
 
 ## [0.3.4] - 2026-06-15
 

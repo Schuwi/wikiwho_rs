@@ -345,8 +345,9 @@ pub struct PageAnalysis {
 
     /// Collection of revision IDs that were detected as spam.
     ///
-    /// These revisions were not analysed and are not included in the `revisions`,
-    /// `revisions_by_id` and `ordered_revisions` fields.
+    /// Spam detection uses the same heuristic and constants as the original Python
+    /// WikiWho. These revisions were not analysed and are not included in the
+    /// `revisions`, `revisions_by_id` and `ordered_revisions` fields.
     pub spam_ids: Vec<i32>,
     /// Map of revision ID to RevisionData.
     ///

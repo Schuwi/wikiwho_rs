@@ -29,6 +29,8 @@ pip install -r requirements.txt
 cargo test --features python-diff
 ```
 
+`requirements.txt` pins a fork ([`Schuwi/WikiWho`](https://github.com/Schuwi/WikiWho)) rather than upstream `wikiwho/WikiWho`. The fork only adds instrumentation — it preserves the `value` fields of sentence and paragraph objects so the parity tests can compare the full splitting structure — and leaves the authorship algorithm unchanged, so comparing against it is equivalent to comparing against upstream WikiWho's behavior.
+
 To control where large temporary IPC files are written, set `TMPDIR` before running:
 
 ```sh
