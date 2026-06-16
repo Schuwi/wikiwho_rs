@@ -182,6 +182,7 @@ impl<T> MaybeVec<T> {
     }
 }
 
+#[doc(hidden)] // internal type alias; not part of the supported public API
 pub type RevisionSubstr = Yoke<Cow<'static, str>, Arc<String>>;
 
 #[derive(Clone)]
@@ -371,6 +372,12 @@ pub struct PageAnalysis {
 impl PageAnalysis {
     /// Creates a PageAnalysis initialized with the given revision as `current_revision`.
     /// For normal use, prefer `analyse_page()`.
+    // Hidden from the public API: a low-level constructor used internally by
+    // `analyse_page` and by the integration tests. Kept `pub` (not `pub(crate)`)
+    // so the integration test crate can still build it; `#[doc(hidden)]` removes
+    // it from the documented surface (classified as breaking by
+    // cargo-semver-checks, hence the 0.4.0 bump).
+    #[doc(hidden)]
     pub fn new(initial_revision: (RevisionAnalysis, RevisionImmutables)) -> Self {
         let arc = Arc::new(initial_revision.1);
         let initial_revision_ptr = RevisionPointer(0, arc.clone());
@@ -393,6 +400,7 @@ impl PageAnalysis {
         }
     }
 
+    #[doc(hidden)] // internal constructor (see `new`)
     pub fn new_revision(&mut self, revision_data: RevisionImmutables) -> RevisionPointer {
         let arc = Arc::new(revision_data);
         let revision_pointer = RevisionPointer(self.revisions.len(), arc.clone());
@@ -401,6 +409,7 @@ impl PageAnalysis {
         revision_pointer
     }
 
+    #[doc(hidden)] // internal constructor (see `new`)
     pub fn new_paragraph(&mut self, paragraph_data: ParagraphImmutables) -> ParagraphPointer {
         let arc = Arc::new(paragraph_data);
         let paragraph_pointer = ParagraphPointer(self.paragraphs.len(), arc.clone());
@@ -409,6 +418,7 @@ impl PageAnalysis {
         paragraph_pointer
     }
 
+    #[doc(hidden)] // internal constructor (see `new`)
     pub fn new_sentence(&mut self, sentence_data: SentenceImmutables) -> SentencePointer {
         let arc = Arc::new(sentence_data);
         let sentence_pointer = SentencePointer(self.sentences.len(), arc.clone());
@@ -417,6 +427,7 @@ impl PageAnalysis {
         sentence_pointer
     }
 
+    #[doc(hidden)] // internal constructor (see `new`)
     pub fn new_word(
         &mut self,
         word_data: WordImmutables,

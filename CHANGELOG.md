@@ -7,9 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **Breaking:** Marked internal, non-API items as `#[doc(hidden)]`, removing them from the documented public API: the `PageAnalysis::{new, new_revision, new_paragraph, new_sentence, new_word}` constructors and the `RevisionSubstr` type alias. These are implementation details (used internally by `analyse_page` and by the test suite) and remain `pub`, so code that calls them still compiles; however, `cargo-semver-checks` classifies doc-hiding an inherent method as a breaking change, hence the `0.4.0` minor bump.
+
 ### Fixed
 
 - `wikiwho-cli --help` now advertises the page-limit flag under its actual long name `--limit` (it previously printed a non-existent `--pages`).
+
+### Documentation
+
+- Overhauled the project documentation: restructured the README and split out dedicated `SECURITY.md` and `CONTRIBUTING.md`; corrected user-facing details (feature table, dependencies, MSRV, and runnable examples) and contributor testing guidance; documented the `wikiwho-cli` tool and the standalone HTML viewer; added a Python WikiWho migration guide with parity guarantees; and filled in the library's API rustdoc (entry points, module-level overviews, a crate-layout map, and per-field `Revision` documentation).
 
 ## [0.3.4] - 2026-06-15
 

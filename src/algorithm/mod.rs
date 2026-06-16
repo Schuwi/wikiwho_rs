@@ -1,4 +1,26 @@
 // SPDX-License-Identifier: MIT AND MPL-2.0
+//! Token-level authorship analysis — the WikiWho algorithm.
+//!
+//! This module turns an ordered sequence of [`Revision`]s
+//! into a [`PageAnalysis`]: a graph of paragraphs, sentences and tokens (≈ words)
+//! that records, for every token still present in a revision, the revision in
+//! which it was first introduced (its *origin*) together with its add/delete
+//! history across the page's lifetime.
+//!
+//! # Entry points
+//!
+//! - [`PageAnalysis::analyse_page`] — analyse a page with default options.
+//! - [`PageAnalysis::analyse_page_with_options`] — same, but select algorithm
+//!   behavior via [`PageAnalysisOptions`] (e.g. the `python-diff` diff algorithm or
+//!   optimized non-ASCII lowercasing).
+//!
+//! Consume the result with
+//! [`iterate_revision_tokens`](crate::utils::iterate_revision_tokens), which walks
+//! the tokens of a revision in reading order.
+//!
+//! Revisions must be supplied in chronological order (oldest first): the algorithm
+//! relies on the order of the input sequence, not on the `timestamp` field of each
+//! [`Revision`].
 mod types;
 use std::{
     borrow::{Borrow, Cow},
@@ -395,6 +417,24 @@ impl PageAnalysis {
         Self::analyse_page_with_options(xml_revisions, PageAnalysisOptions::default())
     }
 
+    /// Like [`analyse_page`](Self::analyse_page), but lets you select algorithm
+    /// behavior via [`PageAnalysisOptions`].
+    ///
+    /// Use this entry point when you need non-default behavior, such as the
+    /// Python-compatible diff algorithm (`python-diff` feature) or the optimized
+    /// non-ASCII lowercasing path (`optimized-lowercase` feature). See
+    /// [`PageAnalysisOptions`] for the full list of options;
+    /// [`analyse_page`](Self::analyse_page) is exactly this function called with
+    /// [`PageAnalysisOptions::default`].
+    ///
+    /// As with [`analyse_page`](Self::analyse_page), `xml_revisions` must be in
+    /// chronological order (oldest first), as returned by
+    /// [`DumpParser::parse_page`](crate::dump_parser::DumpParser::parse_page).
+    ///
+    /// # Errors
+    ///
+    /// Returns [`AnalysisError::NoValidRevisions`] if every revision in the input
+    /// is classified as spam or has empty/deleted text.
     pub fn analyse_page_with_options<I, R>(
         xml_revisions: I,
         analysis_options: PageAnalysisOptions,

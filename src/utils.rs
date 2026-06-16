@@ -313,6 +313,21 @@ pub fn trim_in_place(input: Cow<'_, str>) -> Cow<'_, str> {
     }
 }
 
+/// Iterates over the tokens (≈ words) present in a revision, in reading order.
+///
+/// Given a [`RevisionPointer`] into `analysis`, this yields the tokens that are
+/// *present* in that revision — in paragraph → sentence → word order, i.e. the
+/// order in which they appear in the article text. Tokens that had been deleted by
+/// this revision are not part of its structure and are therefore not yielded; to
+/// inspect deletions, look at the add/delete history on the individual
+/// [`WordAnalysis`](crate::algorithm::WordAnalysis) instead.
+///
+/// This is the primary way to consume analysis results. Pass
+/// [`PageAnalysis::current_revision`] to walk the latest (non-spam) revision, or
+/// any [`RevisionPointer`] from [`PageAnalysis::ordered_revisions`] for a
+/// historical one, then index into `analysis` with each yielded [`WordPointer`]
+/// (e.g. `&analysis[word]`) to read its authorship data, such as the
+/// [`origin_revision`](crate::algorithm::WordAnalysis::origin_revision).
 pub fn iterate_revision_tokens<'a>(
     analysis: &'a PageAnalysis,
     revision: &RevisionPointer,
