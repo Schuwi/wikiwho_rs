@@ -204,6 +204,24 @@ reporting, and ordered output — see the bundled CLI in
 - **Purpose**: Provides utility functions.
 - **Key Function**: `iterate_revision_tokens()` for easy iteration over tokens in a revision.
 
+## Migrating from Python WikiWho
+
+Coming from the original [Python WikiWho](https://github.com/wikiwho/WikiWho)? The main structural change is token lookup: instead of indexing `Wikiwho.tokens` by position (or by `token_id` in the JSON API), you index the `PageAnalysis` itself with a `WordPointer` (`analysis[word_pointer]`) to get a [`WordAnalysis`](https://docs.rs/wikiwho/latest/wikiwho/algorithm/struct.WordAnalysis.html). Iterate a revision's tokens in order with [`utils::iterate_revision_tokens`](https://docs.rs/wikiwho/latest/wikiwho/utils/fn.iterate_revision_tokens.html) (see the [Basic Example](#basic-example)).
+
+The table maps both ways you might know WikiWho today: the in-process Python object attributes returned by `analyse_article_from_xml_dump`, and the field names from the [WikiWho web API](https://wikiwho-api.wmcloud.org/) (e.g. the `all_content` endpoint).
+
+| Python object | WikiWho JSON API | This crate |
+| --- | --- | --- |
+| `Wikiwho(title).analyse_article_from_xml_dump(page)` | `all_content` / `rev_content` endpoint | [`PageAnalysis::analyse_page(&page.revisions)`](https://docs.rs/wikiwho/latest/wikiwho/algorithm/struct.PageAnalysis.html#method.analyse_page) |
+| `Wikiwho.tokens[i]` | per-token object (`token_id`) | `analysis[word_pointer]` |
+| token `.value` | `str` | the token text (`word_pointer.value`) |
+| token `.origin_rev_id` | `o_rev_id` | `WordAnalysis.origin_revision.id` |
+| token `.inbound` / `.outbound` | `in` / `out` | `WordAnalysis.inbound` / `WordAnalysis.outbound` |
+| origin revision's editor | `editor` | contributor of `origin_revision` (see [Basic Example](#basic-example)) |
+| `Wikiwho.spam_ids` | *(not exposed)* | `PageAnalysis.spam_ids` |
+
+Behavior matches the Python implementation: paragraph/sentence/token splitting and spam detection use the same logic and constants, and the `python-diff` feature makes results byte-identical to the reference Python WikiWho (the default backend holds ≥85% precision against the paper's gold standard — see [Validation](#validation)).
+
 ## Dependencies
 
 The crate keeps a modest set of mandatory dependencies and pulls in the rest only when you
@@ -301,7 +319,7 @@ This is only beneficial for text where a significant portion of characters are n
 ## Limitations
 
 - **XML Format Compatibility**: Tested with Wikimedia dump XML format version 0.11. Dumps from other versions or projects may have variations that could cause parsing issues.
-- **Accuracy**: While the library aims for a faithful reimplementation, slight variations may occur due to differences in the diff algorithm.
+- **Accuracy**: By default this crate uses a Rust histogram diff in place of the `difflib` diff used by the original Python WikiWho, so token attributions can differ slightly from that reference implementation on ambiguous tokens. Enable the `python-diff` feature for results byte-identical to Python WikiWho. See [Validation](#validation) for the precision figures.
 - **Other Wiki Formats**: Optimized for Wikipedia-like wikis. Users can manually construct `Page` and `Revision` structs from other data sources if needed.
 
 <div class="rustdoc-hidden">

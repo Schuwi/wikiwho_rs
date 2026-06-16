@@ -45,7 +45,7 @@ cargo test --features python-diff,serde
 > -e git+https://github.com/Schuwi/WikiWho.git@<commit>#egg=WikiWho
 > ```
 >
-> So `pip install` needs **`git` and network access** and will clone and build the fork — slower than a plain wheel download. This is exactly what CI does (`.venv` + `requirements.txt`).
+> So `pip install` needs **`git` and network access** and will clone and build the fork — slower than a plain wheel download. This is exactly what CI does (`.venv` + `requirements.txt`). The fork diverges from upstream [`wikiwho/WikiWho`](https://github.com/wikiwho/WikiWho) only by that instrumentation and leaves the authorship algorithm unchanged, so parity against it is equivalent to parity against upstream.
 
 To control where large temporary IPC files are written, set `TMPDIR` before running:
 
