@@ -30,9 +30,80 @@ A high-performance Rust implementation of the WikiWho algorithm for token-level 
 
 CI verifies exact token-level parity against the reference Python WikiWho on every PR, and ≥85% precision against the paper's gold standard (the paper reports ~95% using Python's `difflib`; enable the `python-diff` feature for byte-identical results). Property-test fuzzing additionally checks Rust-vs-Python parity on randomized input. See [`CONTRIBUTING.md`](CONTRIBUTING.md) for how to run these tests locally.
 
-## Installation
+## Quick Start (no Rust required)
 
-`wikiwho` is available on [crates.io](https://crates.io/crates/wikiwho). Add it to your `Cargo.toml`:
+`wikiwho` ships a command-line tool, `wikiwho-cli`, that runs the full algorithm over a MediaWiki XML dump and streams the per-page authorship results out as JSON. You only need a Rust toolchain to install it once (see [rustup.rs](https://rustup.rs/)); after that it is an ordinary binary — no Rust knowledge needed to use it.
+
+```sh
+# One-time install (the CLI lives behind the `cli` feature)
+cargo install wikiwho --features cli
+
+# Analyse a dump. Input compression (.bz2/.zst/.gz) is auto-detected from the
+# extension; `--namespace 0` keeps only article pages; results go to out.jsonl.
+wikiwho-cli dewiktionary-latest-pages-meta-history.xml.bz2 --namespace 0 -o out.jsonl
+```
+
+The input is a standard `*-pages-meta-history*` export from [Wikimedia dumps](https://dumps.wikimedia.org/). Omit the path (or pass `-`) to read from stdin, and likewise for `-o` to write to stdout. Run `wikiwho-cli --help` for the full list of options:
+
+| Option | Description |
+| --- | --- |
+| `-o, --output PATH` | Output file (`-` or omit for stdout). Compression auto-detected from extension. |
+| `-f, --format FORMAT` | Output format: `jsonl` (default), `json`, or `raw`. |
+| `-j, --jobs N` | Number of worker threads (default: number of CPUs). |
+| `-n, --namespace NS` | Only process pages in this namespace (repeatable; `0` = articles). |
+| `-N, --limit N` | Only process the first N pages. |
+| `-q, --quiet` | Suppress progress messages on stderr. |
+
+### Exploring the output in a browser
+
+[`tools/wikiwho-viewer.html`](tools/wikiwho-viewer.html) is a self-contained, drag-and-drop viewer. Open it in any browser and drop your `out.jsonl` (or `.json`) file onto it to colour each token by its author and age — no server or build step required.
+
+### Output format
+
+With the default `jsonl` format, each line is one self-contained JSON object describing a page. One page looks like this (truncated):
+
+```json
+{
+  "article_title": "Anontalkpagetext",
+  "namespace": 8,
+  "revisions": [
+    { "id": 401685, "timestamp": "2006-09-19T20:46:45+00:00", "editor": "1390" },
+    { "id": 552578, "timestamp": "2007-05-23T15:43:05+00:00", "editor": "1390" }
+  ],
+  "spam_ids": [],
+  "all_tokens": [
+    { "token_id": 0, "str": "/", "o_rev_id": 401685, "editor": "1390", "in": [], "out": [] },
+    { "token_id": 1, "str": "span", "o_rev_id": 401685, "editor": "1390", "in": [], "out": [] }
+  ]
+}
+```
+
+Field reference:
+
+- **`article_title`**, **`namespace`** — page identity.
+- **`revisions`** — the page's revisions in chronological order; `editor` is the user id as a string, or `"0|<username>"` for anonymous/IP edits.
+- **`spam_ids`** — revision ids that were detected as spam/vandalism and excluded.
+- **`all_tokens`** — every token surviving in the current revision, in reading order:
+  - **`str`** — the token text (token ≈ word).
+  - **`o_rev_id`** / **`editor`** — the revision and author that *first introduced* the token (this is the authorship attribution).
+  - **`in`** / **`out`** — revision ids in which the token was re-inserted / removed, tracking tokens that were deleted and later restored.
+
+The other formats: `json` wraps the whole run in a single JSON array (one element per page) instead of newline-delimited objects, and `raw` dumps the internal analysis structures for debugging.
+
+Because `jsonl` is one JSON object per line, you can load it in any language without a streaming parser. In Python:
+
+```python
+import json
+
+with open("out.jsonl") as f:
+    for line in f:
+        page = json.loads(line)
+        print(page["article_title"], len(page["all_tokens"]), "tokens")
+```
+
+## Installation (as a library)
+
+`wikiwho` is also available on [crates.io](https://crates.io/crates/wikiwho) as a library. Add it to your `Cargo.toml`:
 
 ```toml
 [dependencies]

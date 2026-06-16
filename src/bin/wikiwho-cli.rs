@@ -49,7 +49,7 @@ Options:
   -f, --format FORMAT     Output format: jsonl (default), json, raw
   -j, --jobs N            Number of worker threads (default: number of CPUs)
   -n, --namespace NS      Only process pages in this namespace (repeatable)
-  -N, --pages N           Only process the first N pages
+  -N, --limit N           Only process the first N pages
   -q, --quiet             Suppress progress messages on stderr
   -h, --help              Show this help message"
     );

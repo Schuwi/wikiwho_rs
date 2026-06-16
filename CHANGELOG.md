@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- README now documents the `wikiwho-cli` command-line tool and the `tools/wikiwho-viewer.html` browser viewer in a "Quick Start (no Rust required)" section, including the output JSON format and a Python snippet for loading it.
+
+### Fixed
+
+- `wikiwho-cli --help` now advertises the page-limit flag under its actual long name `--limit` (it previously printed a non-existent `--pages`).
+
 ## [0.3.4] - 2026-06-15
 
 ### Added
