@@ -106,15 +106,17 @@ Wikimedia text dumps are generally reusable under CC BY-SA 4.0 and GFDL, with at
 
 ## Running
 
+These tests live in `algorithm_statistic_tests`, which is gated behind the `serde` feature; without it the suite compiles empty and the commands below run nothing.
+
 Pure Rust precision:
 
 ```sh
-cargo test gold_standard_precision_rust -- --ignored
+cargo test --features serde --test algorithm_statistic_tests -- --ignored gold_standard_precision_rust
 ```
 
-Python baseline and divergence checks:
+Python baseline and divergence checks (need the Python venv from `CONTRIBUTING.md`):
 
 ```sh
-cargo test --features python-diff gold_standard_precision_python_diff -- --ignored
-cargo test --features python-diff divergence_rate_gold_standard_articles -- --ignored
+cargo test --features python-diff,serde --test algorithm_statistic_tests -- --ignored gold_standard_precision_python_diff
+cargo test --features python-diff,serde --test algorithm_statistic_tests -- --ignored divergence_rate_gold_standard_articles
 ```
