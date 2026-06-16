@@ -1,4 +1,15 @@
 // SPDX-License-Identifier: MPL-2.0
+//! Fast, allocation-light string processing used by the analysis pipeline.
+//!
+//! This module provides optimized replacements for the text-splitting routines in
+//! [`utils`](crate::utils): paragraph, sentence and token splitting built on
+//! Aho-Corasick and `memchr`-based scanning, designed to avoid copying the input
+//! wherever a borrowed substring will do.
+//!
+//! It is an internal implementation detail: it is gated behind the `optimized-str`
+//! feature and hidden from the public API (only exposed so it can be benchmarked).
+//! Call the stable wrappers in [`utils`](crate::utils) instead, which dispatch to
+//! these implementations when the feature is enabled.
 use aho_corasick::{AhoCorasick, AhoCorasickBuilder, PatternID};
 use memchr::memmem;
 use regex::Regex;

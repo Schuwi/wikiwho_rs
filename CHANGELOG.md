@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Filled in rustdoc gaps across the public API: doc comments for `PageAnalysis::analyse_page_with_options` and `utils::iterate_revision_tokens`, module-level overviews for the `algorithm`, `dump_parser` and `optimized_str` modules plus a crate-layout map in the crate root, and per-field documentation for `dump_parser::Revision` (which fields the algorithm uses versus parser-only metadata, and safe defaults for constructing revisions by hand).
+- Hid internal, non-API items from the documentation with `#[doc(hidden)]`: the `PageAnalysis::{new, new_revision, new_paragraph, new_sentence, new_word}` constructors and the `RevisionSubstr` type alias. This is intentionally **non-breaking** — the items stay `pub` so existing code (and the integration-test crate, which relies on the constructors) keeps compiling, and `cargo-semver-checks` treats `#[doc(hidden)]` items as exempt, so no version bump is required. Tightening their visibility to `pub(crate)` was deliberately deferred because it would be a breaking change requiring a `0.x` minor bump.
+
 ## [0.3.4] - 2026-06-15
 
 ### Added
