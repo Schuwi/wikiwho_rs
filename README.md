@@ -30,9 +30,64 @@ A high-performance Rust implementation of the WikiWho algorithm for token-level 
 
 CI verifies exact token-level parity against the reference Python WikiWho on every PR, and ≥85% precision against the paper's gold standard (the paper reports ~95% using Python's `difflib`; enable the `python-diff` feature for byte-identical results). Property-test fuzzing additionally checks Rust-vs-Python parity on randomized input. See [`CONTRIBUTING.md`](CONTRIBUTING.md) for how to run these tests locally.
 
-## Installation
+## Quick Start (no Rust required)
 
-`wikiwho` is available on [crates.io](https://crates.io/crates/wikiwho). Add it to your `Cargo.toml`:
+`wikiwho` ships a command-line tool, `wikiwho-cli`, that runs the full algorithm over a MediaWiki XML dump and streams the per-page authorship results out as JSON. You only need a Rust toolchain to install it once (see [rustup.rs](https://rustup.rs/)); after that it is an ordinary binary — no Rust knowledge needed to use it.
+
+```sh
+# One-time install (the CLI lives behind the `cli` feature)
+cargo install wikiwho --features cli
+
+# Analyse a dump. Input compression (.bz2/.zst/.gz) is auto-detected from the
+# extension; `--namespace 0` keeps only article pages; results go to out.jsonl.
+wikiwho-cli dewiktionary-latest-pages-meta-history.xml.bz2 --namespace 0 -o out.jsonl
+```
+
+The input is a standard `*-pages-meta-history*` export from [Wikimedia dumps](https://dumps.wikimedia.org/); omit the path (or pass `-`) to read from stdin. Besides `--namespace` and `-o`, the common flags are `-f/--format` (`jsonl` (default), `json`, or `raw`), `-j/--jobs`, `-N/--limit` (first N pages) and `-q/--quiet` — run `wikiwho-cli --help` for the full list.
+
+Once you have `out.jsonl`, drop it onto [`tools/wikiwho-viewer.html`](tools/wikiwho-viewer.html), a self-contained drag-and-drop browser viewer that colours each token by its author and age (no server or build step).
+
+### Output format
+
+With the default `jsonl` format, each line is one self-contained JSON object describing a page. One page looks like this (truncated):
+
+```json
+{
+  "article_title": "Anontalkpagetext",
+  "namespace": 8,
+  "revisions": [
+    { "id": 401685, "timestamp": "2006-09-19T20:46:45+00:00", "editor": "1390" },
+    { "id": 552578, "timestamp": "2007-05-23T15:43:05+00:00", "editor": "1390" }
+  ],
+  "spam_ids": [],
+  "all_tokens": [
+    { "token_id": 0, "str": "/", "o_rev_id": 401685, "editor": "1390", "in": [], "out": [] },
+    { "token_id": 1, "str": "span", "o_rev_id": 401685, "editor": "1390", "in": [], "out": [] }
+  ]
+}
+```
+
+`revisions` lists the page's revisions in chronological order; `all_tokens` lists every token (token ≈ word) surviving in the current revision, in reading order. The less obvious fields:
+
+- **`editor`** — user id as a string, or `"0|<username>"` for anonymous/IP edits.
+- **`spam_ids`** — revision ids flagged as spam/vandalism and excluded from attribution.
+- **`o_rev_id`** / **`editor`** (on a token) — the revision and author that *first introduced* it; this is the authorship attribution.
+- **`in`** / **`out`** — revision ids where the token was re-inserted / removed, tracking tokens deleted and later restored.
+
+Because `jsonl` is one JSON object per line, you can load it in any language without a streaming parser. In Python:
+
+```python
+import json
+
+with open("out.jsonl") as f:
+    for line in f:
+        page = json.loads(line)
+        print(page["article_title"], len(page["all_tokens"]), "tokens")
+```
+
+## Installation (as a library)
+
+`wikiwho` is also available on [crates.io](https://crates.io/crates/wikiwho) as a library. Add it to your `Cargo.toml`:
 
 ```toml
 [dependencies]
