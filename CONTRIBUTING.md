@@ -59,7 +59,7 @@ Test data:
 
 ## Project Status and Support
 
-- **Current Maintainer**: Working independently with assistance from various tools and collaborations.
+- **Maintainer**: [@Schuwi](https://github.com/Schuwi), working independently.
 - **Versioning**: Follows semantic versioning. Expect potential breaking changes before reaching 1.0.0.
 - **Updates**: Development is on-demand. Regular maintenance depends on community interest and contributions.
 
