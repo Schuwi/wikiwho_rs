@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- `wikiwho-cli --help` now advertises the page-limit flag under its actual long name `--limit` (it previously printed a non-existent `--pages`).
+
 ## [0.3.4] - 2026-06-15
 
 ### Added
@@ -19,11 +23,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.3.3] - 2026-06-15
 
-**Yanked**
+**Yanked** — released before immutable releases (a GitHub feature) were enabled and with
+incorrect/missing CHANGELOG links; superseded by an otherwise-identical 0.3.4.
 
 ## [0.3.2] - 2026-06-15
 
-**Yanked**
+**Yanked** — the release workflow failed to attach a build-provenance attestation (a
+cargo 1.96 change moved the packaged `.crate` to a path the CI glob no longer matched),
+so the published crate could not be verified as documented.
 
 ## [0.3.1] - 2026-04-05
 
