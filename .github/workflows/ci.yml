@@ -135,24 +135,9 @@ jobs:
         with:
           feature-group: all-features
 
-  changelog:
-    name: changelog entry
-    # PRs must record their change under [Unreleased] in CHANGELOG.md. Skipped for Dependabot
-    # and for PRs carrying the `skip-changelog` label (CI/docs/refactors that don't warrant one).
-    if: github.event_name == 'pull_request' && github.actor != 'dependabot[bot]' && !contains(github.event.pull_request.labels.*.name, 'skip-changelog')
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-        with: { fetch-depth: 0, lfs: false }
-      - name: Require a CHANGELOG.md update
-        run: |
-          git fetch --no-tags origin "$GITHUB_BASE_REF"
-          if git diff --name-only "origin/$GITHUB_BASE_REF...HEAD" | grep -qx 'CHANGELOG.md'; then
-            echo "CHANGELOG.md updated."
-          else
-            echo "::error::Add an entry under [Unreleased] in CHANGELOG.md, or apply the 'skip-changelog' label for changes that don't warrant one (CI, docs, refactors)."
-            exit 1
-          fi
+  # The changelog gate lives in its own workflow (.github/workflows/changelog.yml) so that
+  # label changes (e.g. applying `skip-changelog`) re-trigger only that lightweight check,
+  # not this entire suite.
 
   # --- Headline: prove the Rust implementation matches the reference Python WikiWho ---
 
