@@ -1,0 +1,37 @@
+name: changelog
+
+# Lightweight gate, split out from ci.yml on purpose. It listens to `labeled`/`unlabeled`
+# in addition to the usual PR events, so applying or removing the `skip-changelog` label
+# after a PR is opened re-evaluates the gate automatically — without re-running the full
+# CI suite. (A bare `pull_request:` trigger freezes the label list into the event payload
+# at open time, which is why a late `skip-changelog` label never used to take effect.)
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, labeled, unlabeled]
+
+# A label toggle supersedes any in-flight run for the same PR.
+concurrency:
+  group: changelog-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  changelog:
+    name: changelog entry
+    # PRs must record their change under [Unreleased] in CHANGELOG.md. Skipped for Dependabot
+    # and for PRs carrying the `skip-changelog` label (CI/docs/refactors that don't warrant one).
+    # On a `labeled`/`unlabeled` event the payload's label list is current, so this re-evaluates
+    # correctly when the label is added or removed after the PR was opened.
+    if: github.actor != 'dependabot[bot]' && !contains(github.event.pull_request.labels.*.name, 'skip-changelog')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0, lfs: false }
+      - name: Require a CHANGELOG.md update
+        run: |
+          git fetch --no-tags origin "$GITHUB_BASE_REF"
+          if git diff --name-only "origin/$GITHUB_BASE_REF...HEAD" | grep -qx 'CHANGELOG.md'; then
+            echo "CHANGELOG.md updated."
+          else
+            echo "::error::Add an entry under [Unreleased] in CHANGELOG.md, or apply the 'skip-changelog' label for changes that don't warrant one (CI, docs, refactors)."
+            exit 1
+          fi

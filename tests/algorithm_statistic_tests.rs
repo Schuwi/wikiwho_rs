@@ -431,6 +431,13 @@ fn run_precision_test(options: PageAnalysisOptions) -> (usize, usize, usize) {
 /// The original WikiWho paper reports ~95% precision on the full gold standard.
 /// We evaluate on the subset for which revision histories are available via repo-local
 /// article extracts, cached pages, or current Wikimedia dump shards.
+///
+/// The ≥85% floor below is intentionally conservative and should not be read as a
+/// representative accuracy figure for the algorithm. It is measured on a small subset
+/// (≤18 tokens from 3 articles) using text-based context matching, which gets confused
+/// by very common, ambiguous tokens ("in", "the") that recur many times in an article.
+/// For results that match the reference Python WikiWho exactly, use the `python-diff`
+/// backend (see `gold_standard_precision_python_diff` and `algorithm_exact_tests.rs`).
 #[test]
 #[ignore = "requires locally prepared benchmark data; see dev-data/README.md"]
 fn gold_standard_precision_rust() {
