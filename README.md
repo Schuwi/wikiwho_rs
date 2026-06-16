@@ -43,20 +43,9 @@ cargo install wikiwho --features cli
 wikiwho-cli dewiktionary-latest-pages-meta-history.xml.bz2 --namespace 0 -o out.jsonl
 ```
 
-The input is a standard `*-pages-meta-history*` export from [Wikimedia dumps](https://dumps.wikimedia.org/). Omit the path (or pass `-`) to read from stdin, and likewise for `-o` to write to stdout. Run `wikiwho-cli --help` for the full list of options:
+The input is a standard `*-pages-meta-history*` export from [Wikimedia dumps](https://dumps.wikimedia.org/); omit the path (or pass `-`) to read from stdin. Besides `--namespace` and `-o`, the common flags are `-f/--format` (`jsonl` (default), `json`, or `raw`), `-j/--jobs`, `-N/--limit` (first N pages) and `-q/--quiet` — run `wikiwho-cli --help` for the full list.
 
-| Option | Description |
-| --- | --- |
-| `-o, --output PATH` | Output file (`-` or omit for stdout). Compression auto-detected from extension. |
-| `-f, --format FORMAT` | Output format: `jsonl` (default), `json`, or `raw`. |
-| `-j, --jobs N` | Number of worker threads (default: number of CPUs). |
-| `-n, --namespace NS` | Only process pages in this namespace (repeatable; `0` = articles). |
-| `-N, --limit N` | Only process the first N pages. |
-| `-q, --quiet` | Suppress progress messages on stderr. |
-
-### Exploring the output in a browser
-
-[`tools/wikiwho-viewer.html`](tools/wikiwho-viewer.html) is a self-contained, drag-and-drop viewer. Open it in any browser and drop your `out.jsonl` (or `.json`) file onto it to colour each token by its author and age — no server or build step required.
+Once you have `out.jsonl`, drop it onto [`tools/wikiwho-viewer.html`](tools/wikiwho-viewer.html), a self-contained drag-and-drop browser viewer that colours each token by its author and age (no server or build step).
 
 ### Output format
 
@@ -78,17 +67,12 @@ With the default `jsonl` format, each line is one self-contained JSON object des
 }
 ```
 
-Field reference:
+`revisions` lists the page's revisions in chronological order; `all_tokens` lists every token (token ≈ word) surviving in the current revision, in reading order. The less obvious fields:
 
-- **`article_title`**, **`namespace`** — page identity.
-- **`revisions`** — the page's revisions in chronological order; `editor` is the user id as a string, or `"0|<username>"` for anonymous/IP edits.
-- **`spam_ids`** — revision ids that were detected as spam/vandalism and excluded.
-- **`all_tokens`** — every token surviving in the current revision, in reading order:
-  - **`str`** — the token text (token ≈ word).
-  - **`o_rev_id`** / **`editor`** — the revision and author that *first introduced* the token (this is the authorship attribution).
-  - **`in`** / **`out`** — revision ids in which the token was re-inserted / removed, tracking tokens that were deleted and later restored.
-
-The other formats: `json` wraps the whole run in a single JSON array (one element per page) instead of newline-delimited objects, and `raw` dumps the internal analysis structures for debugging.
+- **`editor`** — user id as a string, or `"0|<username>"` for anonymous/IP edits.
+- **`spam_ids`** — revision ids flagged as spam/vandalism and excluded from attribution.
+- **`o_rev_id`** / **`editor`** (on a token) — the revision and author that *first introduced* it; this is the authorship attribution.
+- **`in`** / **`out`** — revision ids where the token was re-inserted / removed, tracking tokens deleted and later restored.
 
 Because `jsonl` is one JSON object per line, you can load it in any language without a streaming parser. In Python:
 
