@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- A plain `cargo test` now emits visible `SKIP:` notices (via a new `skipped_suites` test target) when a feature-gated integration suite (`algorithm_exact_tests`, `algorithm_statistic_tests`, `utils_comparisons`) compiles empty, instead of silently reporting `running 0 tests`. Contributor docs gained matching guidance: the canonical test command, Git LFS / Python prerequisites, the editable VCS `requirements.txt`, `.venv` standardization, and a "Reproducing the CI gates" checklist. Several documented test commands that compiled feature-gated suites empty were corrected to include the required `serde`/`python-diff` features.
+
 ## [0.3.4] - 2026-06-15
 
 ### Added
