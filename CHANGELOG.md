@@ -19,7 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.3.3] - 2026-06-15
 
-**Yanked** — released before immutable releases were enabled on crates.io and with
+**Yanked** — released before immutable releases (a GitHub feature) were enabled and with
 incorrect/missing CHANGELOG links; superseded by an otherwise-identical 0.3.4.
 
 ## [0.3.2] - 2026-06-15
