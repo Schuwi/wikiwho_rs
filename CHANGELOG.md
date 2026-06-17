@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- `wikiwho-cli` gained a `-c`/`--compression-level N` option to set the compression level of the output encoder (bzip2 1–9, gzip 0–9, zstd 0–22); it is ignored when the output is uncompressed, and the previous codec defaults are used when the flag is omitted.
+
 ### Fixed
 
 - `wikiwho-cli --help` now advertises the page-limit flag under its actual long name `--limit` (it previously printed a non-existent `--pages`).

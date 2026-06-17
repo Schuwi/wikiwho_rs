@@ -43,7 +43,7 @@ cargo install wikiwho --features cli
 wikiwho-cli dewiktionary-latest-pages-meta-history.xml.bz2 --namespace 0 -o out.jsonl
 ```
 
-The input is a standard `*-pages-meta-history*` export from [Wikimedia dumps](https://dumps.wikimedia.org/); omit the path (or pass `-`) to read from stdin. Besides `--namespace` and `-o`, the common flags are `-f/--format` (`jsonl` (default), `json`, or `raw`), `-j/--jobs`, `-N/--limit` (first N pages) and `-q/--quiet` — run `wikiwho-cli --help` for the full list.
+The input is a standard `*-pages-meta-history*` export from [Wikimedia dumps](https://dumps.wikimedia.org/); omit the path (or pass `-`) to read from stdin. Besides `--namespace` and `-o`, the common flags are `-f/--format` (`jsonl` (default), `json`, or `raw`), `-c/--compression-level` (output encoder level, ignored for uncompressed output), `-j/--jobs`, `-N/--limit` (first N pages) and `-q/--quiet` — run `wikiwho-cli --help` for the full list.
 
 Once you have `out.jsonl`, drop it onto [`tools/wikiwho-viewer.html`](tools/wikiwho-viewer.html), a self-contained drag-and-drop browser viewer that colours each token by its author and age (no server or build step).
 
