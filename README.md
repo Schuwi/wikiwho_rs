@@ -53,6 +53,7 @@ With the default `jsonl` format, each line is one self-contained JSON object des
 
 ```json
 {
+  "page_id": 168,
   "article_title": "Anontalkpagetext",
   "namespace": 8,
   "revisions": [
@@ -69,6 +70,7 @@ With the default `jsonl` format, each line is one self-contained JSON object des
 
 `revisions` lists the page's revisions in chronological order; `all_tokens` lists every token (token ≈ word) surviving in the current revision, in reading order. The less obvious fields:
 
+- **`page_id`** — the MediaWiki page id (from the dump's `<page><id>`); `0`, or a random negative number for pages whose id was missing/invalid.
 - **`editor`** — user id as a string, or `"0|<username>"` for anonymous/IP edits.
 - **`spam_ids`** — revision ids flagged as spam/vandalism and excluded from attribution.
 - **`o_rev_id`** / **`editor`** (on a token) — the revision and author that *first introduced* it; this is the authorship attribution.

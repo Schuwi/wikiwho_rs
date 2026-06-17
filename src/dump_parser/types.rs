@@ -88,6 +88,13 @@ pub struct Revision {
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Page {
+    /// The MediaWiki page id (the `<page><id>` element in a dump).
+    ///
+    /// Defaults to `0` when deserializing data that predates this field (it was added in
+    /// 0.4.0). For pages parsed from a dump with a missing or invalid id, a random negative
+    /// id is generated so distinct pages stay distinguishable.
+    #[cfg_attr(feature = "serde", serde(default))]
+    pub id: i32,
     pub title: CompactString,
     pub namespace: i32,
     pub revisions: Vec<Revision>,

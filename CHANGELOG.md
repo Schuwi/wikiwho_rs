@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- `Page` now exposes the MediaWiki page id via a new `id` field, populated from the `<page><id>` element when parsing a dump (a random negative id is generated for pages with a missing or invalid id, mirroring revision-id handling). `wikiwho-cli` surfaces it as a `page_id` field in its JSON output.
+
+### Changed
+
+- **Breaking:** `Page` gained a public `id` field, so struct-literal construction of `Page` must now set it; the crate version is bumped to 0.4.0 accordingly. Data serialized by earlier versions still deserializes — the field defaults to `0` when absent.
+
 ### Fixed
 
 - `wikiwho-cli --help` now advertises the page-limit flag under its actual long name `--limit` (it previously printed a non-existent `--pages`).

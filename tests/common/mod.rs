@@ -877,6 +877,7 @@ pub mod proptest_support {
                 (revisions in correct_revision_vec(has_hash, text_strategy.clone(), max_revisions))
         -> Page {
             Page {
+                id: 0, /* ignored in algorithm */
                 title: "Pagetitle".into(), /* ignored in algorithm */
                 namespace: 0, /* ignored in algorithm */
                 revisions
