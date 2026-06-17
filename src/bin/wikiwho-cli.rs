@@ -723,6 +723,7 @@ fn write_page_result(
 /// PageAnalysis)>` cart, which keeps the borrowed data alive.
 #[derive(serde::Serialize, yoke::Yokeable)]
 struct PageOutput<'a> {
+    page_id: i32,
     article_title: &'a str,
     namespace: i32,
     revisions: Vec<RevisionOutput<'a>>,
@@ -791,6 +792,7 @@ fn build_page_output<'a>(page: &'a Page, analysis: &'a PageAnalysis) -> PageOutp
         .collect();
 
     PageOutput {
+        page_id: page.id,
         article_title: &page.title,
         namespace: page.namespace,
         revisions,
