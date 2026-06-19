@@ -100,7 +100,7 @@ jobs:
       - uses: taiki-e/install-action@cargo-llvm-cov
       - name: Collect coverage (pure-Rust lib tests)
         run: cargo llvm-cov --lib --features serde,cli,strict,optimized-str,optimized-lowercase --lcov --output-path lcov.info
-      - uses: codecov/codecov-action@v4
+      - uses: codecov/codecov-action@v7
         with:
           files: lcov.info
           fail_ci_if_error: false
