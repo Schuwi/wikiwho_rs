@@ -22,7 +22,7 @@ jobs:
     name: rustfmt
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with: { lfs: false }
       - uses: dtolnay/rust-toolchain@stable
         with: { components: rustfmt }
@@ -42,7 +42,7 @@ jobs:
           - "--features cli"
           - "--features serde,cli,strict,optimized-str,optimized-lowercase"
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with: { lfs: false }
       - uses: dtolnay/rust-toolchain@stable
         with: { components: clippy }
@@ -55,7 +55,7 @@ jobs:
     name: test (lib + doc)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with: { lfs: false }
       - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
@@ -70,7 +70,7 @@ jobs:
     env:
       RUSTDOCFLAGS: "-D warnings"
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with: { lfs: false }
       - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
@@ -82,7 +82,7 @@ jobs:
     name: msrv (1.94.1)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with: { lfs: false }
       - uses: dtolnay/rust-toolchain@1.94.1
       - uses: Swatinem/rust-cache@v2
@@ -92,7 +92,7 @@ jobs:
     name: coverage
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with: { lfs: false }
       - uses: dtolnay/rust-toolchain@stable
         with: { components: llvm-tools-preview }
@@ -110,7 +110,7 @@ jobs:
     name: cargo package
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with: { lfs: false }
       - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
@@ -120,7 +120,7 @@ jobs:
     name: semver (all features)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with: { lfs: false }
       # cargo-semver-checks compares the public API against the latest crates.io release and
       # fails if the version in Cargo.toml doesn't reflect the change (0.x rules understood) —
@@ -145,7 +145,7 @@ jobs:
     name: parity vs Python (deterministic)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with: { lfs: false }
       # Selective LFS: fetch only the small representative subset, never the 808 MB dump.
       - name: Fetch representative dump subset (LFS)
@@ -196,7 +196,7 @@ jobs:
     name: gold standard accuracy (pure Rust)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with: { lfs: false }
       # Selective LFS: fetch only the cached gold-standard article pages, never the dumps.
       - name: Fetch gold-standard article cache (LFS)
@@ -227,7 +227,7 @@ jobs:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with: { lfs: false }
       - name: Fetch gold-standard article cache (LFS)
         run: git lfs pull --include="dev-data/article-cache/*.json.zst"
