@@ -34,7 +34,7 @@ jobs:
       # Third-party actions are pinned to full commit SHAs (not mutable tags) because this
       # workflow holds the publish/attestation credentials. Dependabot (github-actions)
       # keeps the pins current; the trailing comment tracks the human-readable version.
-      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with: { lfs: false } # packaging excludes dev-data; no LFS payload needed
 
       # Rust stable is preinstalled on ubuntu-latest; use it instead of a toolchain action to
