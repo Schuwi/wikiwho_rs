@@ -50,7 +50,7 @@ jobs:
         run: cargo test --features python-diff --test utils_comparisons -- compare_split_into_
       - name: Upload discovered regression seeds
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: proptest-regressions
           path: tests/**/*.proptest-regressions
