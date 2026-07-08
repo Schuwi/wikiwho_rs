@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Dump parser no longer drops most of a revision's text when the wikitext contains entity references (`&lt;`, `&amp;`, `&#NN;`, ...); text chunks are now accumulated across entity-split events and the entity characters resolved, restoring parity with Python WikiWho.
 - `wikiwho-cli --help` now advertises the page-limit flag under its actual long name `--limit` (it previously printed a non-existent `--pages`).
 
 ## [0.3.4] - 2026-06-15
