@@ -9,7 +9,6 @@ A high-performance Rust implementation of the WikiWho algorithm for token-level 
 <div class="rustdoc-hidden">
 
 [![CI](https://github.com/Schuwi/wikiwho_rs/actions/workflows/ci.yml/badge.svg)](https://github.com/Schuwi/wikiwho_rs/actions/workflows/ci.yml)
-[![codecov](https://codecov.io/gh/Schuwi/wikiwho_rs/branch/main/graph/badge.svg)](https://codecov.io/gh/Schuwi/wikiwho_rs)
 [![crates.io](https://img.shields.io/crates/v/wikiwho.svg)](https://crates.io/crates/wikiwho)
 [![docs.rs](https://docs.rs/wikiwho/badge.svg)](https://docs.rs/wikiwho)
 
