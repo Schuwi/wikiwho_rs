@@ -874,11 +874,23 @@ impl<R: BufRead> DumpParser<R> {
                         }
                         [MediaWiki, Page, Revision, Text(deleted, _)] => {
                             if let Some(revision_builder) = &mut revision_builder {
-                                revision_builder.text = Some(if *deleted {
-                                    self::Text::Deleted
+                                if *deleted {
+                                    revision_builder.text = Some(self::Text::Deleted);
                                 } else {
-                                    self::Text::Normal(text.into_owned())
-                                });
+                                    // quick-xml emits character data as multiple Text events, split at
+                                    // entity references (&lt; &gt; &amp; &nbsp; ...). Wikitext is dense
+                                    // with these, so we must ACCUMULATE every chunk — overwriting kept
+                                    // only the tail after the last entity, dropping ~99% of the article.
+                                    match &mut revision_builder.text {
+                                        Some(self::Text::Normal(existing)) => {
+                                            existing.push_str(text.as_ref())
+                                        }
+                                        _ => {
+                                            revision_builder.text =
+                                                Some(self::Text::Normal(text.into_owned()))
+                                        }
+                                    }
+                                }
                             }
                         }
                         [MediaWiki, Page, Revision, Sha1] => {
@@ -916,6 +928,36 @@ impl<R: BufRead> DumpParser<R> {
                         | [MediaWiki, Page, Revision]
                         | [MediaWiki, Page, Revision, Contributor] => {}
                         _ => self.check_known_tags_in_unexpected_location(false),
+                    }
+                }
+                quick_xml::events::Event::GeneralRef(ref e) => {
+                    use Tag::*;
+                    // Entity references (&lt; &gt; &amp; &#NN; ...) inside <text> arrive as their own
+                    // events, separate from the surrounding Text chunks. Resolve and append them so the
+                    // markup characters (< > &) survive — otherwise "<ref>" degrades to "ref" and tokens
+                    // merge, diverging from Python WikiWho.
+                    if let [MediaWiki, Page, Revision, Text(false, _)] =
+                        self.current_path.as_slice()
+                    {
+                        if let Some(revision_builder) = &mut revision_builder {
+                            let resolved: Option<Cow<'_, str>> =
+                                if let Ok(Some(c)) = e.resolve_char_ref() {
+                                    Some(Cow::Owned(c.to_string()))
+                                } else {
+                                    let name = e.decode().map_err(quick_xml::Error::from)?;
+                                    quick_xml::escape::resolve_predefined_entity(&name)
+                                        .map(Cow::Borrowed)
+                                };
+                            if let Some(r) = resolved {
+                                match &mut revision_builder.text {
+                                    Some(self::Text::Normal(existing)) => existing.push_str(&r),
+                                    _ => {
+                                        revision_builder.text =
+                                            Some(self::Text::Normal(r.into_owned()))
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
                 quick_xml::events::Event::End(ref e) => {
