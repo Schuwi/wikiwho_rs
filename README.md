@@ -287,15 +287,20 @@ wikiwho = { version = "0.3", features = ["strict"] }
 
 ### Optimized String Processing
 
-By default, text splitting functions use straightforward implementations based on `String::replace()` and character iteration. Enable the `optimized-str` feature for faster string processing:
+The `optimized-str` feature is enabled by default. It uses the Aho-Corasick algorithm for
+tokenization and `memchr::memmem` with scratch buffers for paragraph and sentence splitting.
+These implementations produce identical results to the fallback implementations and are
+consistently faster, so no additional configuration is needed.
+
+To reduce the number of dependencies, you can disable the default features:
 
 ```toml
 [dependencies]
-wikiwho = { version = "0.3", features = ["optimized-str"] }
+wikiwho = { version = "0.3", default-features = false }
 ```
 
-This swaps in alternative implementations that use the Aho-Corasick algorithm for tokenization and `memchr::memmem` with scratch buffers for paragraph and sentence splitting. These produce identical results and are consistently faster than the default implementations, so enabling this feature is generally recommended (it is included in the default feature set).  
-The only case where you might want to disable this feature is if you want to reduce the amount of dependencies.
+Without `optimized-str`, text splitting falls back to straightforward implementations based on
+`String::replace()` and character iteration.
 
 ### Optimized Lowercasing
 
