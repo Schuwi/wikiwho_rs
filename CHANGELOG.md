@@ -7,10 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.5] - 2026-07-09
+
 ### Fixed
 
-- Dump parser no longer drops most of a revision's text when the wikitext contains entity references (`&lt;`, `&amp;`, `&#NN;`, ...); text chunks are now accumulated across entity-split events and the entity characters resolved, restoring parity with Python WikiWho.
+- Fixed a critical dump parser bug where revision text containing XML entity references (`&lt;`, `&amp;`, `&#NN;`, ...) was truncated, producing severely incomplete authorship output for real Wikimedia dumps. Users of versions 0.3.4 and earlier should upgrade and regenerate affected output.
 - `wikiwho-cli --help` now advertises the page-limit flag under its actual long name `--limit` (it previously printed a non-existent `--pages`).
+
+### Changed
+
+- Dump parsing now accumulates text across entity-split events and resolves the entity characters, restoring parity with Python WikiWho. Correctly parsed dumps may process substantially more text and run slower than affected versions.
 
 ## [0.3.4] - 2026-06-15
 
@@ -22,12 +28,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Updated `pyo3` to `v0.29.0`.
 
-## [0.3.3] - 2026-06-15
+## [0.3.3] - 2026-06-15 [YANKED]
 
 **Yanked** — released before immutable releases (a GitHub feature) were enabled and with
 incorrect/missing CHANGELOG links; superseded by an otherwise-identical 0.3.4.
 
-## [0.3.2] - 2026-06-15
+## [0.3.2] - 2026-06-15 [YANKED]
 
 **Yanked** — the release workflow failed to attach a build-provenance attestation (a
 cargo 1.96 change moved the packaged `.crate` to a path the CI glob no longer matched),
