@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.5] - 2026-07-09
+
 ### Fixed
 
 - Fixed a critical dump parser bug where revision text containing XML entity references (`&lt;`, `&amp;`, `&#NN;`, ...) was truncated, producing severely incomplete authorship output for real Wikimedia dumps. Users of versions 0.3.4 and earlier should upgrade and regenerate affected output.
