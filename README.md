@@ -6,6 +6,12 @@
 
 A high-performance Rust implementation of the WikiWho algorithm for token-level authorship tracking in Wikimedia pages.
 
+> [!WARNING]
+> Versions 0.3.4 and earlier contain a critical dump parser bug: revision text
+> containing XML entity references such as `&lt;`, `&amp;`, `&quot;`, or `&#NN;`
+> was truncated, producing severely incomplete authorship output for real
+> Wikimedia dumps. Upgrade to 0.3.5 or newer and regenerate any affected output.
+
 <div class="rustdoc-hidden">
 
 [![CI](https://github.com/Schuwi/wikiwho_rs/actions/workflows/ci.yml/badge.svg)](https://github.com/Schuwi/wikiwho_rs/actions/workflows/ci.yml)
