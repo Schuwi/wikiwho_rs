@@ -62,6 +62,13 @@ const DUMP_WITH_CONFLICTING_SHA1_FIELDS: &str = r#"<mediawiki>
 	</page>
 </mediawiki>"#;
 
+const DUMP_WITH_CRLF: &str = concat!(
+    "<mediawiki><siteinfo><namespaces><namespace key=\"0\" /></namespaces></siteinfo>",
+    "<page><title>T</title><ns>0</ns><id>1</id><revision><id>1</id>",
+    "<timestamp>2020-01-01T00:00:00Z</timestamp><contributor><username>A</username></contributor>",
+    "<text>first line\r\nsecond line\rthird line</text></revision></page></mediawiki>",
+);
+
 #[test]
 fn revision_text_survives_entity_references() {
     let mut parser =
@@ -100,6 +107,17 @@ fn revision_text_survives_entity_references() {
     assert!(page.revisions[1].contributor.username.is_empty());
     assert_eq!(page.revisions[1].contributor.id, None);
     assert_eq!(page.revisions[1].text, Text::Deleted);
+}
+
+#[test]
+fn xml_1_0_line_endings_are_normalized() {
+    let mut parser = DumpParser::new(Cursor::new(DUMP_WITH_CRLF)).unwrap();
+    let page = parser.parse_page().unwrap().unwrap();
+
+    assert_eq!(
+        page.revisions[0].text.as_str(),
+        "first line\nsecond line\nthird line"
+    );
 }
 
 #[cfg(not(feature = "strict"))]

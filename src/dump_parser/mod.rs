@@ -662,7 +662,7 @@ impl<R: BufRead> DumpParser<R> {
                     self.current_path.pop();
                 }
                 quick_xml::events::Event::Text(e) => {
-                    let text = e.decode().map_err(quick_xml::Error::from)?;
+                    let text = e.xml10_content().map_err(quick_xml::Error::from)?;
 
                     use Tag::*;
 
@@ -858,7 +858,7 @@ impl<R: BufRead> DumpParser<R> {
                     self.current_path.pop();
                 }
                 quick_xml::events::Event::Text(e) => {
-                    let text = e.decode().map_err(quick_xml::Error::from)?;
+                    let text = e.xml10_content().map_err(quick_xml::Error::from)?;
 
                     use Tag::*;
 
