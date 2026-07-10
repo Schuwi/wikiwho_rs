@@ -8,7 +8,7 @@ use std::{
 };
 
 use compact_str::CompactString;
-use quick_xml::events::{BytesEnd, BytesStart};
+use quick_xml::events::{BytesEnd, BytesRef, BytesStart};
 use rand::RngExt;
 use tracing::instrument;
 
@@ -206,9 +206,11 @@ impl Tag {
 struct RevisionBuilder {
     id: Option<i32>,
     timestamp: Option<chrono::DateTime<chrono::Utc>>,
-    contributor_name: Option<CompactString>,
+    contributor_username: Option<CompactString>,
+    contributor_ip: Option<CompactString>,
     contributor_id: Option<i32>,
     text: Option<Text>,
+    text_sha1: Option<Sha1Hash>,
     sha1: Option<Sha1Hash>,
     comment: Option<CompactString>,
     minor: bool,
@@ -223,9 +225,11 @@ impl RevisionBuilder {
         Self {
             id: None,
             timestamp: None,
-            contributor_name: None,
+            contributor_username: None,
+            contributor_ip: None,
             contributor_id: None,
             text: None,
+            text_sha1: None,
             sha1: None,
             comment: None,
             minor: false,
@@ -239,7 +243,7 @@ impl RevisionBuilder {
         if self.timestamp.is_none() {
             return Err(BuildRevisionError("timestamp", self.into()));
         }
-        if self.contributor_name.is_none() {
+        if self.contributor_username.is_none() && self.contributor_ip.is_none() {
             return Err(BuildRevisionError("contributor_name", self.into()));
         }
         if self.text.is_none() {
@@ -250,11 +254,13 @@ impl RevisionBuilder {
             id: self.id.unwrap(),
             timestamp: self.timestamp.unwrap(),
             contributor: Contributor {
-                username: self.contributor_name.unwrap(),
+                // Match mwxml: a username takes precedence over an IP address,
+                // regardless of their order in the XML.
+                username: self.contributor_username.or(self.contributor_ip).unwrap(),
                 id: self.contributor_id,
             },
             text: self.text.unwrap(),
-            sha1: self.sha1,
+            sha1: self.text_sha1.or(self.sha1),
             comment: self.comment,
             minor: self.minor,
         })
@@ -362,6 +368,12 @@ pub enum ParsingError {
     #[cfg(feature = "strict")]
     #[error("mismatched tags")]
     MismatchedTags,
+    #[cfg(feature = "strict")]
+    #[error("contributor contains both username and IP address")]
+    ConflictingContributorIdentity,
+    #[cfg(feature = "strict")]
+    #[error("text SHA-1 attribute differs from revision SHA-1 element")]
+    ConflictingSha1Values,
 }
 
 impl From<std::io::Error> for ParsingError {
@@ -380,6 +392,36 @@ impl From<std::io::Error> for ParsingError {
 // }
 
 impl<R: BufRead> DumpParser<R> {
+    fn has_deleted_attribute(e: &BytesStart<'_>) -> Result<bool, quick_xml::Error> {
+        for attr in e.attributes() {
+            let attr = attr.map_err(quick_xml::Error::from)?;
+            if attr.key.as_ref() == b"deleted" {
+                return Ok(true);
+            }
+        }
+        Ok(false)
+    }
+
+    fn parse_sha1(value: &str) -> Option<Sha1Hash> {
+        let mut sha1 = [0; 31];
+        let bytes = value.as_bytes();
+        if bytes.len() == sha1.len() {
+            sha1.copy_from_slice(bytes);
+            Some(Sha1Hash(sha1))
+        } else {
+            None
+        }
+    }
+
+    fn resolve_general_ref(e: &BytesRef<'_>) -> Result<Option<String>, quick_xml::Error> {
+        if let Ok(Some(c)) = e.resolve_char_ref() {
+            return Ok(Some(c.to_string()));
+        }
+
+        let name = e.decode().map_err(quick_xml::Error::from)?;
+        Ok(quick_xml::escape::resolve_predefined_entity(&name).map(str::to_owned))
+    }
+
     fn new_impl(reader: R, preallocate: bool) -> Self {
         let mut xml_parser = quick_xml::Reader::from_reader(reader);
         let config = xml_parser.config_mut();
@@ -626,7 +668,7 @@ impl<R: BufRead> DumpParser<R> {
 
                     match self.current_path.as_slice() {
                         [MediaWiki, SiteInfo, DbName] => {
-                            site_info.dbname = CompactString::from(text.as_ref());
+                            site_info.dbname.push_str(text.as_ref());
                         }
                         [MediaWiki, SiteInfo, Namespaces, Namespace(id)] => {
                             let key = if let Ok(id) = id.parse() {
@@ -642,10 +684,13 @@ impl<R: BufRead> DumpParser<R> {
                                 }
                                 continue;
                             };
-                            site_info.namespaces.insert(
-                                key,
-                                self::Namespace::Named(CompactString::from(text.as_ref())),
-                            );
+                            match site_info.namespaces.entry(key).or_default() {
+                                self::Namespace::Named(name) => name.push_str(text.as_ref()),
+                                namespace @ self::Namespace::Default => {
+                                    *namespace =
+                                        self::Namespace::Named(CompactString::from(text.as_ref()));
+                                }
+                            }
                         }
                         // quick_xml will output any formatting (e.g. newlines, whitespaces) after the opening tag
                         // and before the closing tag (i.e. outside the child tags) as text events.
@@ -653,6 +698,27 @@ impl<R: BufRead> DumpParser<R> {
                         [MediaWiki] | [MediaWiki, SiteInfo] | [MediaWiki, SiteInfo, Namespaces] => {
                         }
                         _ => self.check_known_tags_in_unexpected_location(false),
+                    }
+                }
+                quick_xml::events::Event::GeneralRef(ref e) => {
+                    let Some(resolved) = Self::resolve_general_ref(e)? else {
+                        continue;
+                    };
+
+                    use Tag::*;
+                    match self.current_path.as_slice() {
+                        [MediaWiki, SiteInfo, DbName] => site_info.dbname.push_str(&resolved),
+                        [MediaWiki, SiteInfo, Namespaces, Namespace(id)] => {
+                            if let Ok(key) = id.parse() {
+                                match site_info.namespaces.entry(key).or_default() {
+                                    self::Namespace::Named(name) => name.push_str(&resolved),
+                                    namespace @ self::Namespace::Default => {
+                                        *namespace = self::Namespace::Named(resolved.into())
+                                    }
+                                }
+                            }
+                        }
+                        _ => {}
                     }
                 }
                 quick_xml::events::Event::End(ref e) => {
@@ -702,12 +768,15 @@ impl<R: BufRead> DumpParser<R> {
             revisions: Vec::new(),
         };
         let mut started_page = false;
+        let mut page_title = String::new();
 
         let mut revision_builder = None;
 
         loop {
             match self.xml_parser.read_event_into(&mut self.buf)? {
                 quick_xml::events::Event::Start(ref e) => {
+                    let contributor_deleted =
+                        e.name().as_ref() == b"contributor" && Self::has_deleted_attribute(e)?;
                     let tag = Self::parse_start_bytes(
                         e,
                         false,
@@ -724,9 +793,23 @@ impl<R: BufRead> DumpParser<R> {
                         revision_builder = Some(RevisionBuilder::new());
                     }
 
+                    if contributor_deleted {
+                        if let Some(revision_builder) = &mut revision_builder {
+                            revision_builder.contributor_username = Some(CompactString::default());
+                        }
+                    }
+
+                    if let Tag::Text(_, Some(sha1)) = &tag {
+                        if let Some(revision_builder) = &mut revision_builder {
+                            revision_builder.text_sha1 = Self::parse_sha1(sha1);
+                        }
+                    }
+
                     self.current_path.push(tag);
                 }
                 quick_xml::events::Event::Empty(ref e) => {
+                    let contributor_deleted =
+                        e.name().as_ref() == b"contributor" && Self::has_deleted_attribute(e)?;
                     let tag = Self::parse_start_bytes(
                         e,
                         false,
@@ -737,14 +820,29 @@ impl<R: BufRead> DumpParser<R> {
 
                     self.current_path.push(tag);
 
+                    if let Some(Tag::Text(_, Some(sha1))) = self.current_path.last() {
+                        if let Some(revision_builder) = &mut revision_builder {
+                            revision_builder.text_sha1 = Self::parse_sha1(sha1);
+                        }
+                    }
+                    if contributor_deleted {
+                        if let Some(revision_builder) = &mut revision_builder {
+                            revision_builder.contributor_username = Some(CompactString::default());
+                        }
+                    }
+
                     use Tag::*;
 
                     match self.current_path.as_slice() {
                         // Revision tags
-                        [MediaWiki, Page, Revision, Text(_, _)] => {
+                        [MediaWiki, Page, Revision, Text(deleted, _)] => {
                             // empty text tag
                             if let Some(revision_builder) = &mut revision_builder {
-                                revision_builder.text = Some(self::Text::Normal(String::new()));
+                                revision_builder.text = Some(if *deleted {
+                                    self::Text::Deleted
+                                } else {
+                                    self::Text::Normal(String::new())
+                                });
                             }
                         }
                         [MediaWiki, Page, Revision, Minor] => {
@@ -767,21 +865,7 @@ impl<R: BufRead> DumpParser<R> {
                     match self.current_path.as_slice() {
                         // Page tags
                         [MediaWiki, Page, Title] => {
-                            fn normalize_title(title: &str) -> Cow<'_, str> {
-                                if title.contains("_") {
-                                    title.replace("_", " ").into()
-                                } else {
-                                    title.into()
-                                }
-                            }
-
-                            if let Some(title) = text.split_once(":") {
-                                // split off the namespace
-                                page.title = CompactString::from(normalize_title(title.1));
-                            } else {
-                                page.title = CompactString::from(normalize_title(&text));
-                            }
-                            span.record("title", page.title.as_str());
+                            page_title.push_str(text.as_ref());
                         }
                         [MediaWiki, Page, Id] => { /* ignore page id */ }
                         [MediaWiki, Page, Ns] => {
@@ -847,15 +931,19 @@ impl<R: BufRead> DumpParser<R> {
                         }
                         [MediaWiki, Page, Revision, Contributor, Username] => {
                             if let Some(revision_builder) = &mut revision_builder {
-                                revision_builder.contributor_name =
-                                    Some(CompactString::from(text.as_ref()));
+                                revision_builder
+                                    .contributor_username
+                                    .get_or_insert_default()
+                                    .push_str(text.as_ref());
                             }
                         }
                         // alternative to Username tag - can happen sometimes
                         [MediaWiki, Page, Revision, Contributor, Ip] => {
                             if let Some(revision_builder) = &mut revision_builder {
-                                revision_builder.contributor_name =
-                                    Some(CompactString::from(text.as_ref()));
+                                revision_builder
+                                    .contributor_ip
+                                    .get_or_insert_default()
+                                    .push_str(text.as_ref());
                             }
                         }
                         [MediaWiki, Page, Revision, Contributor, Id] => {
@@ -895,11 +983,8 @@ impl<R: BufRead> DumpParser<R> {
                         }
                         [MediaWiki, Page, Revision, Sha1] => {
                             if let Some(revision_builder) = &mut revision_builder {
-                                let mut sha1 = [0; 31];
-                                let bytes = text.as_bytes();
-                                if bytes.len() == 31 {
-                                    sha1.copy_from_slice(bytes);
-                                    revision_builder.sha1 = Some(Sha1Hash(sha1));
+                                if let Some(sha1) = Self::parse_sha1(text.as_ref()) {
+                                    revision_builder.sha1 = Some(sha1);
                                 } else {
                                     tracing::warn!(
                                         message = "Found invalid sha1 hash",
@@ -911,7 +996,10 @@ impl<R: BufRead> DumpParser<R> {
                         }
                         [MediaWiki, Page, Revision, Comment] => {
                             if let Some(revision_builder) = &mut revision_builder {
-                                revision_builder.comment = Some(CompactString::from(text.as_ref()));
+                                revision_builder
+                                    .comment
+                                    .get_or_insert_default()
+                                    .push_str(text.as_ref());
                             }
                         }
                         [MediaWiki, Page, Revision, Minor] => {
@@ -932,32 +1020,47 @@ impl<R: BufRead> DumpParser<R> {
                 }
                 quick_xml::events::Event::GeneralRef(ref e) => {
                     use Tag::*;
-                    // Entity references (&lt; &gt; &amp; &#NN; ...) inside <text> arrive as their own
-                    // events, separate from the surrounding Text chunks. Resolve and append them so the
-                    // markup characters (< > &) survive — otherwise "<ref>" degrades to "ref" and tokens
-                    // merge, diverging from Python WikiWho.
-                    if let [MediaWiki, Page, Revision, Text(false, _)] =
-                        self.current_path.as_slice()
-                    {
-                        if let Some(revision_builder) = &mut revision_builder {
-                            let resolved: Option<Cow<'_, str>> =
-                                if let Ok(Some(c)) = e.resolve_char_ref() {
-                                    Some(Cow::Owned(c.to_string()))
-                                } else {
-                                    let name = e.decode().map_err(quick_xml::Error::from)?;
-                                    quick_xml::escape::resolve_predefined_entity(&name)
-                                        .map(Cow::Borrowed)
-                                };
-                            if let Some(r) = resolved {
+                    let Some(resolved) = Self::resolve_general_ref(e)? else {
+                        continue;
+                    };
+
+                    match self.current_path.as_slice() {
+                        [MediaWiki, Page, Title] => page_title.push_str(&resolved),
+                        [MediaWiki, Page, Revision, Contributor, Username] => {
+                            if let Some(revision_builder) = &mut revision_builder {
+                                revision_builder
+                                    .contributor_username
+                                    .get_or_insert_default()
+                                    .push_str(&resolved);
+                            }
+                        }
+                        [MediaWiki, Page, Revision, Contributor, Ip] => {
+                            if let Some(revision_builder) = &mut revision_builder {
+                                revision_builder
+                                    .contributor_ip
+                                    .get_or_insert_default()
+                                    .push_str(&resolved);
+                            }
+                        }
+                        [MediaWiki, Page, Revision, Text(false, _)] => {
+                            if let Some(revision_builder) = &mut revision_builder {
                                 match &mut revision_builder.text {
-                                    Some(self::Text::Normal(existing)) => existing.push_str(&r),
-                                    _ => {
-                                        revision_builder.text =
-                                            Some(self::Text::Normal(r.into_owned()))
+                                    Some(self::Text::Normal(existing)) => {
+                                        existing.push_str(&resolved)
                                     }
+                                    _ => revision_builder.text = Some(self::Text::Normal(resolved)),
                                 }
                             }
                         }
+                        [MediaWiki, Page, Revision, Comment] => {
+                            if let Some(revision_builder) = &mut revision_builder {
+                                revision_builder
+                                    .comment
+                                    .get_or_insert_default()
+                                    .push_str(&resolved);
+                            }
+                        }
+                        _ => {}
                     }
                 }
                 quick_xml::events::Event::End(ref e) => {
@@ -968,8 +1071,39 @@ impl<R: BufRead> DumpParser<R> {
                         &mut self.xml_parser,
                     )?;
 
+                    if tag == Some(Tag::Title) {
+                        fn normalize_title(title: &str) -> Cow<'_, str> {
+                            if title.contains('_') {
+                                title.replace('_', " ").into()
+                            } else {
+                                title.into()
+                            }
+                        }
+
+                        let title = page_title
+                            .split_once(':')
+                            .map_or(page_title.as_str(), |(_, title)| title);
+                        page.title = CompactString::from(normalize_title(title));
+                        span.record("title", page.title.as_str());
+                    }
+
                     if tag == Some(Tag::Revision) {
                         if let Some(revision_builder) = revision_builder.take() {
+                            #[cfg(feature = "strict")]
+                            {
+                                if revision_builder.contributor_username.is_some()
+                                    && revision_builder.contributor_ip.is_some()
+                                {
+                                    return Err(ParsingError::ConflictingContributorIdentity);
+                                }
+                                if let (Some(text_sha1), Some(sha1)) =
+                                    (revision_builder.text_sha1, revision_builder.sha1)
+                                {
+                                    if text_sha1 != sha1 {
+                                        return Err(ParsingError::ConflictingSha1Values);
+                                    }
+                                }
+                            }
                             let revision = match revision_builder.try_build() {
                                 Ok(revision) => revision,
                                 Err(BuildRevisionError(field, revision_builder)) => {
