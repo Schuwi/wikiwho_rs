@@ -70,14 +70,15 @@ To actually run the feature-gated suites (the `python-diff` ones also need the P
 
 | Suite | Needs | Command |
 |---|---|---|
+| `parser_tests` (Rust-vs-`mwxml` parity) | `python-diff` (+ reference dump) | `cargo test --features python-diff --test parser_tests` |
 | `algorithm_exact_tests` (Rust-vs-Python parity) | `python-diff`, `serde` | `cargo test --features python-diff,serde --test algorithm_exact_tests` |
 | `utils_comparisons` (tokenizer parity) | `python-diff` | `cargo test --features python-diff --test utils_comparisons` |
 | `algorithm_statistic_tests` (gold-standard accuracy) | `serde` (+ data) | see [Testing and Validation](#testing-and-validation) |
 
-> `tests/parser_tests.rs` is intentionally empty for now (tracked in [#6](https://github.com/Schuwi/wikiwho_rs/issues/6)); it likewise reports `running 0 tests`.
-
 ## Testing and Validation
 
+- **Parser comparison tests** (`parser_tests.rs`): Compare the Rust dump parser's page and revision fields directly against the Python `mwxml` parser used by WikiWho. The suite also parses the configured reference dump end-to-end in `strict` mode.
+  Run the parity tests with `cargo test --features python-diff --test parser_tests`, or strict validation with `cargo test --features strict --test parser_tests`.
 - **Exact comparison tests** (`algorithm_exact_tests.rs`): Compare the Rust implementation's results against the original Python WikiWho, token by token. These require the `python-diff` and `serde` features (`python-diff` so both implementations use the same diff algorithm; `serde` for the fixture cache), so the whole suite is gated behind both.  
   Run them with `cargo test --features python-diff,serde --test algorithm_exact_tests` (with the Python venv active; see [Development Setup](#development-setup)).
 - **Statistical comparison tests** (`algorithm_statistic_tests.rs`): Gated behind `serde`, ignored by default, and require local benchmark data.
@@ -87,7 +88,7 @@ To actually run the feature-gated suites (the `python-diff` ones also need the P
   
   See [`dev-data/README.md`](dev-data/README.md) for details. CI runs these against a committed cache of gold-standard article histories (the pure-Rust precision test on every PR; the python-diff baselines on push to `main`).
 - **Temporary files**: Some tests use temporary files for IPC coordination between Rust and Python. These files can be large depending on the input dump. Their location follows `std::env::temp_dir()`, which can be controlled by setting the `TMPDIR` environment variable.
-- **Test dump location**: Real-page tests read a reference dump; set `WIKIWHO_TEST_DUMP=/path/to/dump.xml.zst` to override the default path. If the dump is absent, those tests skip (with a `SKIP:` notice) instead of failing.
+- **Test dump location**: Real-page tests read a reference dump; set `WIKIWHO_TEST_DUMP=/path/to/dump.xml.zst` to override the default path. Algorithm parity helpers skip with a `SKIP:` notice when their dump is absent; parser parity and strict-validation tests fail because the dump itself is their required input.
 - **Community Feedback**: Seeking input from users testing with different languages and datasets.
 
 ### Continuous Integration
