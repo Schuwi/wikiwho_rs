@@ -33,6 +33,57 @@ enum Format {
     Raw,
 }
 
+enum OutputWriter {
+    Plain(Box<dyn Write>),
+    Bzip2(BufWriter<bzip2::write::BzEncoder<std::fs::File>>),
+    Zstd(BufWriter<zstd::Encoder<'static, std::fs::File>>),
+    Gzip(BufWriter<flate2::write::GzEncoder<std::fs::File>>),
+}
+
+impl OutputWriter {
+    fn finish(self) -> io::Result<()> {
+        fn finish_buffer<W: Write>(writer: BufWriter<W>) -> io::Result<W> {
+            writer.into_inner().map_err(|error| error.into_error())
+        }
+
+        match self {
+            Self::Plain(mut writer) => writer.flush(),
+            Self::Bzip2(writer) => {
+                let encoder = finish_buffer(writer)?;
+                encoder.finish()?.flush()
+            }
+            Self::Zstd(writer) => {
+                let encoder = finish_buffer(writer)?;
+                encoder.finish()?.flush()
+            }
+            Self::Gzip(writer) => {
+                let encoder = finish_buffer(writer)?;
+                encoder.finish()?.flush()
+            }
+        }
+    }
+}
+
+impl Write for OutputWriter {
+    fn write(&mut self, buf: &[u8]) -> io::Result<usize> {
+        match self {
+            Self::Plain(writer) => writer.write(buf),
+            Self::Bzip2(writer) => writer.write(buf),
+            Self::Zstd(writer) => writer.write(buf),
+            Self::Gzip(writer) => writer.write(buf),
+        }
+    }
+
+    fn flush(&mut self) -> io::Result<()> {
+        match self {
+            Self::Plain(writer) => writer.flush(),
+            Self::Bzip2(writer) => writer.flush(),
+            Self::Zstd(writer) => writer.flush(),
+            Self::Gzip(writer) => writer.flush(),
+        }
+    }
+}
+
 fn print_usage(program: &str) {
     eprintln!(
         "Usage: {program} [OPTIONS] [INPUT]
@@ -155,35 +206,35 @@ fn run() -> Result<(), Box<dyn std::error::Error>> {
     };
 
     // Set up output writer with auto-compression
-    let writer: Box<dyn Write> = match output_path.as_deref() {
-        None | Some("-") => Box::new(BufWriter::new(io::stdout().lock())),
+    let mut writer = match output_path.as_deref() {
+        None | Some("-") => OutputWriter::Plain(Box::new(BufWriter::new(io::stdout().lock()))),
         Some(path) => {
             let file = std::fs::File::create(path)
                 .map_err(|e| format!("cannot create output '{path}': {e}"))?;
             if path.ends_with(".bz2") {
-                Box::new(BufWriter::new(bzip2::write::BzEncoder::new(
+                OutputWriter::Bzip2(BufWriter::new(bzip2::write::BzEncoder::new(
                     file,
                     bzip2::Compression::default(),
                 )))
             } else if path.ends_with(".zst") || path.ends_with(".zstd") {
-                Box::new(BufWriter::new(
+                OutputWriter::Zstd(BufWriter::new(
                     zstd::Encoder::new(file, 3).map_err(|e| format!("zstd init: {e}"))?,
                 ))
             } else if path.ends_with(".gz") {
-                Box::new(BufWriter::new(flate2::write::GzEncoder::new(
+                OutputWriter::Gzip(BufWriter::new(flate2::write::GzEncoder::new(
                     file,
                     flate2::Compression::default(),
                 )))
             } else {
-                Box::new(BufWriter::new(file))
+                OutputWriter::Plain(Box::new(BufWriter::new(file)))
             }
         }
     };
 
-    if num_threads == 1 {
+    let result = if num_threads == 1 {
         process_single(
             reader,
-            writer,
+            &mut writer,
             format,
             &namespace_filter,
             quiet,
@@ -192,14 +243,19 @@ fn run() -> Result<(), Box<dyn std::error::Error>> {
     } else {
         process_parallel(
             reader,
-            writer,
+            &mut writer,
             format,
             &namespace_filter,
             quiet,
             limit_pages,
             num_threads,
         )
-    }
+    };
+    result?;
+    writer
+        .finish()
+        .map_err(|e| format!("failed to finish output: {e}"))?;
+    Ok(())
 }
 
 // ---------------------------------------------------------------------------
@@ -453,7 +509,7 @@ fn text_deleting_iterator(
 /// Single-threaded processing (original path, used when -j 1).
 fn process_single(
     reader: Box<dyn BufRead + Send>,
-    mut writer: Box<dyn Write>,
+    writer: &mut dyn Write,
     format: Format,
     namespace_filter: &[i32],
     quiet: bool,
@@ -500,7 +556,7 @@ fn process_single(
         let yoke = Yoke::attach_to_cart(Box::new((page, analysis)), |cart| {
             build_page_output(&cart.0, &cart.1)
         });
-        write_page_result(&mut writer, &yoke, format, page_count)?;
+        write_page_result(writer, &yoke, format, page_count)?;
         reporter.page_written();
         page_count += 1;
     }
@@ -543,7 +599,7 @@ enum AnalysisResult {
 /// where one slow large page would hold up all completed pages behind it.
 fn process_parallel(
     reader: Box<dyn BufRead + Send>,
-    mut writer: Box<dyn Write>,
+    writer: &mut dyn Write,
     format: Format,
     namespace_filter: &[i32],
     quiet: bool,
@@ -661,7 +717,7 @@ fn process_parallel(
                     reporter.page_skipped(&title, &err);
                 }
                 AnalysisResult::Ok(yoke) => {
-                    write_page_result(&mut writer, &yoke, format, page_count).unwrap();
+                    write_page_result(writer, &yoke, format, page_count).unwrap();
                     page_count += 1;
                     reporter.page_written();
                 }
@@ -686,7 +742,7 @@ fn process_parallel(
 }
 
 fn write_page_result(
-    writer: &mut Box<dyn Write>,
+    writer: &mut dyn Write,
     yoke: &Yoke<PageOutput<'static>, Box<(Page, PageAnalysis)>>,
     format: Format,
     page_count: u64,
