@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.6] - 2026-07-12
+
 ### Added
 
 - `wikiwho-cli` gained a `-c`/`--compression-level N` option to set the compression level of the output encoder (bzip2 1–9, gzip 0–9, zstd 0–22); it is ignored when the output is uncompressed, and the previous codec defaults are used when the flag is omitted.
@@ -103,7 +105,9 @@ so the published crate could not be verified as documented.
 
 Initial release.
 
-[unreleased]: https://github.com/Schuwi/wikiwho_rs/compare/v0.3.4...HEAD
+[Unreleased]: https://github.com/Schuwi/wikiwho_rs/compare/v0.3.6...HEAD
+[0.3.6]: https://github.com/Schuwi/wikiwho_rs/compare/v0.3.5...v0.3.6
+[0.3.5]: https://github.com/Schuwi/wikiwho_rs/compare/v0.3.4...v0.3.5
 [0.3.4]: https://github.com/Schuwi/wikiwho_rs/compare/v0.3.1...v0.3.4
 [0.3.3]: https://github.com/Schuwi/wikiwho_rs/compare/v0.3.1...v0.3.3
 [0.3.2]: https://github.com/Schuwi/wikiwho_rs/compare/v0.3.1...v0.3.2
