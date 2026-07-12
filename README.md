@@ -96,7 +96,7 @@ with open("out.jsonl") as f:
 
 ```toml
 [dependencies]
-wikiwho = "0.3"
+wikiwho = "0.4"
 ```
 
 Requires Rust ≥ 1.94.1 (MSRV). The only feature enabled by default is `optimized-str`; see
@@ -250,7 +250,7 @@ as page titles and contributor names.
 
 ## Features and Configuration
 
-`wikiwho` exposes six Cargo features. Only `optimized-str` is enabled by default
+`wikiwho` exposes five Cargo features. Only `optimized-str` is enabled by default
 (`default = ["optimized-str"]`):
 
 | Feature | Default | Description |
@@ -258,7 +258,6 @@ as page titles and contributor names.
 | `optimized-str` | ✅ | Faster tokenization and paragraph/sentence splitting via the Aho-Corasick algorithm and `memchr::memmem`. Produces identical results to the fallback implementation; disable only to trim dependencies. |
 | `optimized-lowercase` | | Faster non-ASCII lowercasing via the `unicode-case-mapping` crate. Requires both this feature *and* a runtime opt-in (`PageAnalysisOptions::optimize_non_ascii`). |
 | `python-diff` | | Use the original Python diff algorithm (via `pyo3`) for byte-exact parity with reference WikiWho. Much slower; intended for testing and validation. Also requires a runtime opt-in (`PageAnalysisOptions::use_python_diff`). |
-| `strict` | | Make the parser abort on malformed input instead of recovering and continuing. |
 | `serde` | | Derive `serde` `Serialize`/`Deserialize` for the public types. **Note:** the serialized `PageAnalysis` format changed in 0.3.0 and is *not* compatible with data produced by earlier versions. |
 | `cli` | | Build the `wikiwho-cli` binary for running analysis on dumps from the command line. Implies `serde`. |
 
@@ -270,7 +269,7 @@ By default, `wikiwho` uses a fast Rust implementation of the histogram diff algo
 
 ```toml
 [dependencies]
-wikiwho = { version = "0.3", features = ["python-diff"] }
+wikiwho = { version = "0.4", features = ["python-diff"] }
 ```
 
 and
@@ -284,11 +283,13 @@ let analysis = PageAnalysis::analyse_page_with_options(&page.revisions, PageAnal
 ### Logging and Error Handling
 
 - Uses the `tracing` crate for logging warnings and errors.
-- The parser is designed to recover from errors when possible. Enable the `strict` feature to make the parser terminate upon encountering errors.
+- The parser recovers from errors when possible by default. Use `DumpParserOptions` to make it terminate upon encountering malformed or ambiguous input.
 
-```toml
-[dependencies]
-wikiwho = { version = "0.3", features = ["strict"] }
+```rust,ignore
+use wikiwho::dump_parser::{DumpParser, DumpParserOptions};
+
+let options = DumpParserOptions::new().strict();
+let mut parser = DumpParser::new_with_options(reader, options)?;
 ```
 
 ### Optimized String Processing
@@ -302,7 +303,7 @@ To reduce the number of dependencies, you can disable the default features:
 
 ```toml
 [dependencies]
-wikiwho = { version = "0.3", default-features = false }
+wikiwho = { version = "0.4", default-features = false }
 ```
 
 Without `optimized-str`, text splitting falls back to straightforward implementations based on
@@ -314,7 +315,7 @@ The `optimized-lowercase` feature replaces the standard library's `str::to_lower
 
 ```toml
 [dependencies]
-wikiwho = { version = "0.3", features = ["optimized-lowercase"] }
+wikiwho = { version = "0.4", features = ["optimized-lowercase"] }
 ```
 
 ```rust,ignore

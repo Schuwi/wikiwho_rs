@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Added `DumpParserOptions` and `DumpParser::new_with_options` for selecting strict parsing at runtime.
+
+### Changed
+
+- **Breaking:** Removed the `strict` Cargo feature. Strict parsing is now enabled per parser with `DumpParserOptions::strict`, avoiding feature unification unexpectedly changing parser behavior for an entire dependency graph.
+
 ## [0.3.6] - 2026-07-12
 
 ### Added

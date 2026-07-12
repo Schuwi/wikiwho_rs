@@ -40,7 +40,7 @@ jobs:
           - "" # default
           - "--features serde"
           - "--features cli"
-          - "--features serde,cli,strict,optimized-str,optimized-lowercase"
+          - "--features serde,cli,optimized-str,optimized-lowercase"
     steps:
       - uses: actions/checkout@v7
         with: { lfs: false }
@@ -61,7 +61,7 @@ jobs:
       - uses: Swatinem/rust-cache@v2
       # Superset of non-python features runs every unit test (incl. serde round-trips and
       # both optimized/naive string paths).
-      - run: cargo test --lib --features serde,cli,strict,optimized-str,optimized-lowercase
+      - run: cargo test --lib --features serde,cli,optimized-str,optimized-lowercase
       - run: cargo test --doc --features serde
 
   doc:
@@ -137,7 +137,7 @@ jobs:
       - name: Strict parser coverage (representative subset)
         env:
           WIKIWHO_TEST_DUMP: ${{ github.workspace }}/dev-data/reference-dumps/dewiktionary-20240901-ci-subset.xml.zst
-        run: cargo test --features strict --test parser_tests
+        run: cargo test --test parser_tests -- --ignored reference_dump_parses_completely_in_strict_mode
       - uses: actions/setup-python@v6
         with: { python-version: "3.12" }
       - name: Set up reference WikiWho venv
@@ -173,7 +173,7 @@ jobs:
         run: |
           if python3 tools/fetch_test_data.py --which full --dest dev-data/reference-dumps; then
             export WIKIWHO_TEST_DUMP="$PWD/dev-data/reference-dumps/dewiktionary-20240901-pages-meta-history.xml.zst"
-            cargo test --features strict --test parser_tests -- reference_dump_parses_completely_in_strict_mode
+            cargo test --test parser_tests -- --ignored reference_dump_parses_completely_in_strict_mode
             cargo test --features python-diff,serde --test algorithm_exact_tests -- \
               known_bad_example_familia known_bad_example_hallo random_pages_100
           else
