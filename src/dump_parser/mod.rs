@@ -12,6 +12,9 @@ use quick_xml::events::{BytesEnd, BytesRef, BytesStart};
 use rand::RngExt;
 use tracing::instrument;
 
+// MediaWiki dumps use XML 1.0, which this parser also assumes for text content.
+const MEDIAWIKI_XML_VERSION: quick_xml::XmlVersion = quick_xml::XmlVersion::Implicit1_0;
+
 // we normally don't retrieve the value of the tags, so this is the most efficient backend
 type TagStringInterner = string_interner::StringInterner<string_interner::backend::BucketBackend>;
 
@@ -109,7 +112,7 @@ impl Tag {
                     let attr = attr.map_err(quick_xml::Error::from)?;
 
                     if attr.key.as_ref() == b"key" {
-                        let key = attr.unescape_value()?;
+                        let key = attr.normalized_value(MEDIAWIKI_XML_VERSION)?;
                         return Ok(Tag::Namespace(key.into_owned()));
                     }
                 }
@@ -133,10 +136,10 @@ impl Tag {
                     let attr = attr.map_err(quick_xml::Error::from)?;
                     match attr.key.as_ref() {
                         b"bytes" => {
-                            let _bytes = attr.unescape_value()?;
+                            let _bytes = attr.normalized_value(MEDIAWIKI_XML_VERSION)?;
                         }
                         b"sha1" => {
-                            sha1 = Some(attr.unescape_value()?);
+                            sha1 = Some(attr.normalized_value(MEDIAWIKI_XML_VERSION)?);
                         }
                         b"deleted" => {
                             deleted = true;

@@ -8,7 +8,7 @@ use std::{fs::File, io::BufReader};
 
 #[cfg(feature = "python-diff")]
 use pyo3::{prelude::*, types::PyBytes};
-use wikiwho::dump_parser::{DumpParser, Text};
+use wikiwho::dump_parser::{DumpParser, Namespace, Text};
 
 #[cfg(feature = "strict")]
 const DEFAULT_REFERENCE_DUMP: &str =
@@ -117,6 +117,23 @@ fn xml_1_0_line_endings_are_normalized() {
     assert_eq!(
         page.revisions[0].text.as_str(),
         "first line\nsecond line\nthird line"
+    );
+}
+
+#[test]
+fn xml_1_0_attribute_references_are_normalized() {
+    let xml = concat!(
+        r#"<?xml version="1.0" encoding="UTF-8"?>"#,
+        r#"<mediawiki><siteinfo><dbname>testwiki</dbname><namespaces>"#,
+        r#"<namespace key="&#48;">Main</namespace>"#,
+        r#"</namespaces></siteinfo></mediawiki>"#,
+    );
+
+    let parser = DumpParser::new(Cursor::new(xml)).unwrap();
+
+    assert_eq!(
+        parser.site_info().namespaces.get(&0),
+        Some(&Namespace::Named("Main".into()))
     );
 }
 
