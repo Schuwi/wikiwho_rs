@@ -11,13 +11,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Breaking:** Marked internal, non-API items as `#[doc(hidden)]`, removing them from the documented public API: the `PageAnalysis::{new, new_revision, new_paragraph, new_sentence, new_word}` constructors and the `RevisionSubstr` type alias. These are implementation details (used internally by `analyse_page` and by the test suite) and remain `pub`, so code that calls them still compiles; however, `cargo-semver-checks` classifies doc-hiding an inherent method as a breaking change, hence the `0.4.0` minor bump.
 
-### Fixed
-
-- `wikiwho-cli --help` now advertises the page-limit flag under its actual long name `--limit` (it previously printed a non-existent `--pages`).
-
 ### Documentation
 
 - Overhauled the project documentation: restructured the README and split out dedicated `SECURITY.md` and `CONTRIBUTING.md`; corrected user-facing details (feature table, dependencies, MSRV, and runnable examples) and contributor testing guidance; documented the `wikiwho-cli` tool and the standalone HTML viewer; added a Python WikiWho migration guide with parity guarantees; and filled in the library's API rustdoc (entry points, module-level overviews, a crate-layout map, and per-field `Revision` documentation).
+
+## [0.3.6] - 2026-07-12
+
+### Added
+
+- `wikiwho-cli` gained a `-c`/`--compression-level N` option to set the compression level of the output encoder (bzip2 1–9, gzip 0–9, zstd 0–22); it is ignored when the output is uncompressed, and the previous codec defaults are used when the flag is omitted.
+- Added direct dump-parser parity tests against Python `mwxml` and strict end-to-end parsing coverage for the reference Wiktionary dump.
+
+### Fixed
+
+- `wikiwho-cli` now finalizes compressed output encoders explicitly, producing complete zstd frames and reporting finalization errors instead of silently emitting truncated output.
+- The dump parser now preserves entity-split comments, SHA-1 hashes stored on `<text>` attributes, deleted revision text, and revisions with suppressed contributors. Username/IP alternatives and duplicate SHA-1 representations now follow Python `mwxml` precedence; strict mode rejects ambiguous contributors and differing SHA-1 values. XML 1.0 line endings are normalized consistently with other XML parsers.
+- Updated `quick-xml` to 0.41.0, hardening dump parsing against malformed-DTD panics and pathological start tags with many attributes while applying XML 1.0 attribute-value normalization.
+
+## [0.3.5] - 2026-07-09
+
+### Fixed
+
+- Fixed a critical dump parser bug where revision text containing XML entity references (`&lt;`, `&amp;`, `&#NN;`, ...) was truncated, producing severely incomplete authorship output for real Wikimedia dumps. Users of versions 0.3.4 and earlier should upgrade and regenerate affected output.
+- `wikiwho-cli --help` now advertises the page-limit flag under its actual long name `--limit` (it previously printed a non-existent `--pages`).
+
+### Changed
+
+- Dump parsing now accumulates text across entity-split events and resolves the entity characters, restoring parity with Python WikiWho. Correctly parsed dumps may process substantially more text and run slower than affected versions.
 
 ## [0.3.4] - 2026-06-15
 
@@ -29,12 +49,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Updated `pyo3` to `v0.29.0`.
 
-## [0.3.3] - 2026-06-15
+## [0.3.3] - 2026-06-15 [YANKED]
 
 **Yanked** — released before immutable releases (a GitHub feature) were enabled and with
 incorrect/missing CHANGELOG links; superseded by an otherwise-identical 0.3.4.
 
-## [0.3.2] - 2026-06-15
+## [0.3.2] - 2026-06-15 [YANKED]
 
 **Yanked** — the release workflow failed to attach a build-provenance attestation (a
 cargo 1.96 change moved the packaged `.crate` to a path the CI glob no longer matched),
@@ -93,7 +113,9 @@ so the published crate could not be verified as documented.
 
 Initial release.
 
-[unreleased]: https://github.com/Schuwi/wikiwho_rs/compare/v0.3.4...HEAD
+[Unreleased]: https://github.com/Schuwi/wikiwho_rs/compare/v0.3.6...HEAD
+[0.3.6]: https://github.com/Schuwi/wikiwho_rs/compare/v0.3.5...v0.3.6
+[0.3.5]: https://github.com/Schuwi/wikiwho_rs/compare/v0.3.4...v0.3.5
 [0.3.4]: https://github.com/Schuwi/wikiwho_rs/compare/v0.3.1...v0.3.4
 [0.3.3]: https://github.com/Schuwi/wikiwho_rs/compare/v0.3.1...v0.3.3
 [0.3.2]: https://github.com/Schuwi/wikiwho_rs/compare/v0.3.1...v0.3.2

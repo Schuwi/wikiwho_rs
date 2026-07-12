@@ -6,6 +6,7 @@ use compact_str::CompactString;
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Contributor {
+    /// Contributor name or IP address. Empty when the dump suppresses the contributor.
     pub username: CompactString,
     pub id: Option<i32>,
 }
