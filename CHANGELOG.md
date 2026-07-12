@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Added direct dump-parser parity tests against Python `mwxml` and strict end-to-end parsing coverage for the reference Wiktionary dump.
+- Added a real-data benchmarking harness for separate XML parsing, authorship algorithm, and end-to-end speed comparisons between Rust and the original Python WikiWho.
 
 ### Fixed
 

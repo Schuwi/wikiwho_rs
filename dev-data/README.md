@@ -106,6 +106,18 @@ Wikimedia text dumps are generally reusable under CC BY-SA 4.0 and GFDL, with at
 
 ## Running
 
+To benchmark Rust against the original Python implementation on the committed reference subset or any dumps in `extra-dumps/`, use the real-data harness described in the main README:
+
+```sh
+. .venv/bin/activate
+python scripts/wikiwho_bench.py
+python scripts/wikiwho_bench.py dev-data/extra-dumps/example.xml.zst --pages 100
+```
+
+The harness creates its prepared JSONL and uncompressed XML inputs in a temporary directory and removes them after the run. Input preparation is not included in reported timings.
+
+### Accuracy tests
+
 These tests live in `algorithm_statistic_tests`, which is gated behind the `serde` feature; without it the suite compiles empty and the commands below run nothing.
 
 Pure Rust precision:
