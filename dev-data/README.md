@@ -114,7 +114,7 @@ python scripts/wikiwho_bench.py
 python scripts/wikiwho_bench.py dev-data/extra-dumps/example.xml.zst --pages 100
 ```
 
-The harness creates its prepared JSONL and uncompressed XML inputs in a temporary directory and removes them after the run. Input preparation is not included in reported timings.
+The harness streams only the requested pages into prepared JSONL and uncompressed XML corpora in a temporary directory, then removes them after the run. It never unpacks the complete source dump to disk. Input preparation is not included in reported timings.
 
 ### Accuracy tests
 

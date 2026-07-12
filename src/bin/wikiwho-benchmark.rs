@@ -8,11 +8,11 @@ use std::time::{Duration, Instant};
 
 use serde::Serialize;
 use wikiwho::algorithm::PageAnalysis;
-use wikiwho::dump_parser::{DumpParser, Page};
+use wikiwho::dump_parser::{Contributor, DumpParser, Namespace, Page, Revision, SiteInfo, Text};
 
 fn usage(program: &str) {
     eprintln!(
-        "Usage:\n  {program} prepare --output CORPUS [--limit N] [--namespace NS]... INPUT...\n  {program} decompress --output XML INPUT\n  {program} run --corpus CORPUS\n  {program} run-xml --mode parse|end-to-end [--limit N] [--namespace NS]... INPUT...\n\nThis is an internal worker. Prefer scripts/wikiwho_bench.py for normal use."
+        "Usage:\n  {program} prepare --output CORPUS --xml-output XML [--limit N] [--namespace NS]... INPUT...\n  {program} run --corpus CORPUS\n  {program} run-xml --mode parse|end-to-end [--limit N] [--namespace NS]... INPUT...\n\nThis is an internal worker. Prefer scripts/wikiwho_bench.py for normal use."
     );
 }
 
@@ -20,7 +20,6 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let args: Vec<String> = std::env::args().collect();
     match args.get(1).map(String::as_str) {
         Some("prepare") => prepare(&args[2..]),
-        Some("decompress") => decompress(&args[2..]),
         Some("run") => run_corpus(&args[2..]),
         Some("run-xml") => run_xml(&args[2..]),
         _ => {
@@ -28,21 +27,6 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             Err("missing or unknown subcommand".into())
         }
     }
-}
-
-fn decompress(args: &[String]) -> Result<(), Box<dyn std::error::Error>> {
-    let mut opts = getopts::Options::new();
-    opts.reqopt("o", "output", "uncompressed XML to create", "PATH");
-    let matches = opts.parse(args)?;
-    if matches.free.len() != 1 {
-        return Err("decompress requires exactly one input".into());
-    }
-    let output = matches.opt_str("output").expect("required by getopts");
-    let mut reader = input_reader(&matches.free[0])?;
-    let mut writer = BufWriter::new(File::create(&output)?);
-    io::copy(&mut reader, &mut writer)?;
-    writer.flush()?;
-    Ok(())
 }
 
 fn input_reader(path: &str) -> Result<Box<dyn BufRead>, Box<dyn std::error::Error>> {
@@ -64,7 +48,9 @@ fn input_reader(path: &str) -> Result<Box<dyn BufRead>, Box<dyn std::error::Erro
 fn prepare(args: &[String]) -> Result<(), Box<dyn std::error::Error>> {
     let mut opts = getopts::Options::new();
     opts.reqopt("o", "output", "JSONL corpus to create", "PATH");
+    opts.reqopt("", "xml-output", "bounded XML corpus to create", "PATH");
     opts.optopt("N", "limit", "maximum number of pages in total", "N");
+    opts.optopt("", "stride", "select every Nth matching page", "N");
     opts.optmulti("n", "namespace", "only include this namespace", "NS");
     let matches = opts.parse(args)?;
     if matches.free.is_empty() {
@@ -75,27 +61,46 @@ fn prepare(args: &[String]) -> Result<(), Box<dyn std::error::Error>> {
     if limit == Some(0) {
         return Err("--limit must be at least 1".into());
     }
+    let stride: usize = matches.opt_get("stride")?.unwrap_or(1);
+    if stride == 0 {
+        return Err("--stride must be at least 1".into());
+    }
     let namespaces: Vec<i32> = matches
         .opt_strs("namespace")
         .iter()
         .map(|value| value.parse())
         .collect::<Result<_, _>>()?;
     let output = matches.opt_str("output").expect("required by getopts");
+    let xml_output = matches.opt_str("xml-output").expect("required by getopts");
     let mut writer = BufWriter::new(
         File::create(&output).map_err(|e| format!("cannot create corpus '{output}': {e}"))?,
     );
+    let mut xml_writer = BufWriter::new(
+        File::create(&xml_output)
+            .map_err(|e| format!("cannot create XML corpus '{xml_output}': {e}"))?,
+    );
 
     let mut pages = 0usize;
+    let mut matching_pages_seen = 0usize;
     let mut revisions = 0usize;
     let mut text_bytes = 0usize;
+    let mut header_written = false;
     'inputs: for input in &matches.free {
         let mut parser = DumpParser::new(input_reader(input)?)
             .map_err(|e| format!("cannot parse site info in '{input}': {e}"))?;
+        if !header_written {
+            write_xml_header(&mut xml_writer, parser.site_info())?;
+            header_written = true;
+        }
         while let Some(page) = parser
             .parse_page()
             .map_err(|e| format!("cannot parse page from '{input}': {e}"))?
         {
             if !namespaces.is_empty() && !namespaces.contains(&page.namespace) {
+                continue;
+            }
+            matching_pages_seen += 1;
+            if !(matching_pages_seen - 1).is_multiple_of(stride) {
                 continue;
             }
             revisions += page.revisions.len();
@@ -106,13 +111,16 @@ fn prepare(args: &[String]) -> Result<(), Box<dyn std::error::Error>> {
                 .sum::<usize>();
             serde_json::to_writer(&mut writer, &page)?;
             writer.write_all(b"\n")?;
+            write_xml_page(&mut xml_writer, &page, pages + 1)?;
             pages += 1;
             if limit.is_some_and(|limit| pages >= limit) {
                 break 'inputs;
             }
         }
     }
+    xml_writer.write_all(b"</mediawiki>\n")?;
     writer.flush()?;
+    xml_writer.flush()?;
     if pages == 0 {
         return Err("no pages matched the requested inputs and filters".into());
     }
@@ -123,10 +131,108 @@ fn prepare(args: &[String]) -> Result<(), Box<dyn std::error::Error>> {
             pages,
             revisions,
             text_bytes,
+            matching_pages_seen,
+            json_bytes: std::fs::metadata(&output)?.len(),
+            xml_bytes: std::fs::metadata(&xml_output)?.len(),
         },
     )?;
     println!();
     Ok(())
+}
+
+fn write_escaped(writer: &mut impl Write, value: &str) -> io::Result<()> {
+    writer.write_all(quick_xml::escape::escape(value).as_bytes())
+}
+
+fn write_xml_header(writer: &mut impl Write, site_info: &SiteInfo) -> io::Result<()> {
+    writer.write_all(
+        b"<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<mediawiki xmlns=\"http://www.mediawiki.org/xml/export-0.11/\" version=\"0.11\" xml:lang=\"en\">\n<siteinfo><sitename>WikiWho benchmark corpus</sitename><dbname>",
+    )?;
+    write_escaped(writer, &site_info.dbname)?;
+    writer.write_all(b"</dbname><base>https://example.invalid/wiki/Main_Page</base><generator>wikiwho-benchmark</generator><case>first-letter</case><namespaces>")?;
+    let mut namespaces: Vec<_> = site_info.namespaces.iter().collect();
+    namespaces.sort_unstable_by_key(|(key, _)| **key);
+    for (key, namespace) in namespaces {
+        write!(writer, "<namespace key=\"{key}\" case=\"first-letter\">")?;
+        if let Namespace::Named(name) = namespace {
+            write_escaped(writer, name)?;
+        }
+        writer.write_all(b"</namespace>")?;
+    }
+    writer.write_all(b"</namespaces></siteinfo>\n")
+}
+
+fn write_contributor(writer: &mut impl Write, contributor: &Contributor) -> io::Result<()> {
+    if contributor.username.is_empty() {
+        return writer.write_all(b"<contributor deleted=\"deleted\" />");
+    }
+    writer.write_all(b"<contributor>")?;
+    if let Some(id) = contributor.id {
+        writer.write_all(b"<username>")?;
+        write_escaped(writer, &contributor.username)?;
+        write!(writer, "</username><id>{id}</id>")?;
+    } else {
+        writer.write_all(b"<ip>")?;
+        write_escaped(writer, &contributor.username)?;
+        writer.write_all(b"</ip>")?;
+    }
+    writer.write_all(b"</contributor>")
+}
+
+fn write_xml_revision(writer: &mut impl Write, revision: &Revision) -> io::Result<()> {
+    write!(
+        writer,
+        "<revision><id>{}</id><timestamp>{}</timestamp>",
+        revision.id,
+        revision
+            .timestamp
+            .to_rfc3339_opts(chrono::SecondsFormat::Secs, true)
+    )?;
+    write_contributor(writer, &revision.contributor)?;
+    if let Some(comment) = &revision.comment {
+        writer.write_all(b"<comment>")?;
+        write_escaped(writer, comment)?;
+        writer.write_all(b"</comment>")?;
+    }
+    if revision.minor {
+        writer.write_all(b"<minor />")?;
+    }
+    match &revision.text {
+        Text::Normal(text) => {
+            if text.is_empty() {
+                writer.write_all(b"<text bytes=\"0\" xml:space=\"preserve\" />")?;
+            } else {
+                write!(
+                    writer,
+                    "<text bytes=\"{}\" xml:space=\"preserve\">",
+                    text.len()
+                )?;
+                write_escaped(writer, text)?;
+                writer.write_all(b"</text>")?;
+            }
+        }
+        Text::Deleted => writer.write_all(b"<text deleted=\"deleted\" />")?,
+    }
+    if let Some(sha1) = revision.sha1 {
+        writer.write_all(b"<sha1>")?;
+        writer.write_all(&sha1.0)?;
+        writer.write_all(b"</sha1>")?;
+    }
+    writer.write_all(b"</revision>")
+}
+
+fn write_xml_page(writer: &mut impl Write, page: &Page, page_id: usize) -> io::Result<()> {
+    writer.write_all(b"<page><title>")?;
+    write_escaped(writer, &page.title)?;
+    write!(
+        writer,
+        "</title><ns>{}</ns><id>{page_id}</id>",
+        page.namespace
+    )?;
+    for revision in &page.revisions {
+        write_xml_revision(writer, revision)?;
+    }
+    writer.write_all(b"</page>\n")
 }
 
 #[derive(Serialize)]
@@ -134,6 +240,9 @@ struct CorpusSummary {
     pages: usize,
     revisions: usize,
     text_bytes: usize,
+    matching_pages_seen: usize,
+    json_bytes: u64,
+    xml_bytes: u64,
 }
 
 #[derive(Serialize)]
@@ -296,4 +405,46 @@ fn run_xml(args: &[String]) -> Result<(), Box<dyn std::error::Error>> {
     )?;
     println!();
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use std::collections::HashMap;
+    use std::io::Cursor;
+
+    use super::*;
+
+    #[test]
+    fn canonical_xml_preserves_empty_normal_revision_text() {
+        let site_info = SiteInfo {
+            dbname: "testwiki".into(),
+            namespaces: HashMap::from([(0, Namespace::Default)]),
+        };
+        let page = Page {
+            title: "Cleared page".into(),
+            namespace: 0,
+            revisions: vec![Revision {
+                id: 42,
+                timestamp: chrono::DateTime::from_timestamp(1_700_000_000, 0).unwrap(),
+                contributor: Contributor {
+                    username: "127.0.0.1".into(),
+                    id: None,
+                },
+                text: Text::Normal(String::new()),
+                sha1: None,
+                comment: Some("page cleared".into()),
+                minor: false,
+            }],
+        };
+
+        let mut xml = Vec::new();
+        write_xml_header(&mut xml, &site_info).unwrap();
+        write_xml_page(&mut xml, &page, 1).unwrap();
+        xml.extend_from_slice(b"</mediawiki>\n");
+
+        let mut parser = DumpParser::new(Cursor::new(xml)).unwrap();
+        let parsed = parser.parse_page().unwrap().unwrap();
+        assert_eq!(parsed.revisions.len(), 1);
+        assert_eq!(parsed.revisions[0].text, Text::Normal(String::new()));
+    }
 }

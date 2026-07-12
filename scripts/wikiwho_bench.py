@@ -10,6 +10,7 @@ import subprocess
 import sys
 import tempfile
 import time
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Sequence
 
@@ -227,6 +228,11 @@ def print_report(result: dict[str, Any]) -> None:
         f"Corpus: {summary['pages']:,} pages, {summary['revisions']:,} revisions, "
         f"{summary['text_bytes'] / (1024 * 1024):.2f} MiB revision text"
     )
+    if "xml_bytes" in summary and "json_bytes" in summary:
+        prepared_bytes = summary["xml_bytes"] + summary["json_bytes"]
+        print(f"Temporary prepared corpora: {prepared_bytes / (1024 * 1024):.2f} MiB")
+    if summary.get("matching_pages_seen", summary["pages"]) > summary["pages"]:
+        print(f"Matching pages scanned during sampling: {summary['matching_pages_seen']:,}")
     print(f"Repetitions: {result['repetitions']} (median)\n")
     print("Mode             Rust median  Python median     Speedup")
     print("---------------  -----------  -------------  ----------")
@@ -238,6 +244,7 @@ def print_report(result: dict[str, Any]) -> None:
 
 
 def benchmark(args: argparse.Namespace) -> int:
+    started_at = datetime.now(timezone.utc).isoformat(timespec="seconds").replace("+00:00", "Z")
     binary = args.rust_binary.resolve()
     if not args.no_build:
         build_rust(binary)
@@ -251,23 +258,17 @@ def benchmark(args: argparse.Namespace) -> int:
                 raise SystemExit(f"corpus does not exist: {corpus}")
             corpus_summary = None
         else:
-            xml_inputs = []
-            print("Materializing uncompressed XML outside the timed region...", file=sys.stderr)
-            for index, input_path in enumerate(args.inputs):
-                xml_path = Path(temporary) / f"input-{index}.xml"
-                completed = subprocess.run(
-                    [str(binary), "decompress", "--output", str(xml_path), str(input_path.resolve())],
-                    check=False,
-                )
-                if completed.returncode:
-                    raise SystemExit(completed.returncode)
-                xml_inputs.append(xml_path)
+            xml_inputs = [Path(temporary) / "corpus.xml"]
             corpus = Path(temporary) / "corpus.jsonl"
-            command = [str(binary), "prepare", "--output", str(corpus), "--limit", str(args.pages)]
+            command = [
+                str(binary), "prepare", "--output", str(corpus),
+                "--xml-output", str(xml_inputs[0]), "--limit", str(args.pages),
+                "--stride", str(args.stride),
+            ]
             for namespace in args.namespace:
                 command.extend(("--namespace", str(namespace)))
-            command.extend(str(path) for path in xml_inputs)
-            print("Preparing the shared real-page corpus...", file=sys.stderr)
+            command.extend(str(path.resolve()) for path in args.inputs)
+            print("Streaming the selected pages into bounded benchmark corpora...", file=sys.stderr)
             corpus_summary = run_json(command)
 
         if args.corpus:
@@ -331,8 +332,25 @@ def benchmark(args: argparse.Namespace) -> int:
                 "speedup": timings["python"]["median"] / timings["rust"]["median"],
                 "last_reports": {name: values[-1] for name, values in mode_reports.items()},
             }
+        corpus_result = {key: expected[key] for key in ("pages", "revisions", "text_bytes")}
+        for key in ("json_bytes", "xml_bytes", "matching_pages_seen"):
+            if key in expected:
+                corpus_result[key] = expected[key]
         result = {
-            "corpus": {key: expected[key] for key in ("pages", "revisions", "text_bytes")},
+            "started_at": started_at,
+            "parameters": {
+                "input_files": [str(path.resolve()) for path in args.inputs] if not args.corpus else [],
+                "prepared_corpus": str(args.corpus.resolve()) if args.corpus else None,
+                "page_limit": args.pages if not args.corpus else None,
+                "stride": args.stride if not args.corpus else None,
+                "namespace_filter": args.namespace if not args.corpus else [],
+                "selected_modes": selected_modes,
+                # Preserve the virtualenv path instead of resolving its interpreter symlink.
+                "python_executable": str(args.python.absolute()),
+                "rust_binary": str(binary),
+                "release_build_performed": not args.no_build,
+            },
+            "corpus": corpus_result,
             "repetitions": args.repetitions,
             "warmups": args.warmups,
             "modes": mode_results,
@@ -370,6 +388,10 @@ def parse_args(argv: Sequence[str]) -> argparse.Namespace:
         help="MediaWiki history dumps (.xml, .bz2, .gz, .zst); defaults to the committed CI subset",
     )
     parser.add_argument("--pages", type=positive_int, default=10, help="maximum pages to select (default: 10)")
+    parser.add_argument(
+        "--stride", type=positive_int, default=1,
+        help="select every Nth namespace-matching page to reduce dump-order bias (default: 1)",
+    )
     parser.add_argument(
         "--namespace", "-n", action="append", type=int, default=[], help="only select this namespace (repeatable)"
     )
