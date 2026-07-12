@@ -175,8 +175,10 @@ fn run() -> Result<(), Box<dyn std::error::Error>> {
     let writer: Box<dyn Write> = match output_path.as_deref() {
         None | Some("-") => Box::new(BufWriter::new(io::stdout().lock())),
         Some(path) => {
-            let file = std::fs::File::create(path)
-                .map_err(|e| format!("cannot create output '{path}': {e}"))?;
+            let create_file = || {
+                std::fs::File::create(path)
+                    .map_err(|e| format!("cannot create output '{path}': {e}"))
+            };
             if path.ends_with(".bz2") {
                 let compression = if let Some(level) = compression_level {
                     u32::try_from(level)
@@ -186,7 +188,7 @@ fn run() -> Result<(), Box<dyn std::error::Error>> {
                 } else {
                     bzip2::Compression::default()
                 };
-
+                let file = create_file()?;
                 Box::new(BufWriter::new(bzip2::write::BzEncoder::new(
                     file,
                     compression,
@@ -199,7 +201,7 @@ fn run() -> Result<(), Box<dyn std::error::Error>> {
                     )
                     .into());
                 }
-
+                let file = create_file()?;
                 Box::new(BufWriter::new(
                     zstd::Encoder::new(file, compression_level.unwrap_or(3))
                         .map_err(|e| format!("zstd init: {e}"))?,
@@ -214,12 +216,13 @@ fn run() -> Result<(), Box<dyn std::error::Error>> {
                 } else {
                     flate2::Compression::default()
                 };
-
+                let file = create_file()?;
                 Box::new(BufWriter::new(flate2::write::GzEncoder::new(
                     file,
                     compression,
                 )))
             } else {
+                let file = create_file()?;
                 Box::new(BufWriter::new(file))
             }
         }
