@@ -3,14 +3,12 @@
 //!
 use std::io::Cursor;
 
-#[cfg(any(feature = "strict", feature = "python-diff"))]
 use std::{fs::File, io::BufReader};
 
 #[cfg(feature = "python-diff")]
 use pyo3::{prelude::*, types::PyBytes};
-use wikiwho::dump_parser::{DumpParser, Namespace, Text};
+use wikiwho::dump_parser::{DumpParser, DumpParserOptions, Namespace, Text};
 
-#[cfg(feature = "strict")]
 const DEFAULT_REFERENCE_DUMP: &str =
     "dev-data/reference-dumps/dewiktionary-20240901-pages-meta-history.xml.zst";
 #[cfg(feature = "python-diff")]
@@ -58,6 +56,16 @@ const DUMP_WITH_CONFLICTING_SHA1_FIELDS: &str = r#"<mediawiki>
 			<contributor><username>Alice</username></contributor>
 			<text sha1="aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa">x</text>
 			<sha1>bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb</sha1>
+		</revision>
+	</page>
+</mediawiki>"#;
+
+const DUMP_WITH_MISSING_CONTRIBUTOR: &str = r#"<mediawiki>
+	<siteinfo><namespaces><namespace key="0" /></namespaces></siteinfo>
+	<page><title>T</title><ns>0</ns><id>1</id>
+		<revision><id>1</id><timestamp>2020-01-01T00:00:00Z</timestamp><text>x</text></revision>
+		<revision><id>2</id><timestamp>2020-01-02T00:00:00Z</timestamp>
+			<contributor><username>Alice</username></contributor><text>y</text>
 		</revision>
 	</page>
 </mediawiki>"#;
@@ -137,7 +145,6 @@ fn xml_1_0_attribute_references_are_normalized() {
     );
 }
 
-#[cfg(not(feature = "strict"))]
 #[test]
 fn contributor_username_takes_precedence_over_ip() {
     let mut parser = DumpParser::new(Cursor::new(DUMP_WITH_BOTH_CONTRIBUTOR_FIELDS)).unwrap();
@@ -150,17 +157,19 @@ fn contributor_username_takes_precedence_over_ip() {
     assert_parsers_match(DUMP_WITH_BOTH_CONTRIBUTOR_FIELDS.as_bytes()).unwrap();
 }
 
-#[cfg(feature = "strict")]
 #[test]
 fn strict_mode_rejects_username_and_ip_together() {
-    let mut parser = DumpParser::new(Cursor::new(DUMP_WITH_BOTH_CONTRIBUTOR_FIELDS)).unwrap();
+    let mut parser = DumpParser::new_with_options(
+        Cursor::new(DUMP_WITH_BOTH_CONTRIBUTOR_FIELDS),
+        DumpParserOptions::new().strict(),
+    )
+    .unwrap();
     assert!(matches!(
         parser.parse_page(),
         Err(wikiwho::dump_parser::ParsingError::ConflictingContributorIdentity)
     ));
 }
 
-#[cfg(not(feature = "strict"))]
 #[test]
 fn text_sha1_takes_precedence_over_conflicting_element() {
     let mut parser = DumpParser::new(Cursor::new(DUMP_WITH_CONFLICTING_SHA1_FIELDS)).unwrap();
@@ -175,13 +184,36 @@ fn text_sha1_takes_precedence_over_conflicting_element() {
     assert_parsers_match(DUMP_WITH_CONFLICTING_SHA1_FIELDS.as_bytes()).unwrap();
 }
 
-#[cfg(feature = "strict")]
 #[test]
 fn strict_mode_rejects_conflicting_sha1_values() {
-    let mut parser = DumpParser::new(Cursor::new(DUMP_WITH_CONFLICTING_SHA1_FIELDS)).unwrap();
+    let mut parser = DumpParser::new_with_options(
+        Cursor::new(DUMP_WITH_CONFLICTING_SHA1_FIELDS),
+        DumpParserOptions::new().strict(),
+    )
+    .unwrap();
     assert!(matches!(
         parser.parse_page(),
         Err(wikiwho::dump_parser::ParsingError::ConflictingSha1Values)
+    ));
+}
+
+#[test]
+fn missing_contributor_is_selected_at_runtime() {
+    let mut recovering = DumpParser::new(Cursor::new(DUMP_WITH_MISSING_CONTRIBUTOR)).unwrap();
+    let page = recovering.parse_page().unwrap().unwrap();
+    assert_eq!(page.revisions.len(), 1);
+    assert_eq!(page.revisions[0].id, 2);
+
+    let mut strict = DumpParser::new_with_options(
+        Cursor::new(DUMP_WITH_MISSING_CONTRIBUTOR),
+        DumpParserOptions::new().strict(),
+    )
+    .unwrap();
+    assert!(matches!(
+        strict.parse_page(),
+        Err(wikiwho::dump_parser::ParsingError::MissingField(
+            "contributor_name"
+        ))
     ));
 }
 
@@ -340,8 +372,8 @@ fn python_parser_matches_rust_on_reference_dump() {
 ///
 /// CI points `WIKIWHO_TEST_DUMP` at the small representative dump on pull
 /// requests and at the full bundled Wiktionary dump on pushes to `main`.
-#[cfg(feature = "strict")]
 #[test]
+#[ignore = "requires a reference dump; exercised explicitly in CI"]
 fn reference_dump_parses_completely_in_strict_mode() {
     let path =
         std::env::var("WIKIWHO_TEST_DUMP").unwrap_or_else(|_| DEFAULT_REFERENCE_DUMP.to_owned());
@@ -349,8 +381,9 @@ fn reference_dump_parses_completely_in_strict_mode() {
         .unwrap_or_else(|err| panic!("failed to open reference dump `{path}`: {err}"));
     let decoder = zstd::stream::Decoder::new(file)
         .unwrap_or_else(|err| panic!("failed to decompress reference dump `{path}`: {err}"));
-    let mut parser = DumpParser::new(BufReader::new(decoder))
-        .unwrap_or_else(|err| panic!("failed to parse site info from `{path}`: {err:?}"));
+    let mut parser =
+        DumpParser::new_with_options(BufReader::new(decoder), DumpParserOptions::new().strict())
+            .unwrap_or_else(|err| panic!("failed to parse site info from `{path}`: {err:?}"));
 
     let mut page_count = 0_u64;
     let mut revision_count = 0_u64;

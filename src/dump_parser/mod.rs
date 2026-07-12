@@ -2,10 +2,7 @@
 mod types;
 pub use types::*;
 
-use std::{
-    any::type_name_of_val, borrow::Cow, collections::HashMap, convert::Infallible, fmt::Debug,
-    io::BufRead,
-};
+use std::{any::type_name_of_val, borrow::Cow, collections::HashMap, fmt::Debug, io::BufRead};
 
 use compact_str::CompactString;
 use quick_xml::events::{BytesEnd, BytesRef, BytesStart};
@@ -297,6 +294,7 @@ pub struct DumpParser<R: BufRead> {
     current_path: Vec<Tag>,
     site_info: SiteInfo,
     non_utf8_reporter: NonUtf8Reporter,
+    options: DumpParserOptions,
 }
 
 impl<R: BufRead> Debug for DumpParser<R> {
@@ -309,7 +307,29 @@ impl<R: BufRead> Debug for DumpParser<R> {
             .field("buf.capacity", &self.buf.capacity())
             .field("current_path", &self.current_path)
             .field("site_info", &self.site_info)
+            .field("options", &self.options)
             .finish()
+    }
+}
+
+/// Runtime configuration for [`DumpParser`].
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
+#[non_exhaustive]
+pub struct DumpParserOptions {
+    /// Abort when malformed or ambiguous input is encountered instead of attempting recovery.
+    pub strict: bool,
+}
+
+impl DumpParserOptions {
+    /// Creates parser options with recovery enabled.
+    pub const fn new() -> Self {
+        Self { strict: false }
+    }
+
+    /// Enables strict parsing.
+    pub const fn strict(mut self) -> Self {
+        self.strict = true;
+        self
     }
 }
 
@@ -335,14 +355,15 @@ impl NonUtf8Reporter {
         &mut self,
         e: &BytesStart,
         tag_interner: &mut TagStringInterner,
-    ) -> Result<Tag, TagReadingError<Infallible>> {
+        strict: bool,
+    ) -> Result<Tag, TagReadingError<()>> {
         match Tag::from_start_bytes(e, tag_interner) {
             Ok(tag) => Ok(tag),
             Err(TagReadingError::NonUtf8Tag(tag)) => {
                 self.register(e.name().as_ref());
 
-                if cfg!(feature = "strict") {
-                    todo!("not sure how to abort parsing here");
+                if strict {
+                    Err(TagReadingError::NonUtf8Tag(()))
                 } else {
                     Ok(tag)
                 }
@@ -365,18 +386,21 @@ pub enum ParsingError {
     XmlError(#[from] quick_xml::Error),
     #[error("unexpected end of file")]
     Eof,
-    #[cfg(feature = "strict")]
     #[error("missing field: {0}")]
     MissingField(&'static str),
-    #[cfg(feature = "strict")]
     #[error("mismatched tags")]
     MismatchedTags,
-    #[cfg(feature = "strict")]
     #[error("contributor contains both username and IP address")]
     ConflictingContributorIdentity,
-    #[cfg(feature = "strict")]
     #[error("text SHA-1 attribute differs from revision SHA-1 element")]
     ConflictingSha1Values,
+    #[error("non-UTF-8 tag")]
+    NonUtf8Tag,
+    #[error("missing expected attribute `{attribute}` for tag `{tag}`")]
+    MissingAttribute {
+        attribute: &'static str,
+        tag: &'static str,
+    },
 }
 
 impl From<std::io::Error> for ParsingError {
@@ -425,7 +449,7 @@ impl<R: BufRead> DumpParser<R> {
         Ok(quick_xml::escape::resolve_predefined_entity(&name).map(str::to_owned))
     }
 
-    fn new_impl(reader: R, preallocate: bool) -> Self {
+    fn new_impl(reader: R, preallocate: bool, options: DumpParserOptions) -> Self {
         let mut xml_parser = quick_xml::Reader::from_reader(reader);
         let config = xml_parser.config_mut();
         // expand_empty_elements not set, take care to handle empty elements!
@@ -448,6 +472,7 @@ impl<R: BufRead> DumpParser<R> {
                 namespaces: HashMap::new(),
             },
             non_utf8_reporter: NonUtf8Reporter::new(),
+            options,
         }
     }
 
@@ -461,7 +486,14 @@ impl<R: BufRead> DumpParser<R> {
     /// Returns [`ParsingError`] if the XML is malformed or the `<siteinfo>` block
     /// cannot be parsed.
     pub fn new(reader: R) -> Result<Self, ParsingError> {
-        let mut new = Self::new_impl(reader, true);
+        Self::new_with_options(reader, DumpParserOptions::default())
+    }
+
+    /// Creates a new parser with the supplied runtime configuration.
+    ///
+    /// Immediately parses the `<siteinfo>` header from the XML stream.
+    pub fn new_with_options(reader: R, options: DumpParserOptions) -> Result<Self, ParsingError> {
+        let mut new = Self::new_impl(reader, true, options);
 
         new.parse_site_info()?;
 
@@ -496,13 +528,18 @@ impl<R: BufRead> DumpParser<R> {
         non_utf8_reporter: &mut NonUtf8Reporter,
         tag_interner: &mut TagStringInterner,
         current_path: &[Tag],
-    ) -> Result<Tag, quick_xml::Error> {
-        match non_utf8_reporter.tag_from_start_bytes(e, tag_interner) {
+        strict: bool,
+    ) -> Result<Tag, ParsingError> {
+        match non_utf8_reporter.tag_from_start_bytes(e, tag_interner, strict) {
             Ok(tag) => Ok(tag),
+            Err(TagReadingError::NonUtf8Tag(_)) => Err(ParsingError::NonUtf8Tag),
             Err(TagReadingError::MissingAttribute(attr, tag)) => {
                 if tag == "namespace" {
-                    if cfg!(feature = "strict") {
-                        todo!();
+                    if strict {
+                        return Err(ParsingError::MissingAttribute {
+                            attribute: attr,
+                            tag,
+                        });
                     }
                     // print warning and skip the tag
                     if expecting_namespace {
@@ -528,8 +565,7 @@ impl<R: BufRead> DumpParser<R> {
                     );
                 }
             }
-            Err(TagReadingError::XmlError(e)) => Err(e),
-            _ => unreachable!(),
+            Err(TagReadingError::XmlError(e)) => Err(e.into()),
         }
     }
 
@@ -557,6 +593,7 @@ impl<R: BufRead> DumpParser<R> {
         current_path: &mut Vec<Tag>,
         tag_interner: &mut TagStringInterner,
         xml_parser: &mut quick_xml::Reader<R>,
+        strict: bool,
     ) -> Result<Option<Tag>, ParsingError> {
         // error handling for mismatched tags
         let tag = if let Some(tag) = current_path.pop() {
@@ -565,15 +602,11 @@ impl<R: BufRead> DumpParser<R> {
             let tag = String::from_utf8_lossy(e.name().into_inner());
             tracing::error!(message = "Unexpected end tag", tag = tag.as_ref(), current_path = ?current_path, position = xml_parser.buffer_position());
 
-            #[cfg(feature = "strict")]
-            {
+            if strict {
                 return Err(ParsingError::MismatchedTags);
             }
-            #[cfg(not(feature = "strict"))]
-            {
-                tracing::warn!("Ignoring unexpected end tag. This may lead to incorrect results.");
-                return Ok(None);
-            }
+            tracing::warn!("Ignoring unexpected end tag. This may lead to incorrect results.");
+            return Ok(None);
         };
 
         // ignore non-utf8 error here because we already reported it when the tag was read
@@ -590,24 +623,20 @@ impl<R: BufRead> DumpParser<R> {
                 position = xml_parser.buffer_position()
             );
 
-            #[cfg(feature = "strict")]
-            {
+            if strict {
                 return Err(ParsingError::MismatchedTags);
             }
-            #[cfg(not(feature = "strict"))]
-            {
-                tracing::warn!("Ignoring mismatched tag. This may lead to incorrect results.");
+            tracing::warn!("Ignoring mismatched tag. This may lead to incorrect results.");
 
-                // (1) either this closing tag does not have a corresponding opening tag,
-                // (2) or it is not the expected closing tag (e.g. typo),
-                // (3) or a previous opening tag is not closed
-                // let's try to recover as best as possible
+            // (1) either this closing tag does not have a corresponding opening tag,
+            // (2) or it is not the expected closing tag (e.g. typo),
+            // (3) or a previous opening tag is not closed
+            // let's try to recover as best as possible
 
-                // for (1) we would have to push the tag back onto the stack
-                // for (2) we'd just continue
-                // for (3) we'd need to find the corresponding opening tag and close it
-                // we can't distinguish between these cases, so we'll just continue
-            }
+            // for (1) we would have to push the tag back onto the stack
+            // for (2) we'd just continue
+            // for (3) we'd need to find the corresponding opening tag and close it
+            // we can't distinguish between these cases, so we'll just continue
         }
 
         Ok(Some(tag))
@@ -629,6 +658,7 @@ impl<R: BufRead> DumpParser<R> {
                         &mut self.non_utf8_reporter,
                         &mut self.tag_interner,
                         &self.current_path,
+                        self.options.strict,
                     )?;
 
                     self.current_path.push(tag);
@@ -640,6 +670,7 @@ impl<R: BufRead> DumpParser<R> {
                         &mut self.non_utf8_reporter,
                         &mut self.tag_interner,
                         &self.current_path,
+                        self.options.strict,
                     )?;
 
                     use Tag::*;
@@ -730,6 +761,7 @@ impl<R: BufRead> DumpParser<R> {
                         &mut self.current_path,
                         &mut self.tag_interner,
                         &mut self.xml_parser,
+                        self.options.strict,
                     )?;
 
                     if tag == Some(Tag::SiteInfo) {
@@ -786,6 +818,7 @@ impl<R: BufRead> DumpParser<R> {
                         &mut self.non_utf8_reporter,
                         &mut self.tag_interner,
                         &self.current_path,
+                        self.options.strict,
                     )?;
 
                     if tag == Tag::Page {
@@ -819,6 +852,7 @@ impl<R: BufRead> DumpParser<R> {
                         &mut self.non_utf8_reporter,
                         &mut self.tag_interner,
                         &self.current_path,
+                        self.options.strict,
                     )?;
 
                     self.current_path.push(tag);
@@ -1072,6 +1106,7 @@ impl<R: BufRead> DumpParser<R> {
                         &mut self.current_path,
                         &mut self.tag_interner,
                         &mut self.xml_parser,
+                        self.options.strict,
                     )?;
 
                     if tag == Some(Tag::Title) {
@@ -1092,8 +1127,7 @@ impl<R: BufRead> DumpParser<R> {
 
                     if tag == Some(Tag::Revision) {
                         if let Some(revision_builder) = revision_builder.take() {
-                            #[cfg(feature = "strict")]
-                            {
+                            if self.options.strict {
                                 if revision_builder.contributor_username.is_some()
                                     && revision_builder.contributor_ip.is_some()
                                 {
@@ -1110,8 +1144,7 @@ impl<R: BufRead> DumpParser<R> {
                             let revision = match revision_builder.try_build() {
                                 Ok(revision) => revision,
                                 Err(BuildRevisionError(field, revision_builder)) => {
-                                    #[cfg(feature = "strict")]
-                                    {
+                                    if self.options.strict {
                                         tracing::error!(
                                             message = "Missing mandatory field in revision",
                                             field,
@@ -1120,16 +1153,13 @@ impl<R: BufRead> DumpParser<R> {
                                         );
                                         return Err(ParsingError::MissingField(field));
                                     }
-                                    #[cfg(not(feature = "strict"))]
-                                    {
-                                        tracing::warn!(
-                                            message = "Ignoring revision with missing mandatory field",
-                                            field,
-                                            partial_revision = ?revision_builder,
-                                            revision_end_position = self.xml_parser.buffer_position()
-                                        );
-                                        continue;
-                                    }
+                                    tracing::warn!(
+                                        message = "Ignoring revision with missing mandatory field",
+                                        field,
+                                        partial_revision = ?revision_builder,
+                                        revision_end_position = self.xml_parser.buffer_position()
+                                    );
+                                    continue;
                                 }
                             };
                             page.revisions.push(revision);
@@ -1145,8 +1175,7 @@ impl<R: BufRead> DumpParser<R> {
                         tracing::error!(message = "Unexpected end of file", partial_page = ?page, current_path = ?self.current_path);
                         return Err(ParsingError::Eof);
                     } else {
-                        #[cfg(feature = "strict")]
-                        if !self.current_path.is_empty() {
+                        if self.options.strict && !self.current_path.is_empty() {
                             tracing::error!(
                                 message = "Unexpected end of file",
                                 current_path = ?self.current_path
@@ -1165,7 +1194,16 @@ impl<R: BufRead> DumpParser<R> {
     }
 
     pub fn parse_single_page(reader: R, read_bytes: &mut usize) -> Result<Page, ParsingError> {
-        let mut parser = Self::new_impl(reader, false);
+        Self::parse_single_page_with_options(reader, read_bytes, DumpParserOptions::default())
+    }
+
+    /// Parses one standalone `<page>` with the supplied runtime configuration.
+    pub fn parse_single_page_with_options(
+        reader: R,
+        read_bytes: &mut usize,
+        options: DumpParserOptions,
+    ) -> Result<Page, ParsingError> {
+        let mut parser = Self::new_impl(reader, false, options);
         parser.current_path.push(Tag::MediaWiki);
 
         let page = parser.parse_page()?.ok_or(ParsingError::Eof)?;

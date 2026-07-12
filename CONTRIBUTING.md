@@ -60,7 +60,7 @@ A bare `cargo test` is misleading here. The integration suites are **feature-gat
 - **Run the canonical pure-Rust command**, the same one CI's `test` job uses (`.github/workflows/ci.yml`). This superset of the Python-free features exercises every unit and doc test — both the optimized and naive string paths, serde round-trips, and so on:
 
   ```sh
-  cargo test --lib --features serde,cli,strict,optimized-str,optimized-lowercase
+  cargo test --lib --features serde,cli,optimized-str,optimized-lowercase
   cargo test --doc --features serde
   ```
 
@@ -78,7 +78,7 @@ To actually run the feature-gated suites (the `python-diff` ones also need the P
 ## Testing and Validation
 
 - **Parser comparison tests** (`parser_tests.rs`): Compare the Rust dump parser's page and revision fields directly against the Python `mwxml` parser used by WikiWho. The suite also parses the configured reference dump end-to-end in `strict` mode.
-  Run the parity tests with `cargo test --features python-diff --test parser_tests`, or strict validation with `cargo test --features strict --test parser_tests`.
+  Run the parity tests with `cargo test --features python-diff --test parser_tests`, or strict validation with `cargo test --test parser_tests -- --ignored reference_dump_parses_completely_in_strict_mode`.
 - **Exact comparison tests** (`algorithm_exact_tests.rs`): Compare the Rust implementation's results against the original Python WikiWho, token by token. These require the `python-diff` and `serde` features (`python-diff` so both implementations use the same diff algorithm; `serde` for the fixture cache), so the whole suite is gated behind both.  
   Run them with `cargo test --features python-diff,serde --test algorithm_exact_tests` (with the Python venv active; see [Development Setup](#development-setup)).
 - **Statistical comparison tests** (`algorithm_statistic_tests.rs`): Gated behind `serde`, ignored by default, and require local benchmark data.
@@ -114,7 +114,7 @@ Before pushing, you can reproduce every blocking PR gate locally. Each maps to a
 
   ```sh
   for f in "--no-default-features" "" "--features serde" "--features cli" \
-           "--features serde,cli,strict,optimized-str,optimized-lowercase"; do
+           "--features serde,cli,optimized-str,optimized-lowercase"; do
     cargo clippy --all-targets $f -- -D warnings
   done
   ```
