@@ -10,10 +10,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - `wikiwho-cli` gained a `-c`/`--compression-level N` option to set the compression level of the output encoder (bzip2 1–9, gzip 0–9, zstd 0–22); it is ignored when the output is uncompressed, and the previous codec defaults are used when the flag is omitted.
+- Added direct dump-parser parity tests against Python `mwxml` and strict end-to-end parsing coverage for the reference Wiktionary dump.
 
 ### Fixed
 
+- `wikiwho-cli` now finalizes compressed output encoders explicitly, producing complete zstd frames and reporting finalization errors instead of silently emitting truncated output.
+- The dump parser now preserves entity-split comments, SHA-1 hashes stored on `<text>` attributes, deleted revision text, and revisions with suppressed contributors. Username/IP alternatives and duplicate SHA-1 representations now follow Python `mwxml` precedence; strict mode rejects ambiguous contributors and differing SHA-1 values. XML 1.0 line endings are normalized consistently with other XML parsers.
+
+## [0.3.5] - 2026-07-09
+
+### Fixed
+
+- Fixed a critical dump parser bug where revision text containing XML entity references (`&lt;`, `&amp;`, `&#NN;`, ...) was truncated, producing severely incomplete authorship output for real Wikimedia dumps. Users of versions 0.3.4 and earlier should upgrade and regenerate affected output.
 - `wikiwho-cli --help` now advertises the page-limit flag under its actual long name `--limit` (it previously printed a non-existent `--pages`).
+
+### Changed
+
+- Dump parsing now accumulates text across entity-split events and resolves the entity characters, restoring parity with Python WikiWho. Correctly parsed dumps may process substantially more text and run slower than affected versions.
 
 ## [0.3.4] - 2026-06-15
 
@@ -25,12 +38,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Updated `pyo3` to `v0.29.0`.
 
-## [0.3.3] - 2026-06-15
+## [0.3.3] - 2026-06-15 [YANKED]
 
 **Yanked** — released before immutable releases (a GitHub feature) were enabled and with
 incorrect/missing CHANGELOG links; superseded by an otherwise-identical 0.3.4.
 
-## [0.3.2] - 2026-06-15
+## [0.3.2] - 2026-06-15 [YANKED]
 
 **Yanked** — the release workflow failed to attach a build-provenance attestation (a
 cargo 1.96 change moved the packaged `.crate` to a path the CI glob no longer matched),

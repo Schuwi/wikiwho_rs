@@ -6,10 +6,15 @@
 
 A high-performance Rust implementation of the WikiWho algorithm for token-level authorship tracking in Wikimedia pages.
 
+> [!WARNING]
+> Versions 0.3.4 and earlier contain a critical dump parser bug: revision text
+> containing XML entity references such as `&lt;`, `&amp;`, `&quot;`, or `&#NN;`
+> was truncated, producing severely incomplete authorship output for real
+> Wikimedia dumps. Upgrade to 0.3.5 or newer and regenerate any affected output.
+
 <div class="rustdoc-hidden">
 
 [![CI](https://github.com/Schuwi/wikiwho_rs/actions/workflows/ci.yml/badge.svg)](https://github.com/Schuwi/wikiwho_rs/actions/workflows/ci.yml)
-[![codecov](https://codecov.io/gh/Schuwi/wikiwho_rs/branch/main/graph/badge.svg)](https://codecov.io/gh/Schuwi/wikiwho_rs)
 [![crates.io](https://img.shields.io/crates/v/wikiwho.svg)](https://crates.io/crates/wikiwho)
 [![docs.rs](https://docs.rs/wikiwho/badge.svg)](https://docs.rs/wikiwho)
 
@@ -288,15 +293,20 @@ wikiwho = { version = "0.3", features = ["strict"] }
 
 ### Optimized String Processing
 
-By default, text splitting functions use straightforward implementations based on `String::replace()` and character iteration. Enable the `optimized-str` feature for faster string processing:
+The `optimized-str` feature is enabled by default. It uses the Aho-Corasick algorithm for
+tokenization and `memchr::memmem` with scratch buffers for paragraph and sentence splitting.
+These implementations produce identical results to the fallback implementations and are
+consistently faster, so no additional configuration is needed.
+
+To reduce the number of dependencies, you can disable the default features:
 
 ```toml
 [dependencies]
-wikiwho = { version = "0.3", features = ["optimized-str"] }
+wikiwho = { version = "0.3", default-features = false }
 ```
 
-This swaps in alternative implementations that use the Aho-Corasick algorithm for tokenization and `memchr::memmem` with scratch buffers for paragraph and sentence splitting. These produce identical results and are consistently faster than the default implementations, so enabling this feature is generally recommended (it is included in the default feature set).  
-The only case where you might want to disable this feature is if you want to reduce the amount of dependencies.
+Without `optimized-str`, text splitting falls back to straightforward implementations based on
+`String::replace()` and character iteration.
 
 ### Optimized Lowercasing
 

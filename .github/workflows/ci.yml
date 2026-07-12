@@ -88,24 +88,6 @@ jobs:
       - uses: Swatinem/rust-cache@v2
       - run: cargo check --all-features
 
-  coverage:
-    name: coverage
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-        with: { lfs: false }
-      - uses: dtolnay/rust-toolchain@stable
-        with: { components: llvm-tools-preview }
-      - uses: Swatinem/rust-cache@v2
-      - uses: taiki-e/install-action@cargo-llvm-cov
-      - name: Collect coverage (pure-Rust lib tests)
-        run: cargo llvm-cov --lib --features serde,cli,strict,optimized-str,optimized-lowercase --lcov --output-path lcov.info
-      - uses: codecov/codecov-action@v4
-        with:
-          files: lcov.info
-          fail_ci_if_error: false
-          token: ${{ secrets.CODECOV_TOKEN }}
-
   package:
     name: cargo package
     runs-on: ubuntu-latest
@@ -152,6 +134,10 @@ jobs:
         run: git lfs pull --include="dev-data/reference-dumps/dewiktionary-20240901-ci-subset.xml.zst"
       - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
+      - name: Strict parser coverage (representative subset)
+        env:
+          WIKIWHO_TEST_DUMP: ${{ github.workspace }}/dev-data/reference-dumps/dewiktionary-20240901-ci-subset.xml.zst
+        run: cargo test --features strict --test parser_tests
       - uses: actions/setup-python@v5
         with: { python-version: "3.12" }
       - name: Set up reference WikiWho venv
@@ -173,6 +159,7 @@ jobs:
           else
             echo "::warning::subset not available; real-page parity tests will self-skip"
           fi
+          cargo test --features python-diff --test parser_tests -- python_parser_matches_
           cargo test --features python-diff,serde --test algorithm_exact_tests -- \
             known_bad_example_anontalkpagetext \
             known_bad_example_familia \
@@ -186,6 +173,7 @@ jobs:
         run: |
           if python3 tools/fetch_test_data.py --which full --dest dev-data/reference-dumps; then
             export WIKIWHO_TEST_DUMP="$PWD/dev-data/reference-dumps/dewiktionary-20240901-pages-meta-history.xml.zst"
+            cargo test --features strict --test parser_tests -- reference_dump_parses_completely_in_strict_mode
             cargo test --features python-diff,serde --test algorithm_exact_tests -- \
               known_bad_example_familia known_bad_example_hallo random_pages_100
           else
