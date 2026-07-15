@@ -1,4 +1,19 @@
 // SPDX-License-Identifier: MPL-2.0
+//! Streaming parser for Wikimedia XML dumps.
+//!
+//! [`DumpParser`] reads a `pages-meta-history` XML dump from any
+//! [`BufRead`] and yields one [`Page`] at a time via
+//! [`DumpParser::parse_page`], so memory use stays roughly constant regardless of
+//! dump size. Each [`Page`] carries its [`Revision`]s in the dump's order (oldest
+//! first) — exactly the order
+//! [`PageAnalysis::analyse_page`](crate::algorithm::PageAnalysis::analyse_page)
+//! expects.
+//!
+//! The parser targets Wikimedia dump format 0.11. By default it is lenient,
+//! logging and recovering from malformed input; enable the `strict` feature to
+//! make it abort on the first error instead. The parsed data model lives in this
+//! module's re-exports: [`Page`], [`Revision`], [`Contributor`], [`Text`] and
+//! [`SiteInfo`].
 mod types;
 pub use types::*;
 

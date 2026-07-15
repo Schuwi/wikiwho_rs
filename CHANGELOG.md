@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **Breaking:** Removed the unused `RevisionSubstr` type alias and hid the internal `PageAnalysis::{new, new_revision, new_paragraph, new_sentence, new_word}` constructors from the documentation. Do not use these constructors; they are only intended for internal use and thus may change.
+
+### Documentation
+
+- Documented the analysis entry points, revision-token iteration, core modules, and `Revision` fields, and added a crate-layout overview.
+
 ## [0.3.6] - 2026-07-12
 
 ### Added

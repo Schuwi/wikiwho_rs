@@ -25,6 +25,26 @@
 //! ```rust,ignore
 //! let origin_revision = &analysis.words[word_pointer.unique_id()].origin_revision;
 //! ```
+//!
+//! ## Crate layout
+//!
+//! At a high level the crate is a pipeline of three stages, each in its own module:
+//!
+//! - **Parse** — [`dump_parser`]: a streaming parser for Wikimedia XML dumps that
+//!   yields [`Page`](dump_parser::Page) / [`Revision`](dump_parser::Revision)
+//!   values one page at a time.
+//! - **Analyse** — [`algorithm`]: the WikiWho authorship algorithm. The entry
+//!   point is [`PageAnalysis::analyse_page`](algorithm::PageAnalysis::analyse_page)
+//!   (or
+//!   [`analyse_page_with_options`](algorithm::PageAnalysis::analyse_page_with_options)
+//!   for non-default options).
+//! - **Consume** — [`utils`]: helpers for reading results, notably
+//!   [`iterate_revision_tokens`](utils::iterate_revision_tokens).
+//!
+//! Diffing — the heart of the algorithm — lives in two internal modules that are
+//! not part of the public API: `difflib` (a clean-room Ratcliff/Obershelp matcher
+//! mirroring Python's `difflib`) and `optimized_str` (fast string splitting and
+//! lowercasing).
 
 pub mod algorithm;
 pub(crate) mod difflib;

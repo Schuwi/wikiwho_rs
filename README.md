@@ -270,7 +270,7 @@ By default, `wikiwho` uses a fast Rust implementation of the histogram diff algo
 
 ```toml
 [dependencies]
-wikiwho = { version = "0.3", features = ["python-diff"] }
+wikiwho = { version = "0.4", features = ["python-diff"] }
 ```
 
 and
@@ -288,7 +288,7 @@ let analysis = PageAnalysis::analyse_page_with_options(&page.revisions, PageAnal
 
 ```toml
 [dependencies]
-wikiwho = { version = "0.3", features = ["strict"] }
+wikiwho = { version = "0.4", features = ["strict"] }
 ```
 
 ### Optimized String Processing
@@ -302,7 +302,7 @@ To reduce the number of dependencies, you can disable the default features:
 
 ```toml
 [dependencies]
-wikiwho = { version = "0.3", default-features = false }
+wikiwho = { version = "0.4", default-features = false }
 ```
 
 Without `optimized-str`, text splitting falls back to straightforward implementations based on
@@ -314,7 +314,7 @@ The `optimized-lowercase` feature replaces the standard library's `str::to_lower
 
 ```toml
 [dependencies]
-wikiwho = { version = "0.3", features = ["optimized-lowercase"] }
+wikiwho = { version = "0.4", features = ["optimized-lowercase"] }
 ```
 
 ```rust,ignore
