@@ -374,9 +374,7 @@ impl PageAnalysis {
     /// For normal use, prefer `analyse_page()`.
     // Hidden from the public API: a low-level constructor used internally by
     // `analyse_page` and by the integration tests. Kept `pub` (not `pub(crate)`)
-    // so the integration test crate can still build it; `#[doc(hidden)]` removes
-    // it from the documented surface (classified as breaking by
-    // cargo-semver-checks, hence the 0.4.0 bump).
+    // so the integration test crate can still build it.
     #[doc(hidden)]
     pub fn new(initial_revision: (RevisionAnalysis, RevisionImmutables)) -> Self {
         let arc = Arc::new(initial_revision.1);

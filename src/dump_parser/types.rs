@@ -77,7 +77,7 @@ impl Debug for Sha1Hash {
 ///
 /// When parsing a dump these are produced by the
 /// [parser](crate::dump_parser::DumpParser); you can also construct them by hand to
-/// feed the [algorithm](crate::algorithm) from a non-MediaWiki source.
+/// feed the [algorithm](crate::algorithm) from a source other than a MediaWiki XML dump.
 ///
 /// The algorithm only reads a subset of these fields: [`text`](Self::text),
 /// [`sha1`](Self::sha1), [`comment`](Self::comment) and [`minor`](Self::minor)
@@ -127,7 +127,8 @@ pub struct Revision {
     /// Optional edit summary/comment.
     ///
     /// Together with [`minor`](Self::minor) this tunes one spam-detection
-    /// heuristic (a minor edit that carries a comment skips the deletion check).
+    /// heuristic (a minor edit that carries a comment prevents the revision from
+    /// being marked as vandalism by the significant deletion heuristic).
     /// `None` is a safe default.
     pub comment: Option<CompactString>,
     /// Whether the revision was flagged as a minor edit.
