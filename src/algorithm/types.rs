@@ -182,9 +182,6 @@ impl<T> MaybeVec<T> {
     }
 }
 
-#[doc(hidden)] // internal type alias; not part of the supported public API
-pub type RevisionSubstr = Yoke<Cow<'static, str>, Arc<String>>;
-
 #[derive(Clone)]
 pub struct RevisionImmutables {
     pub id: i32,
