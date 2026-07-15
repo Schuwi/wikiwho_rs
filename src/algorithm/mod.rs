@@ -407,8 +407,10 @@ impl PageAnalysis {
     ///
     /// # Errors
     ///
-    /// Returns [`AnalysisError::NoValidRevisions`] if every revision in the input
-    /// is classified as spam or has empty/deleted text.
+    /// Returns [`AnalysisError::NoValidRevisions`] if no revision remains after
+    /// revisions with [`Text::Deleted`] content and revisions classified as
+    /// spam/vandalism are skipped. An empty [`Text::Normal`] string still counts
+    /// as a valid revision.
     pub fn analyse_page<I, R>(xml_revisions: I) -> Result<Self, AnalysisError>
     where
         R: Borrow<Revision>,
@@ -433,8 +435,10 @@ impl PageAnalysis {
     ///
     /// # Errors
     ///
-    /// Returns [`AnalysisError::NoValidRevisions`] if every revision in the input
-    /// is classified as spam or has empty/deleted text.
+    /// Returns [`AnalysisError::NoValidRevisions`] if no revision remains after
+    /// revisions with [`Text::Deleted`] content and revisions classified as
+    /// spam/vandalism are skipped. An empty [`Text::Normal`] string still counts
+    /// as a valid revision.
     pub fn analyse_page_with_options<I, R>(
         xml_revisions: I,
         analysis_options: PageAnalysisOptions,
