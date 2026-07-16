@@ -16,6 +16,11 @@ name = "wikiwho-cli"
 path = "src/bin/wikiwho-cli.rs"
 required-features = ["cli"]
 
+[[bin]]
+name = "wikiwho-benchmark"
+path = "src/bin/wikiwho-benchmark.rs"
+required-features = ["cli"]
+
 [[bench]]
 name = "bench_utils"
 harness = false

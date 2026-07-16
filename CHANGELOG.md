@@ -21,6 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - `wikiwho-cli` gained a `-c`/`--compression-level N` option to set the compression level of the output encoder (bzip2 1–9, gzip 0–9, zstd 0–22); it is ignored when the output is uncompressed, and the previous codec defaults are used when the flag is omitted.
 - Added direct dump-parser parity tests against Python `mwxml` and strict end-to-end parsing coverage for the reference Wiktionary dump.
+- Added a real-data benchmarking harness for separate XML parsing, authorship algorithm, and end-to-end speed comparisons between Rust and the original Python WikiWho.
 
 ### Fixed
 

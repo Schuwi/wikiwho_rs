@@ -35,6 +35,42 @@ A high-performance Rust implementation of the WikiWho algorithm for token-level 
 
 CI verifies exact token-level parity against the reference Python WikiWho on every PR, and ≥85% precision against the paper's gold standard (the paper reports ~95% using Python's `difflib`; enable the `python-diff` feature for byte-identical results). Property-test fuzzing additionally checks Rust-vs-Python parity on randomized input. See [`CONTRIBUTING.md`](CONTRIBUTING.md) for how to run these tests locally.
 
+## Benchmarking Rust against Python
+
+The repository includes a real-data harness that compares this crate with the original Python WikiWho on exactly the same pages and revisions. Activate a Python environment with [`requirements.txt`](requirements.txt) installed, then run:
+
+```sh
+. .venv/bin/activate
+python scripts/wikiwho_bench.py
+```
+
+By default it selects 10 pages from the committed CI reference dump, performs one warm-up and three measured repetitions, and reports median times for three distinct workloads:
+
+- `parse`: MediaWiki XML parsing and page/revision construction only.
+- `algorithm`: authorship analysis only, using a shared prepared JSONL corpus so neither XML parser is in the timed region.
+- `end-to-end`: XML parsing plus authorship analysis.
+
+The selected pages are streamed once from the input into a bounded, uncompressed temporary XML corpus before measurement; the full dump is never unpacked to disk. This keeps gzip, bzip2, or zstd implementation differences out of the parser and end-to-end timings while making temporary disk use proportional to the selected pages. The Rust release worker is also built before measurement. Both implementations run single-threaded in a fresh process, process pages in dump order, and alternate execution order between repetitions. The algorithm comparison uses each implementation's normal default diff backend, so it measures production performance rather than exact-output `python-diff` mode.
+
+Pass any number of user-supplied MediaWiki history dumps in `.xml`, `.xml.bz2`, `.xml.gz`, `.xml.zst`, or `.xml.zstd` form:
+
+```sh
+python scripts/wikiwho_bench.py /data/enwiki-history.xml.bz2 \
+  --pages 100 --namespace 0 --repetitions 5
+
+# Spread 1,000 selected pages across the first 100,000 matching pages.
+python scripts/wikiwho_bench.py /data/enwiki-history.xml.bz2 \
+  --pages 1000 --namespace 0 --stride 100 --repetitions 5
+
+# Run selected components and retain a machine-readable report.
+python scripts/wikiwho_bench.py /data/dump.xml.zst \
+  --mode parse --mode end-to-end --json-output benchmark.json
+```
+
+Use `--python /path/to/venv/bin/python` when the original implementation is installed for a different interpreter. Run `python scripts/wikiwho_bench.py --help` for all options. The existing Criterion benchmarks under `benches/` remain useful for synthetic microbenchmarks; this harness is intended for implementation-level comparisons on real revision histories.
+
+JSON reports include the UTC run-start timestamp and a `parameters` object with the resolved input paths, page limit, stride, namespace filters, selected modes, Python interpreter, Rust worker path, and whether the release worker was built for that run. Together with the top-level repetition and warm-up counts, this records the settings needed to reproduce and compare benchmark runs.
+
 ## Quick Start (no Rust required)
 
 `wikiwho` ships a command-line tool, `wikiwho-cli`, that runs the full algorithm over a MediaWiki XML dump and streams the per-page authorship results out as JSON. You only need a Rust toolchain to install it once (see [rustup.rs](https://rustup.rs/)); after that it is an ordinary binary — no Rust knowledge needed to use it.
