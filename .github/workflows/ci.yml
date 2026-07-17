@@ -196,7 +196,7 @@ jobs:
       # hiccup can't fail unrelated PRs.
       - name: Cache gold-standard CSV
         id: gold-csv
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: dev-data/gold_standard.partial.newnames.csv
           key: gold-standard-csv-${{ hashFiles('tools/fetch_gold_standard.py') }}
@@ -235,7 +235,7 @@ jobs:
           echo "$PWD/.venv/bin" >> "$GITHUB_PATH"
       - name: Cache gold-standard CSV
         id: gold-csv
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: dev-data/gold_standard.partial.newnames.csv
           key: gold-standard-csv-${{ hashFiles('tools/fetch_gold_standard.py') }}
