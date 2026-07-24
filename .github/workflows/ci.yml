@@ -111,7 +111,7 @@ jobs:
       # pyo3 only needs a Python interpreter to *build* (not the WikiWho venv — rustdoc is
       # compiled, never run). This is also what enforces SemVer for releases: release.yml
       # requires this workflow to be green for the tagged commit.
-      - uses: actions/setup-python@v6
+      - uses: actions/setup-python@v7
         with: { python-version: "3.12" }
       - uses: obi1kenobi/cargo-semver-checks-action@v2
         with:
@@ -138,7 +138,7 @@ jobs:
         env:
           WIKIWHO_TEST_DUMP: ${{ github.workspace }}/dev-data/reference-dumps/dewiktionary-20240901-ci-subset.xml.zst
         run: cargo test --features strict --test parser_tests
-      - uses: actions/setup-python@v6
+      - uses: actions/setup-python@v7
         with: { python-version: "3.12" }
       - name: Set up reference WikiWho venv
         run: |
@@ -221,7 +221,7 @@ jobs:
         run: git lfs pull --include="dev-data/article-cache/*.json.zst"
       - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
-      - uses: actions/setup-python@v6
+      - uses: actions/setup-python@v7
         with: { python-version: "3.12" }
       - name: Set up reference WikiWho venv
         run: |
